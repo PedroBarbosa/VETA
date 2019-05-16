@@ -1,0 +1,6 @@
+sklearn-pandas
+bleedml
+dtreeviz
+gplearn
+hgvs
+git+git://github.com/schlegelp/catheat@master

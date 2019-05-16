@@ -1,0 +1,20 @@
+numpy
+cython
+pandas
+seaborn
+matplotlib
+pyvcf
+-e git+git://github.com/scikit-learn-contrib/py-earth.git#egg=py-earth
+sklearn
+sklearn-pandas
+imbalanced-learn
+cyvcf2
+bokeh
+yellowbrick
+dtreeviz
+ipython
+sklearn-contrib-lightning
+gplearn
+xgboost
+bleedml
+hgvs

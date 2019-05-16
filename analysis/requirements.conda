@@ -1,0 +1,16 @@
+anaconda::scikit-learn
+bioconda::pysam
+numpy
+cython
+pandas
+seaborn
+matplotlib
+pyvcf
+imbalanced-learn
+cyvcf2
+bokeh
+districtdatalabs::yellowbrick
+ipython
+conda-forge::sklearn-contrib-lightning
+conda-forge::sklearn-contrib-py-earth
+xgboost

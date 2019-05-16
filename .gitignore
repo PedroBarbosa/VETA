@@ -1,0 +1,16 @@
+*aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex*
+*.puc
+**/__pycache__
+*.stackdump
+*.idea
+main.pdf
+analysis/src
+figures/
+src
+**/*.pyc
+datasets/clinvar/clinvar_vep_03_2019.vcf.bgz
