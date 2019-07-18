@@ -45,7 +45,7 @@ def process_vep_scores(vcf_file, is_clinvar=False):
                     else:
                         absent.append(plugin)
             elif field["HeaderType"] == "INFO" and field["ID"] == "SpliceAI":
-                spliceai_scores_fromtool=True
+                spliceai_scores_fromtool= True
 
         for record in vcf_data:
 

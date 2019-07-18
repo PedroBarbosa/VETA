@@ -6,7 +6,7 @@ import sys
 import logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,  format='%(asctime)s %(message)s')
 
-def preprocess(loc, ROOT_DIR, thresholdAnalysis, dataset=None, newDataset=None):
+def preprocess(loc, ROOT_DIR, thresholdAnalysis, clinvarStars, dataset= None, newDataset=None):
     DATASET_FOLDER = os.path.join(os.path.dirname(ROOT_DIR), "datasets")
 
     dict = {}
@@ -34,6 +34,7 @@ def preprocess(loc, ROOT_DIR, thresholdAnalysis, dataset=None, newDataset=None):
             '3s_l': filter_clinvar_3_stars(df_clinvar),
             '4s_l': filter_clinvar_4_stars(df_clinvar),
         }
+
 
     if dataset and dataset != "clinvar":
         logging.info("Prepocessing {} data".format(dataset))

@@ -13,4 +13,6 @@ analysis/src
 figures/
 src
 **/*.pyc
-datasets/clinvar/clinvar_vep_03_2019.vcf.bgz.tsv
+datasets/clinvar/*
+datasets/hcm_manually_curated/*
+dbs/*
