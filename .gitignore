@@ -13,6 +13,4 @@ analysis/src
 figures/
 src
 **/*.pyc
-datasets/clinvar/*
-datasets/hcm_manually_curated/*
 dbs/*

@@ -1,0 +1,1 @@
+Because some tools are not suitable for commercial use, annotated VCF are available for academic use upon request. Please contact Pedro Barbosa (pedro.barbosa@medicina.ulisboa.pt) to have access to the data.
