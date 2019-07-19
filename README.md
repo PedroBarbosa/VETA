@@ -1,12 +1,37 @@
-# VETA - Variant prEdiction Tools evAluation
+# Table of Contents
+1. [VETA - Variant prEdiction Tools evAluation](#veta)
+2. [Installation](#installation)
+3. [Scores annotation](#scores-annotation)
+4. [Running on reference datasets](#reference)
+5. [Running on unlabelled VCFs](#unlabelled)
 
+<a name="veta"></a>
+## VETA - Variant prEdiction Tools evAluation
 VETA is a framework that analyses the performance of several variant prediction methods at different levels. It can:
   * 1) Analyse the tools prediction scores on an unseen VCF taking into account the reference thresholds described in literature.
   * 2) Given labeled variants (benign and pathogenic), evaluate tools performance producing several metrics and plots.
   * 3) Inspect reliability of reference thresholds using Clinvar database
   * 4) Apply machine learning to combine scores and improve predictions
 
-### Scores ###
+<a name="installation"></a>
+## Intallation
+VETA requires python3 and conda/pip is recommended to install all the dependencies. You can
+
+~~~~
+git clone https://github.com/PedroBarbosa/VETA.git
+conda install --yes --file requirements.conda
+pip install -r requirements.pip
+~~~~
+
+Alternatively, there is a docker image with all dependencies pre-installed:
+~~~~
+git clone https://github.com/PedroBarbosa/VETA.git
+docker pull pbarbosa/prediction_tools_evaluation:latest
+docker run -it pbarbosa/prediction_tools_evaluation:latest
+~~~~
+
+<a name="scores-annotation"></a>
+## Scores annotation
 
 Currently, hg19 version is used, as some tools do not provide scores for the latest genome build. We apply a combination of VEP, 
 dbNSFP and vcfanno to annotate variants with the scores. We expect to release in a near future a simple web application to distance
@@ -50,3 +75,9 @@ List of tools available (more will be continuosly added)
 |                                 | SPIDEX            | \|dpsi_zscore\| > 2    | No                        | vcfanno       |
 |                                 | traP              | > 0.92               | Yes                       | vcfanno       |
 |                                 | SpliceAI          | > 0.2                | No                        | vcfanno       |
+
+<a name="reference"></a>
+## Running on reference datasets
+
+<a name="unlabelled"></a>
+## Running on unlabelled VCFs
