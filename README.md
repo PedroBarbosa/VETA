@@ -34,8 +34,7 @@ docker run -it pbarbosa/prediction_tools_evaluation:latest
 ## Scores annotation
 
 Currently, hg19 version is used, as some tools do not provide scores for the latest genome build. We apply a combination of VEP, 
-dbNSFP and vcfanno to annotate variants with the scores. We expect to release in a near future a simple web application to distance
-users from the cumbersome process of running the tools and/or annotating VCFs with the scores. 
+dbNSFP and vcfanno to annotate variants with the scores. 
 
 ---
 List of tools available (more will be continuosly added)
@@ -78,6 +77,21 @@ List of tools available (more will be continuosly added)
 
 <a name="reference"></a>
 ## Running on reference datasets
+
+By default, Clinvar database is used as the ground truth dataset. The simplest command will benchmark prediction tools and produce plots and statistics about their performance. 
+
+`python veta.py -o out_dir`
+
+By default, Clinvar database is filtered so that only variants with 3 stars (and pathogenic, likely_pathhogenic, benign, likely_benign interpretations) are used. If one wants to evaluate Clinvar variants with a different review status, you can set the `--clinvarStars` argument to be less / more stringent in the selection of the ground truth data. Available values for this argument can checked with the `--listClinvarLevels` flag. To run VETA over the clinvar data with 2 stars:
+
+`python veta.py -o out_dir --clinvarStars 2s`
+
+By default, threshold analysis is turned off. To enable it, set the `--thresholdAnalysis` flag. It will use the Clinvar 3 stars with likely assignments (3s_l) as the ground truth data regardless of the argument set in `--clinvarStars`.
+
+Different datasets (other than clinvar) can be used for analysis. Swissvar, Humsavar and Unifun are available. To use a different one, set the `--dataset` argument.
+
+Machine learning analysis can be enbabled with the `--machineLearning` flag. Tools scores will be combined and different standard classifiers are tested.
+
 
 <a name="unlabelled"></a>
 ## Running on unlabelled VCFs
