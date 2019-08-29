@@ -31,7 +31,7 @@ def build_converter(df, threshold_list):
         #else:
         #    print(f, df[f].head())
     fields = []
-    for t, _, _, _, _ in threshold_list:
+    for t, *args in threshold_list:
         fields.append(([t], SimpleImputer(strategy="median")))
 
     mapper = DataFrameMapper(fields)

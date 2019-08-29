@@ -29,7 +29,7 @@ def generate_threshold_analysis(dataset, filters, threshold_list, name, folder, 
             continue
 
         final_thresholds = OrderedDict()
-        for tool, direction, recommended_threshold, color, marker in threshold_list:
+        for tool, direction, recommended_threshold, *args in threshold_list:
             if tool not in df_f.columns:
                 continue
             df_ = df_f.loc[pd.notnull(df_f[tool]),].copy()

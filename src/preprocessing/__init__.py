@@ -1,12 +1,13 @@
 import os.path
 from .utils import *
 from .clinvar import *
-from .vep import *
+from .vcf_processing import *
 import sys
 import logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,  format='%(asctime)s %(message)s')
 
-def preprocess(loc, ROOT_DIR, thresholdAnalysis, clinvarStars, dataset= None, newDataset=None):
+
+def preprocess(loc, ROOT_DIR, thresholdAnalysis, clinvarStars, intronic_analysis, dataset= None, newDataset=None):
     DATASET_FOLDER = os.path.join(os.path.dirname(ROOT_DIR), "datasets")
 
     dict = {}
@@ -35,15 +36,15 @@ def preprocess(loc, ROOT_DIR, thresholdAnalysis, clinvarStars, dataset= None, ne
             '4s_l': filter_clinvar_4_stars(df_clinvar),
         }
 
-
     if dataset and dataset != "clinvar":
         logging.info("Prepocessing {} data".format(dataset))
         if newDataset:
-            dirname = dataset
-            if dataset.rsplit('/', 1)[-1]:
-                dataset_name = dataset.rsplit('/', 1)[-1]
+            if os.path.isdir(dataset):
+                dirname = dataset
+                dataset_name = utils.check_dataset_arg(dataset)
             else:
-                dataset_name = dataset.rsplit('/', 1)[-2]
+                dirname = os.path.join(DATASET_FOLDER, dataset)
+                dataset_name = dataset
 
         else:
             dirname = os.path.join(DATASET_FOLDER, dataset)
@@ -53,10 +54,10 @@ def preprocess(loc, ROOT_DIR, thresholdAnalysis, clinvarStars, dataset= None, ne
         benign, deleterious = check_required_files(dirname, dataset_name)
         for f in [benign,deleterious]:
             isbenign = False if "pathogenic" in f or "deleterious" in f else True
-            dfs.append(get_df_ready(f, False, isbenign, loc))
+            dfs.append(get_df_ready(f, False, isbenign, loc, intronic_analysis))
 
         df = pd.concat(dfs)
-        df = vep_cleaning(df)
-        dict[dataset] = df
+        df = vcf_cleaning(df)
+        dict[dataset_name] = df
 
     return dict

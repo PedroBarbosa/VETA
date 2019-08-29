@@ -17,9 +17,12 @@ def generate_ml_analysis(df, filters, threshold_list, name, folder):
         if len(X) < 10:
             logging.info("{} {} has less than 10 samples. Skipping.".format(name, filtern))
             continue
-        
+
+        logging.info("Generating feature ranking.")
         featsel, new_thresholds = generate_feature_ranking(df_.columns, X, y, threshold_list, filtern, name, folder)
         X_small = featsel.transform(X)
+        logging.info("Applying classifiers to data.")
         generate_classifiers_analysis(X, y, threshold_list, filtern, name, folder)
+        logging.info("Applying classifiers to data with less features..")
         generate_classifiers_analysis(X_small, y, new_thresholds, filtern, name, folder, extra="less_features")
         generate_tree_plot(X_small, y, new_thresholds, filtern, name, folder)

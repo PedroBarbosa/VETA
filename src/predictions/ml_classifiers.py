@@ -26,9 +26,14 @@ from xgboost import XGBClassifier
 from bleedml.classifiers import CascadeForest
 
 from predictions.ml_single_feature_classifier import SingleFeatureClassifier
+from plots.ml import plot_classifiers
+
+import sys
+import logging
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,  format='%(asctime)s %(message)s')
 
 classifiers = [
-#    ('Random', dummy.DummyClassifier()),    
+#    ('Random', dummy.DummyClassifier()),
     ('Naive Bayes', GaussianNB()),
     ('QDA', QuadraticDiscriminantAnalysis()),    
     ('KNN', NearestCentroid()),
@@ -54,7 +59,7 @@ classifiers = [
 def expand_classifier_list(threshold_list):
     classifiers_total = copy.deepcopy(classifiers)
     i = 0
-    for t, a, b, c, m in threshold_list:
+    for t, a, b, *args in threshold_list:
         single_cls = SingleFeatureClassifier(t, a, b, i)
         classifiers_total.append((t, single_cls))
         i += 1
@@ -89,6 +94,7 @@ def generate_classifiers_analysis(X, y, threshold_list, filtern, fname, folder, 
     
     out_metrics = {}
     for name, classifier in classifiers:
+        logging.info("Applying {} classifier".format(name))
         out_metrics[name] = list(perform_cross_validation(X, y, name, classifier))
-        
+
     plot_classifiers(out_metrics, filtern, fname, folder, extra)

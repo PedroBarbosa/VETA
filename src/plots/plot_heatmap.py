@@ -16,11 +16,11 @@ def plot_heatmap_unlabelled(df):
     sns.heatmap(df, cmap=cmap,  linewidths=0, cbar=False)
     plt.show()
     
-def prepare_dataset_for_heatmap(df, thresholds):
+def prepare_dataset_for_heatmap(df, thresholds, absent_tools):
     df['blank'] = pd.Series(np.nan, index = np.arange(df.shape[0]))
-    df = df[['class'] + [ tool + "_prediction" for tool, *args in thresholds]].copy()
-    df.columns = [GT_LABEL] + [ tool for tool, *args in thresholds]
-    f = lambda x: pd.isna(x) and np.nan or (1-int(x)) 
+    df = df[['class'] + [ tool + "_prediction" for tool, *args in thresholds if tool not in absent_tools]].copy()
+    df.columns = [GT_LABEL] + [tool for tool, *args in thresholds if tool not in absent_tools]
+    f = lambda x: pd.isna(x) and np.nan or (1-int(x))
     for col in df.columns:
         df[col] = df[col].apply(f)
         if df[col].isnull().all():
@@ -33,8 +33,9 @@ def hide_ylabel():
     fr = plt.gca()
     fr.axes.yaxis.set_ticklabels([])
 
-def plot_heatmap(df, filtername, thresholds, fname):
-    df = prepare_dataset_for_heatmap(df, thresholds)
+def plot_heatmap(df, filtername, thresholds, fname, absent_tools):
+
+    df = prepare_dataset_for_heatmap(df, thresholds, absent_tools)
     plt.clf()
     f, ax = plt.subplots(figsize=(0.5 * len(df.columns), 6))
     cmap="PiYG"
@@ -44,7 +45,8 @@ def plot_heatmap(df, filtername, thresholds, fname):
     plt.savefig(fname, bbox_inches='tight')
     plt.close()
 
-def generate_heatmap(df_original, filters_var_type, filters, thresholds, name, folder):
+
+def generate_heatmap(df_original, filters_var_type, filters, thresholds, name, folder, absent_tools):
     logging.info("Generating heatmaps..")
     for vartype, vartypefunction in filters_var_type:
         if not os.path.exists(os.path.join(folder, "figures", vartype)):
@@ -55,4 +57,4 @@ def generate_heatmap(df_original, filters_var_type, filters, thresholds, name, f
             df = filterfunction(df_v).copy()
             if df.shape[0] > 10:
                 plot_heatmap(df, filtername, thresholds, os.path.join(outdir, "heatmap_{}_{}.pdf".format(name,
-                                                                                                         filtername)))
+                                                                                            filtername)), absent_tools)

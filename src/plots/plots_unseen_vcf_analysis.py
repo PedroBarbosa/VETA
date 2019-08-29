@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import os
 import seaborn as sns
-from thresholds import threshold_list
 import matplotlib.patches as mpatches
 
 def plot_area(df, outdir):
@@ -60,7 +59,7 @@ def plot_heatmap_toptools(df,filters,outdir):
             plt.savefig(os.path.join(outdir,"top_tools_{}.pdf".format(filtername)),bbox_inches='tight', pad_inches = 0)
             plt.close()
 
-def plot_tool_score_distribution(df, tool, outdir):
+def plot_tool_score_distribution(df, tool, threshold_list, outdir):
    # sns.kdeplot(df[tool], shade=True, cut=0)
    # sns.rugplot(df[tool])
     df[tool].dropna(inplace=True)

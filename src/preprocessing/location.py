@@ -2,8 +2,10 @@ import re
 import hgvs.parser
 import hgvs.enums
 import hgvs.exceptions
+import numpy as np
+import pandas as pd
 
-def get_location(x,hp):
+def get_location(x, hp):
     try:
         v = hp.parse_hgvs_variant(x.split(" ")[0])
         if v.type == "m":
@@ -23,6 +25,7 @@ def get_location(x,hp):
 
     except hgvs.exceptions.HGVSParseError:
         return 'unknown'
+
 
 def get_location_from_consequence(x):
     conseq = x.split("&")[0]
@@ -57,3 +60,24 @@ def get_location_from_consequence(x):
     else:
         print("Consequence not registered. {}".format(conseq))
         return conseq
+
+
+ranges = [(0, 10, '0-10'),
+          (11, 30, '10-30'),
+          (31, 60, '30-60'),
+          (61, 100, '60-100'),
+          (101, 200, '100-200'),
+          (201, 500, '200-500'),
+          (501, 50000, '500+')]
+
+
+def assign_intronic_bins(hgvs, hp, location):
+
+    if location == "splicesite" or location == "deepintronic":
+        v = hp.parse_hgvs_variant(hgvs.split(" ")[0])
+        offset = abs(v.posedit.pos.start.offset)
+        for i in ranges:
+            if i[0] <= offset <= i[1]:
+                return pd.Series([i[2], np.int(offset)])
+    else:
+        return pd.Series([np.nan, np.nan])
