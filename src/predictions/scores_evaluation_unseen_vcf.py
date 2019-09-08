@@ -73,8 +73,7 @@ def inspect_predictions(vcf, top_tools_file, n_top_tools, plot_tool, tools_by_sc
             logging.warning("WARN: There are no {} in the variant set. Skipping this analysis.".format(vartype))
             continue
 
-        #df = apply_tool_predictions(df, threshold_list).set_index('id')
-        df.to_csv("pred.csv", sep="\t")
+        df = apply_tool_predictions(df, threshold_list)
         df_t = pd.concat(
             [df[[col for col in df.columns if '_prediction' in col]], df["HGVSc"], df["location"].to_frame()],
             axis=1).copy()
