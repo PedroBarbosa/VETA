@@ -11,6 +11,5 @@
 main.pdf
 analysis/src
 figures/
-src
-**/*.pyc
+*.pyc
 dbs/*

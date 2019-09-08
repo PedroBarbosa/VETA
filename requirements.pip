@@ -4,3 +4,4 @@ dtreeviz
 gplearn
 hgvs
 git+git://github.com/schlegelp/catheat@master
+git+git://github.com/webermarcolivier/statannot.git#egg=statannot

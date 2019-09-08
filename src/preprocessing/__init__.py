@@ -22,7 +22,7 @@ def preprocess(loc, ROOT_DIR, thresholdAnalysis, clinvarStars, intronic_analysis
         try:
             file_name = os.path.join(DATASET_FOLDER, 'clinvar', fclinvar[0])
         except IndexError:
-            logging.error("Perhaps your  clinvar file does not have 'clinvar' string on its name")
+            logging.error("Perhaps your clinvar file does not have 'clinvar' string on its name")
             exit(1)
         df_clinvar = get_clinvar_cached(file_name, loc, intronic_analysis)
         df_clinvar_sure = filter_clinvar_sure(df_clinvar)
