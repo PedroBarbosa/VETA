@@ -6,7 +6,7 @@ from plots.plots_intronic_analysis import *
 import sys
 import logging
 from sklearn.metrics import auc
-
+from scipy import integrate
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,  format='%(asctime)s %(message)s')
 
 
@@ -53,7 +53,7 @@ def generate_statistics(df, statistics, filtername, tool):
     statistics['nan'].append(nan)
     statistics['fraction_nan'].append(ratio(nan, total))
     statistics['coverage'].append(coverage)
-    statistics['accuracy'].append(accuracy)
+    statistics['accuracy'].append(round(accuracy, 2))
     statistics['precision'].append(precision)
     statistics['specificity'].append(ratio(tn, tn + fp))
     statistics['sensitivity'].append(recall)
@@ -93,33 +93,37 @@ def perform_intron_analysis(df, filter_intronic_bins, threshold_list, dataset_na
     plot_general_bin_info(df_i, filter_intronic_bins, os.path.join(os.path.join(out_dir, "intron_analysis"),
                                                                    "intronic".format(dataset_name)))
 
-    plot_allele_frequency(df_i, os.path.join(os.path.join(out_dir, "intron_analysis"),
-                                                                   "AF".format(dataset_name)))
-
     roc_per_bin = defaultdict(list)
+    na = {}
     for bin, filterbin in filter_intronic_bins:
-        df_i_= filterbin(df_i).copy()
+        df_i_ = filterbin(df_i).copy()
+        df_i_['count_class'] = df_i_.groupby('outcome')['outcome'].transform('size')
         if df_i_.shape[0] > 20:
             logging.info("Looking at {} bin ({} variants)".format(bin, df_i_.shape[0]))
         else:
             logging.info("Not enough variants for ROC analysis at {} bin ({})".format(bin, df_i_.shape[0]))
             continue
 
+        plot_allele_frequency(df_i_, os.path.join(os.path.join(out_dir, "intron_analysis"),
+                                                 "AF_{}".format(bin)))
         list_df_metrics_per_tool = []
+        statistics = defaultdict(list)
+
         for tool, direction, threshold, *args in threshold_list:
             try:
                 df_ = df_i_.loc[pd.notnull(df_i_[tool]), ].copy()
             except KeyError:
+                na[tool] = 1
                 continue
 
+            statistics = generate_statistics(df_i_, statistics, bin, tool)
+            stats_df = pd.DataFrame(statistics)
+            na[tool] = stats_df.loc[stats_df['tool'] == tool, 'fraction_nan'].iloc[0]
             df_tool = df_[~df_[tool + "_prediction"].isnull()]
-            if df_tool.shape[0] > 20:
-                #y_scored = df_tool[tool]
-                #y_true = df_tool["class"]
-                #precision, recall, thresh = precision_recall_curve(y_true, y_scored)
+            if df_tool.shape[0] >= 0:
 
-                max_thr = df_tool[tool].max() # + (df_tool[tool].max() - df_tool[tool].min()) * 0.01
-                min_thr = df_tool[tool].min() #- (df_tool[tool].max() - df_tool[tool].min()) * 0.01
+                max_thr = df_tool[tool].max() #+ (df_tool[tool].max()) - df_tool[tool].min()) * 0.001
+                min_thr = df_tool[tool].min() #- (df_tool[tool].max()) - df_tool[tool].min()) * 0.001
 
                 if pd.isnull(max_thr) or pd.isnull(min_thr) or max_thr == min_thr:
                     print("Something strange in max/min thresholds {} {} {}".format(tool, max_thr, min_thr))
@@ -143,7 +147,7 @@ def perform_intron_analysis(df, filter_intronic_bins, threshold_list, dataset_na
                     ap = tp + fn
                     ap_predicted = np.sum(classification)  # == tp +fp, sensitivity was being calculated with this value
 
-                    sensitivity = ratio(tp, ap)  # same as recall
+                    sensitivity = ratio(tp, ap)
                     precision = ratio(tp, ap_predicted)
 
                     an = tn + fp
@@ -154,33 +158,51 @@ def perform_intron_analysis(df, filter_intronic_bins, threshold_list, dataset_na
                     tool_metrics.append([tool + "(n=" + str(df_tool.shape[0]) + ",", threshold, precision, sensitivity,
                                          1-specificity])
 
-
                 prc = [val_at_thresh[2] for val_at_thresh in tool_metrics]
                 fpr = [val_at_thresh[4] for val_at_thresh in tool_metrics]
                 tpr = [val_at_thresh[3] for val_at_thresh in tool_metrics]
 
-                roc_auc = [auc(fpr, tpr)] * len(tool_metrics)
-                #pr_auc = [auc(tpr, prc)] * len(tool_metrics)
+                roc_auc = [auc(sorted(fpr), sorted(tpr))] * len(tool_metrics)
+                pr_auc = [auc(sorted(tpr), sorted(prc))] * len(tool_metrics)
+                #pr_auc = [integrate.simps(prc, dx=step)] * len(tool_metrics)
                 #trapz gives the same are, but with negative values. Need to reverse X
                 #roc_auc = [np.trapz(tpr, fpr, dx=step)] * len(tool_metrics)
-                pr_auc = [np.trapz(prc, tpr, dx=step)] * len(tool_metrics)
+                #pr_auc = [np.trapz(prc, tpr)] * len(tool_metrics)
 
-                tool_metrics = [x + [y] + [z] for x, y, z in zip(tool_metrics, roc_auc, pr_auc)]
+                f1_score = [stats_df.loc[stats_df['tool'] == tool, 'f1'].iloc[0]] * len(tool_metrics)
+                weighted_f1_score = [stats_df.loc[stats_df['tool'] == tool, 'weighted_f1'].iloc[0]] * len(tool_metrics)
+                nan = [na[tool]] * len(tool_metrics)
+                tool_metrics = [x + [y] + [z] + [f] + [wf] + [na] for x, y, z, f, wf, na in zip(tool_metrics, roc_auc,
+                                                                                    pr_auc,
+                                                                                     f1_score,
+                                                                          weighted_f1_score,
+                                                                                    nan)]
                 list_df_metrics_per_tool.append(pd.DataFrame(tool_metrics,
-                                    columns=["tool", "threshold", "precision","recall", "FPR", "ROC-auc","PR-auc"]))
+                                    columns=["tool", "threshold", "precision", "recall", "FPR", "ROC-auc", "PR-auc",
+                                             "F1", "weighted_F1", "fraction_nan"]))
 
                 if bin != "all_intronic" and bin is not None:
-                    roc_per_bin[tool].append([bin, roc_auc[0], pr_auc[0]])
+                    roc_per_bin[tool].append([bin, roc_auc[0], pr_auc[0], f1_score[0], weighted_f1_score[0], na[tool]])
             else:
                 logging.info("\t{} didn't score at least 20 variants in the {} bin".format(tool, bin))
 
-        final_df_metrics = pd.concat(list_df_metrics_per_tool)
-        final_df_metrics.to_csv("final.csv", sep="\t")
-        plot_ROCs(final_df_metrics, os.path.join(os.path.join(out_dir, "intron_analysis"), "{}_ROC".format(bin)))
-        exit(1)
+        stats_df.drop(['filter'], axis=1).to_csv(os.path.join(os.path.join(out_dir, "intron_analysis"),
+                                                              "statistics_{}.csv".format(bin)), sep="\t", index=False)
 
+        plot_unscored(stats_df, os.path.join(os.path.join(out_dir, "intron_analysis"), 'unscored_fraction_{}'.format(bin)))
+        plot_metrics(stats_df, os.path.join(os.path.join(out_dir, "intron_analysis"), 'performance_{}'.format(bin)))
+        final_df_metrics = pd.concat(list_df_metrics_per_tool)
+
+        try:
+            plot_ROCs(final_df_metrics, os.path.join(os.path.join(out_dir, "intron_analysis"), "{}_ROC".format(bin)),
+                  df_i_.loc[df_i_['outcome'] == "Pathogenic", 'count_class'].iloc[0])
+        except IndexError:
+            logging.info("No positive class instances, skipping ROC")
     df_roc_bins = pd.DataFrame([[k] + i for k, v in roc_per_bin.items() for i in v], columns=["tool", "bin", "auROC",
-                                                                                              "prROC"])
+                                                                                              "prROC",
+                                                                                              "F1",
+                                                                                              "weighted_F1",
+                                                                                              "fraction_nan"])
     plot_auROC_by_bin(df_roc_bins, os.path.join(os.path.join(out_dir, "intron_analysis", "per_bin_evol")))
 
 

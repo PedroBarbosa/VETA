@@ -73,7 +73,7 @@ ranges = [(0, 10, '0-10'),
 
 def assign_intronic_bins(hgvs, hp, location):
 
-    if location == "splicesite" or location == "deepintronic":
+    if location == "splicesite" or location == "deepintronic" or location == "5primeUTR" or location == "3primeUTR":
         v = hp.parse_hgvs_variant(hgvs.split(" ")[0])
         offset = abs(v.posedit.pos.start.offset)
         for i in ranges:

@@ -37,6 +37,7 @@ def plot_density_by_class(data, thresholds, fname):
 def plot_unscored(data, fname):
     ax = sns.barplot(x="fraction_nan", y="tool", color="skyblue", data=data)
     ax.set(xlabel='Fraction of unscored variants', ylabel='')
+    plt.xlim(0, 1)
     plt.tight_layout()
     plt.savefig(fname + ".pdf")
     plt.close()
@@ -98,7 +99,7 @@ def plot_precision_recall(data, threshold_list, fname):
 
 def plot_metrics(data, fname):
     my_range = range(1, len(data.index) + 1)
-    data.sort_values('weighted_accuracy', ascending=True, inplace=True)
+    data.sort_values('accuracy', ascending=True, inplace=True)
     fig, ax = plt.subplots(figsize=(10, 10))
     #  plt.hlines(y=my_range, xmin=data['specificity'], xmax=data['sensitivity'], color='grey', alpha=0.75)
     plt.scatter(data['specificity'], my_range, color='skyblue', alpha=1, marker='s', edgecolors='black', linewidths=0.5,
@@ -120,7 +121,7 @@ def plot_metrics(data, fname):
 
     ax.grid(axis='x', linestyle='dashed')
     plt.legend()
-    plt.yticks(my_range, data['tool'] + " (" + data['weighted_accuracy'].astype(str) + ")")
+    plt.yticks(my_range, data['tool'] + " (" + data['accuracy'].astype(str) + ")")
     plt.savefig(fname + ".pdf")
     plt.close()
 

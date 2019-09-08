@@ -18,9 +18,13 @@ def preprocess(loc, ROOT_DIR, thresholdAnalysis, clinvarStars, intronic_analysis
             logging.info("Processing clinvar data..")
 
         fclinvar= [filename for filename in os.listdir(os.path.join(DATASET_FOLDER, 'clinvar')) if
-                   fnmatch.fnmatch(filename, "clinvar*gz")]
-        file_name = os.path.join(DATASET_FOLDER, 'clinvar', fclinvar[0])
-        df_clinvar = get_clinvar_cached(file_name,loc)
+                   fnmatch.fnmatch(filename, "*clinvar*gz")]
+        try:
+            file_name = os.path.join(DATASET_FOLDER, 'clinvar', fclinvar[0])
+        except IndexError:
+            logging.error("Perhaps your  clinvar file does not have 'clinvar' string on its name")
+            exit(1)
+        df_clinvar = get_clinvar_cached(file_name, loc, intronic_analysis)
         df_clinvar_sure = filter_clinvar_sure(df_clinvar)
 
         dict = {
@@ -52,7 +56,7 @@ def preprocess(loc, ROOT_DIR, thresholdAnalysis, clinvarStars, intronic_analysis
 
         dfs = []
         benign, deleterious = check_required_files(dirname, dataset_name)
-        for f in [benign,deleterious]:
+        for f in [benign, deleterious]:
             isbenign = False if "pathogenic" in f or "deleterious" in f else True
             dfs.append(get_df_ready(f, False, isbenign, loc, intronic_analysis))
 

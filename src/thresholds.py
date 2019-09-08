@@ -3,8 +3,8 @@ threshold_list_complete = [
     ('phyloP', '>', 0.5, 'Conservation', '#00441b',','), # TODO
     ('SiPhy', '>', 12.16, 'Conservation', '#00441b','p'),
     ('phastCons', '>', 0.8, 'Conservation', '#00441b','v'), # TODO
-    ('fitCons', '>', 0.4, 'Conservation', '#00441b','h'),
-    ('LINSIGHT', '>', 0.4, 'Conservation|Functional', '#00441b', 'h'),
+    ('fitCons', '>', 0.4, 'Functional', '#00441b','h'),
+    ('LINSIGHT', '>', 0.4, 'Functional', '#00441b', 'h'),
 
     ('Sift', '<', 0.05, 'Protein', '#084594','o'),
     ('Polyphen2HVAR', '>', 0.5, 'Protein', '#084594',','),

@@ -45,11 +45,10 @@ def generate_performance_with_label(dataset, filters, threshold_list, outdir):
 
                 if np.sum(~df[tool].isnull()) == 0:
                     continue
-                generate_statistics_unseen_vcf(df)
+                generate_statistics_unseen_vcf(df, statistics, filtername, tool)
 
             except KeyError:
                 continue
-
 
             stats_df = pd.DataFrame(statistics)
             stats_df.sort_values(["weighted_accuracy"], ascending=False).to_csv(
@@ -59,12 +58,14 @@ def generate_performance_with_label(dataset, filters, threshold_list, outdir):
 
 
 def inspect_predictions(vcf, top_tools_file, n_top_tools, plot_tool, tools_by_scope, variant_types, has_label, location,
-                        intronic_analysis, outdir):
+                        intronic_analysis, out_dir):
     df_original = vcf_processing.get_df_ready(vcf, False, True, location, intronic_analysis)
     df_original = vcf_cleaning(df_original)
     threshold_list = subset_toolset_by_scope(threshold_list_complete, tools_by_scope)
+    df_original = apply_tool_predictions(df_original, threshold_list).set_index('id')
+
     for vartype, vartypefunction in variant_types:
-        outdir = os.path.join(outdir, vartype)
+        outdir = os.path.join(out_dir, vartype)
         ensure_folder_exists(outdir)
         df = vartypefunction(df_original).copy()
         logging.info("Looking at {} ({} variants)".format(vartype, df_original.shape[0]))
@@ -72,7 +73,7 @@ def inspect_predictions(vcf, top_tools_file, n_top_tools, plot_tool, tools_by_sc
             logging.warning("WARN: There are no {} in the variant set. Skipping this analysis.".format(vartype))
             continue
 
-        df = apply_tool_predictions(df, threshold_list).set_index('id')
+        #df = apply_tool_predictions(df, threshold_list).set_index('id')
         df.to_csv("pred.csv", sep="\t")
         df_t = pd.concat(
             [df[[col for col in df.columns if '_prediction' in col]], df["HGVSc"], df["location"].to_frame()],
@@ -109,4 +110,5 @@ def inspect_predictions(vcf, top_tools_file, n_top_tools, plot_tool, tools_by_sc
                 plot_tool_score_distribution(df, tool, threshold_list, outdir)
 
     if intronic_analysis:
-        perform_intron_analysis(df_original, filter_intronic_bins, threshold_list, "", outdir)
+        logging.info("For now, intronic analysis is not available for unseen VCFs analysis (-v argument). Skipping it.")
+        #perform_intron_analysis(df_original, filter_intronic_bins, threshold_list, "", out_dir)
