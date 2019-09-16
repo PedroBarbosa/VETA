@@ -18,6 +18,8 @@ VETA is a framework that analyses the performance of several variant prediction 
 VETA requires python3 and conda/pip is recommended to install all the dependencies. You can
 
 ~~~~
+conda create -n veta python=3.6
+conda activate veta
 git clone https://github.com/PedroBarbosa/VETA.git
 conda install --yes --file requirements.conda
 pip install -r requirements.pip
@@ -25,10 +27,16 @@ pip install -r requirements.pip
 
 Alternatively, there is a docker image with all dependencies pre-installed:
 ~~~~
-git clone https://github.com/PedroBarbosa/VETA.git
-docker pull pbarbosa/prediction_tools_evaluation:latest
-docker run -it pbarbosa/prediction_tools_evaluation:latest
+docker pull pbarbosa/veta:latest
+docker run pbarbosa/prediction_tools_evaluation:latest python /tools/VETA/src/veta.py --help
 ~~~~
+To use VETA on your own data (local directory with benign and pathogenic variants OR a single VCF), please map your local data onto the container by seting up a bindmount volume
+~~~~
+docker run -it -v /local/dir/with/data/:/media pbarbosa/veta:latest
+root@e1d195af4858:/tools# veta --dataset /media [Other options..]
+~~~~
+
+
 
 <a name="scores-annotation"></a>
 ## Scores annotation
