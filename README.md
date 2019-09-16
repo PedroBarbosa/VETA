@@ -28,7 +28,7 @@ pip install -r requirements.pip
 Alternatively, there is a docker image with all dependencies pre-installed:
 ~~~~
 docker pull pbarbosa/veta:latest
-docker run pbarbosa/prediction_tools_evaluation:latest python /tools/VETA/src/veta.py --help
+docker run pbarbosa/veta:latest python /tools/VETA/src/veta.py --help
 ~~~~
 To use VETA on your own data (local directory with benign and pathogenic variants OR a single VCF), please map your local data onto the container by seting up a bindmount volume
 ~~~~
