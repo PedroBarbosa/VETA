@@ -3,12 +3,12 @@ from predictions.ml_prepare_dataset import MISSING_CONSTANT
 
 class SingleFeatureClassifier(dummy.DummyClassifier):
 
-    def __init__(self, tool, direction, threshold,index):
+    def __init__(self, tool, direction, threshold, index):
         super(SingleFeatureClassifier, self).__init__()
         self.tool = tool
         self.direction = direction
         self.threshold = float(threshold)
-        self.index= index
+        self.index = index
 
     def meaning(self,x):
         if x == MISSING_CONSTANT:
@@ -18,9 +18,9 @@ class SingleFeatureClassifier(dummy.DummyClassifier):
         else:
             return True if x < self.threshold else False
 
-    def fit(self,X,y):
+    def fit(self, X, y):
         return self
 
-    def predict(self,X,y=None):
+    def predict(self, X, y=None):
         #print(X.shape, self.index, "bb")
         return [self.meaning(x[self.index]) for x in X]

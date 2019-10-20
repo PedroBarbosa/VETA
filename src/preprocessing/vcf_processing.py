@@ -38,6 +38,7 @@ tools_map = {'CADD_phred': 'CADD_PHRED',
 
 def process_vcf_scores(vcf_file, is_clinvar=False):
     indexes, scores, absent = OrderedDict(), defaultdict(list), []
+    info_attributes_in_vcf = []
     vcf_data = VCF(vcf_file)
     if vcf_data.contains("ANN") or vcf_data.contains("CSQ"):
         spliceai_scores_fromtool = False
@@ -97,13 +98,13 @@ def process_vcf_scores(vcf_file, is_clinvar=False):
                     scores[key].append(("FATHMM-MKL", record.INFO.get("fathmmMKL")))
                     scores[key].append(("Eigen", record.INFO.get("Eigen")))
                     scores[key].append(("Eigen-PC", record.INFO.get("Eigen-PC")))
-                    scores[key].append(("funseq2", record.INFO.get("funseq2")))
+                    scores[key].append(("FunSeq2", record.INFO.get("funseq2")))
                     scores[key].append(("dpsi_zscore", record.INFO.get("dpsi_zscore")))
                     scores[key].append(("traP", record.INFO.get("traP")))
                     scores[key].append(("HAL", record.INFO.get("HAL_DIFF")))
                     scores[key].append(("S-CAP", record.INFO.get("SCAP")))
-                    scores[key].append(("kipoiSplice_4", record.INFO.get("kipoisplice_4")))
-                    scores[key].append(("kipoiSplice_4cons", record.INFO.get("kipoisplice_4cons")))
+                    scores[key].append(("kipoiSplice4", record.INFO.get("kipoisplice_4")))
+                    scores[key].append(("kipoiSplice4_cons", record.INFO.get("kipoisplice_4cons")))
                     scores[key].append(("kipoi_maxentscan_3", record.INFO.get("maxentscan_3")))
                     scores[key].append(("kipoi_maxentscan_5", record.INFO.get("maxentscan_5")))
                     scores[key].append(("mmsplice_deltaLogitPSI", record.INFO.get("mmsplice_deltaPSI")))
@@ -112,8 +113,8 @@ def process_vcf_scores(vcf_file, is_clinvar=False):
                     if spliceai_scores_fromtool:
                         scores[key].append(("SpliceAI", record.INFO.get("SpliceAI")))
                     else:
-                        scores[key].append(("SpliceAI", format_spliceai_fields(record, info[tools_annotated_with_vep.
-                                                                               index('SYMBOL')])))
+                        scores[key].append(("SpliceAI", format_spliceai_fields(record,
+                                                                    info[tools_annotated_with_vep.index('SYMBOL')])))
 
                 for pl, i in indexes.items():
                     scores[key].append((pl, info[i]))
@@ -158,7 +159,6 @@ def get_df_ready(vcf, isclinvar, isbenign, loc, deeper_intronic_analysis):
     elif loc == "Consequence" and deeper_intronic_analysis:
         logging.error("If --intronic is set, --location must be HGVSc because intronic bin analysis will be performed"
                       " based on the HGVS nomenclature.")
-        exit(1)
 
     elif loc == "Consequence":
         df['location'] = df['Consequence'].apply(get_location_from_consequence)

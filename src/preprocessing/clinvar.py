@@ -8,7 +8,7 @@ from .location import *
 from .vcf_cleaning import vcf_cleaning
 from .vcf_processing import process_vcf_scores
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,  format='%(asctime)s %(message)s')
-
+from thresholds import threshold_list_complete
 
 def tuple2float(x):
     if not x:
@@ -39,10 +39,10 @@ def get_clinvar_cached(fname, loc, intronic_analysis):
     if os.path.exists(tsv_file):
         return pd.read_csv(tsv_file)
     else:
-        print("Clinvar 'tsv' file not found. Dataset will be transformed")
+        logging.info("Clinvar 'tsv' file not found. Dataset will be transformed")
         df = get_clinvar(fname, loc, intronic_analysis)
         df.to_csv(tsv_file)
-        print("Done")
+        logging.info("Done")
         return df
 
 
@@ -54,7 +54,8 @@ def get_clinvar(fname, loc, deeper_intronic_analysis):
     df = df.dropna(subset=["CLNSIG", "CLNREVSTAT"])
 
     df = remove_clinvar_useless(df)
-    print("remove useless ", df.shape)
+    logging.info("Number of variants after removing useless CLNSIG values: {}".format(df.shape[0]))
+
     if loc == "HGVSc":
         hp = hgvs.parser.Parser()
         df['location'] = df['HGVSc'].apply(get_location, hp=hp)

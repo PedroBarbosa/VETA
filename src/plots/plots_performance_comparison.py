@@ -2,10 +2,7 @@ import numpy as np
 import seaborn as sns
 sns.set(style="white")
 from preprocessing.utils import ratio
-import os
-from collections import defaultdict
-from osutils import ensure_folder_exists
-from matplotlib import lines
+import matplotlib.patches as mpatches
 from plots.plots_utils import *
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
@@ -43,65 +40,11 @@ def plot_unscored(data, fname):
     plt.close()
 
 
-def plot_precision_recall(data, threshold_list, fname):
-    df_precision_recall = pd.DataFrame(columns=['tool','threshold', 'precision', 'recall'])
-    for tool, direction, recommended_threshold, *args in threshold_list:
-        try:
-            df_ = data.loc[pd.notnull(data[tool]), ].copy()
-        except KeyError:
-            continue
-
-        max_thr = df_[tool].max()
-        min_thr = df_[tool].min()
-
-        if pd.isnull(max_thr) or pd.isnull(min_thr) or max_thr == min_thr:
-            print("Something strange in max/min thresholds {} {} {}".format(tool, max_thr, min_thr))
-            continue
-
-        step = (max_thr - min_thr) / float(100)
-        threshold_range = np.arange(min_thr, max_thr, step)
-
-        toappend=[]
-        for threshold in threshold_range:
-            if direction == ">":
-                classification_f = lambda x: x == np.nan and np.nan or x > threshold
-            else:
-                classification_f = lambda x: x == np.nan and np.nan or x < threshold
-
-            classification = df_[tool].map(classification_f)
-            # df_ = df.copy()
-
-            correct = np.sum(classification.eq(df_['class']))
-            total = df_.shape[0]
-            acc = ratio(correct, total)
-
-            tp = np.sum(classification.eq(df_['class']) & classification)
-            fp = np.sum(~df_['class'] & classification)
-            fn = np.sum(df_['class'] & ~classification)
-            tn = np.sum(classification.eq(df_['class']) & ~classification)
-            ap = tp + fn
-            ap_predicted = np.sum(classification)  # == tp +fp, sensitivity was being calculated with this value
-
-            sensitivity = ratio(tp, ap)  # same as recall
-            precision = ratio(tp, ap_predicted)
-
-            an = tn + fp
-            an_predicted = np.sum(~classification)  # == tn + fn, sensitivity was being calculated with this value
-            specificity = ratio(tn, an)
-            f1 = ratio(2.0 * (precision * sensitivity), (sensitivity + precision))
-
-
-            toappend.append([tool, threshold, precision, sensitivity])
-        pd.concat([df_precision_recall, pd.Series(toappend)], ignore_index=True)
-
-    print(df_precision_recall.head)
-
-
-def plot_metrics(data, fname):
+def plot_metrics(data, fname, metric_to_evaluate):
     my_range = range(1, len(data.index) + 1)
-    data.sort_values('accuracy', ascending=True, inplace=True)
+    data.sort_values(metric_to_evaluate, ascending=True, inplace=True)
     fig, ax = plt.subplots(figsize=(10, 10))
-    #  plt.hlines(y=my_range, xmin=data['specificity'], xmax=data['sensitivity'], color='grey', alpha=0.75)
+    #plt.hlines(y=my_range, xmin=data['specificity'], xmax=data['sensitivity'], color='grey', alpha=0.75)
     plt.scatter(data['specificity'], my_range, color='skyblue', alpha=1, marker='s', edgecolors='black', linewidths=0.5,
                 label='Specificity')
     plt.scatter(data['sensitivity'], my_range, color='yellow', alpha=0.75, marker='^', edgecolors='black',
@@ -121,7 +64,9 @@ def plot_metrics(data, fname):
 
     ax.grid(axis='x', linestyle='dashed')
     plt.legend()
-    plt.yticks(my_range, data['tool'] + " (" + data['accuracy'].astype(str) + ")")
+    plt.yticks(my_range, data['tool'] + " (" + data[metric_to_evaluate].astype(str) + ")")
+    plt.title("#variants: {} ({} pos, {} neg)".format(data["total"].iloc[0], data["total_p"].iloc[0],
+                                                      data["total_n"].iloc[0]))
     plt.savefig(fname + ".pdf")
     plt.close()
 
@@ -184,34 +129,31 @@ def plot_tools_paper(data, fname):
     plt.close()
 
 
-def plot_tools(data, fname):
+def plot_tools(data, fname, metric):
     df = data.iloc[::-1]
     set_style()
-
-    correct_p = df['tp'].values
-    incorrect_p = df['scored_p']  # [ x+y for (x,y) in zip(df['tp'].values, df['fn'].values)]
-    correct_n = df['tn']
-    incorrect_n = df['scored_n']  # [ x+y for (x,y) in zip(df['tn'], df['fp'])]
-
     w = 0.8
-    fig, axes = plt.subplots(ncols=2, sharey=True)
+    fig, axes = plt.subplots(ncols=2, sharey=True, figsize=(15,15))
     ind = np.arange(df.shape[0])
 
     axes[0].barh(ind, df['tp'], align='center', color='darkblue', alpha=0.7, zorder=10, height=w, edgecolor='black',
                  linewidth=0.75)
-    axes[0].barh(ind, df['fn'], left=correct_p, align='center', alpha=0.8, color='darkred', zorder=10, height=w,
+    axes[0].barh(ind, df['fn'], left=df['tp'], align='center', alpha=0.8, color='darkred', zorder=10, height=w,
                  edgecolor='black', linewidth=0.75)
-    axes[0].barh(ind, df['mp'], left=incorrect_p, align='center', color='lightgrey', zorder=10, height=w,
-                 edgecolor='black', linewidth=0.75)
+    axes[0].barh(ind, df['mp'], left=df['scored_p'], align='center', color='lightgrey', zorder=10, height=w,
+                 edgecolor='black', alpha=0.9, linewidth=0.75)
+
+
     axes[1].barh(ind, df['tn'], align='center', color='darkblue', alpha=0.7, zorder=10, height=w, edgecolor='black',
                  linewidth=0.75)
-    axes[1].barh(ind, df['fp'], left=correct_n, align='center', alpha=0.8, color='darkred', zorder=10, height=w,
+    axes[1].barh(ind, df['fp'], left=df['tn'], align='center', alpha=0.8, color='darkred', zorder=10, height=w,
                  edgecolor='black', linewidth=0.75)
-    axes[1].barh(ind, df['mn'], left=incorrect_n, align='center', color='lightgrey', zorder=10, height=w,
-                 edgecolor='black', linewidth=0.75)
+    axes[1].barh(ind, df['mn'], left=df['scored_n'], align='center', color='lightgrey', zorder=10, height=w,
+                 edgecolor='black', alpha=0.9, linewidth=0.75)
 
     axes[0].invert_xaxis()
-    axes[0].set(yticks=ind, yticklabels=df['tool'])
+    axes[0].set(yticks=ind,
+                yticklabels=["{} ({:.2f})".format(t, p) for t, p in df[['tool', metric]].values.tolist()])
 
     axes[0].set_xlabel('# Pathogenic Variants')
     axes[1].set_xlabel('# Benign Variants')
@@ -223,6 +165,10 @@ def plot_tools(data, fname):
             tick.tick1line.set_markersize(0)
             tick.tick2line.set_markersize(0)
 
+    colors = ["darkblue", "darkred", "lightgrey"]
+    patches = [mpatches.Patch(facecolor=c, edgecolor=c) for c in colors]
+    axes[1].legend(patches, ["Correct", "Incorrect", "Unpredictable"], bbox_to_anchor=(1.7, 1),
+                   borderaxespad=0, loc='upper right', prop=dict(size=8))
     set_size(fig, len(df['tool']))
     fig.tight_layout()
     plt.savefig(fname + ".pdf")

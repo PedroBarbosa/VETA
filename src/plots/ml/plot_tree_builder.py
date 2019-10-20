@@ -2,6 +2,7 @@ import os.path
 from sklearn import tree
 from dtreeviz.trees import *
 
+
 def generate_tree_plot(X, y, threshold_list, filtern, name, folder):
     classifier = tree.DecisionTreeClassifier(
         criterion = "entropy",
@@ -17,4 +18,4 @@ def generate_tree_plot(X, y, threshold_list, filtern, name, folder):
                    feature_names = [ x[0] for x in threshold_list],
                    class_names = ['benign', 'pathogenic', 'unknown'])
               
-    viz.save(os.path.join(folder, "figures", "tree_{}_{}.svg".format(name, filtern)))
+    viz.save(os.path.join(folder,  "tree_{}_{}.svg".format(name, filtern)))

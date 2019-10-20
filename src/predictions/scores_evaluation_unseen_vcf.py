@@ -30,7 +30,8 @@ def generate_statistics_unseen_vcf(df, statistics, filtername, tool):
     statistics['weighted_accuracy'].append(weighted_accuracy)
     return statistics
 
-def generate_performance_with_label(dataset, filters, threshold_list, outdir):
+
+def generate_performance_with_label(dataset, filters, threshold_list, metric_to_evaluate, outdir):
 
     for filtername, filterfunction in filters:
         statistics = defaultdict(list)
@@ -42,7 +43,6 @@ def generate_performance_with_label(dataset, filters, threshold_list, outdir):
 
         for tool, *args in threshold_list:
             try:
-
                 if np.sum(~df[tool].isnull()) == 0:
                     continue
                 generate_statistics_unseen_vcf(df, statistics, filtername, tool)
@@ -51,14 +51,18 @@ def generate_performance_with_label(dataset, filters, threshold_list, outdir):
                 continue
 
             stats_df = pd.DataFrame(statistics)
-            stats_df.sort_values(["weighted_accuracy"], ascending=False).to_csv(
+            if "f1" in metric_to_evaluate:
+                logging.info("F1 based metrics are not available, since this running mode only expects"
+                             " variants of one class type. Using weighted_accuracy instead.")
+                metric_to_evaluate = "weighted_accuracy"
+            stats_df.sort_values([metric_to_evaluate], ascending=False).to_csv(
                     os.path.join(outdir, "tools_ranking_{}.csv").format(filtername), sep="\t", index=False)
 
     logging.info("Done!")
 
 
 def inspect_predictions(vcf, top_tools_file, n_top_tools, plot_tool, tools_by_scope, variant_types, has_label, location,
-                        intronic_analysis, out_dir):
+                        intronic_analysis, metric_to_evaluate, out_dir):
     df_original = vcf_processing.get_df_ready(vcf, False, True, location, intronic_analysis)
     df_original = vcf_cleaning(df_original)
     threshold_list = subset_toolset_by_scope(threshold_list_complete, tools_by_scope)
@@ -68,7 +72,7 @@ def inspect_predictions(vcf, top_tools_file, n_top_tools, plot_tool, tools_by_sc
         outdir = os.path.join(out_dir, vartype)
         ensure_folder_exists(outdir)
         df = vartypefunction(df_original).copy()
-        logging.info("Looking at {} ({} variants)".format(vartype, df_original.shape[0]))
+        logging.info("Looking at {} ({} variants)".format(vartype, df.shape[0]))
         if df.shape[0] == 0:
             logging.warning("WARN: There are no {} in the variant set. Skipping this analysis.".format(vartype))
             continue
@@ -77,7 +81,7 @@ def inspect_predictions(vcf, top_tools_file, n_top_tools, plot_tool, tools_by_sc
         df_t = pd.concat(
             [df[[col for col in df.columns if '_prediction' in col]], df["HGVSc"], df["location"].to_frame()],
             axis=1).copy()
-        df_t = df_t.rename(columns={col: col.split('_')[0] for col in df_t.columns})
+        df_t = df_t.rename(columns={col: col.split('_prediction')[0] for col in df_t.columns})
 
         try:
             df_new = df_t.drop(["location", "HGVSc"], axis=1).apply(lambda x: x.value_counts(True, dropna=False),
@@ -95,7 +99,7 @@ def inspect_predictions(vcf, top_tools_file, n_top_tools, plot_tool, tools_by_sc
 
         if has_label is not None:
             df_t['class'] = False if has_label == "Benign" else True
-            generate_performance_with_label(df_t, filters, threshold_list, outdir)
+            generate_performance_with_label(df_t, filters, threshold_list, metric_to_evaluate, outdir)
 
         if top_tools_file and os.path.isfile(top_tools_file):
             tools = pd.read_csv(top_tools_file, sep="\t")['tool'].head(n_top_tools).tolist()

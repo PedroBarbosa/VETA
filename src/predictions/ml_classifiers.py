@@ -26,7 +26,7 @@ from xgboost import XGBClassifier
 from bleedml.classifiers import CascadeForest
 
 from predictions.ml_single_feature_classifier import SingleFeatureClassifier
-from plots.ml import plot_classifiers
+from plots.ml.plot_classifiers import plot_classifiers
 
 import sys
 import logging
@@ -53,17 +53,17 @@ classifiers = [
                              ('logistic', LogisticRegression(solver='lbfgs'))])),
     ('XGBoost', XGBClassifier(n_jobs = -1)),
     ('Cascade Forests', CascadeForest())
-
 ]
 
 def expand_classifier_list(threshold_list):
     classifiers_total = copy.deepcopy(classifiers)
     i = 0
-    for t, a, b, *args in threshold_list:
-        single_cls = SingleFeatureClassifier(t, a, b, i)
-        classifiers_total.append((t, single_cls))
+    for tool, threshold, tool_type, *args in threshold_list:
+        single_cls = SingleFeatureClassifier(tool, threshold, tool_type, i)
+        classifiers_total.append((tool, single_cls))
         i += 1
     return classifiers_total
+
 
 def make_metric(yreal, ypred):
     return {
@@ -76,7 +76,8 @@ def make_metric(yreal, ypred):
         'mn': len([ 1 for (r,p) in zip(yreal, ypred) if r == 0 and p not in [0,1] ])
         }
 
-def perform_cross_validation(X, y, name, classifier):
+
+def perform_cross_validation(X, y, classifier):
     gkf = StratifiedKFold(10)
     
     for train, test in gkf.split(X, y):
@@ -86,15 +87,13 @@ def perform_cross_validation(X, y, name, classifier):
         score = make_metric(yreal, ypred)
         yield score
 
-def generate_classifiers_analysis(X, y, threshold_list, filtern, fname, folder, extra=None):
-    if extra:
-        classifiers = expand_classifier_list(threshold_list)
-    else:
-        classifiers = expand_classifier_list(threshold_list)
-    
+
+def generate_classifiers_analysis(X, y, threshold_list, filtern, folder, extra=None):
+
+    classifiers = expand_classifier_list(threshold_list)
     out_metrics = {}
     for name, classifier in classifiers:
         logging.info("Applying {} classifier".format(name))
-        out_metrics[name] = list(perform_cross_validation(X, y, name, classifier))
+        out_metrics[name] = list(perform_cross_validation(X, y, classifier))
 
-    plot_classifiers(out_metrics, filtern, fname, folder, extra)
+    plot_classifiers(out_metrics, filtern, folder, extra)

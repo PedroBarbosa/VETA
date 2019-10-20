@@ -16,10 +16,10 @@ def plot_heatmap_unlabelled(df):
     sns.heatmap(df, cmap=cmap,  linewidths=0, cbar=False)
     plt.show()
     
-def prepare_dataset_for_heatmap(df, thresholds, absent_tools):
+def prepare_dataset_for_heatmap(df, thresholds):
     df['blank'] = pd.Series(np.nan, index = np.arange(df.shape[0]))
-    df = df[['class'] + [ tool + "_prediction" for tool, *args in thresholds if tool not in absent_tools]].copy()
-    df.columns = [GT_LABEL] + [tool for tool, *args in thresholds if tool not in absent_tools]
+    df = df[['class'] + [col for col in df.columns if '_prediction' in col]].copy()
+    df.columns = [GT_LABEL] + [col.replace("_prediction", "") for col in df.columns if '_prediction' in col]
     f = lambda x: pd.isna(x) and np.nan or (1-int(x))
     for col in df.columns:
         df[col] = df[col].apply(f)
@@ -33,9 +33,9 @@ def hide_ylabel():
     fr = plt.gca()
     fr.axes.yaxis.set_ticklabels([])
 
-def plot_heatmap(df, filtername, thresholds, fname, absent_tools):
+def plot_heatmap(df, filtername, thresholds, fname):
 
-    df = prepare_dataset_for_heatmap(df, thresholds, absent_tools)
+    df = prepare_dataset_for_heatmap(df, thresholds)
     plt.clf()
     f, ax = plt.subplots(figsize=(0.5 * len(df.columns), 6))
     cmap="PiYG"
@@ -46,15 +46,17 @@ def plot_heatmap(df, filtername, thresholds, fname, absent_tools):
     plt.close()
 
 
-def generate_heatmap(df_original, filters_var_type, filters, thresholds, name, folder, absent_tools):
-    logging.info("Generating heatmaps..")
+def generate_heatmap(df_original, filters_var_type, filters, thresholds, name, folder):
+    logging.info("-----------------------------")
+    logging.info("Generating performance heatmaps. If dataset is large, this step will take long time.")
+    logging.info("-----------------------------")
     for vartype, vartypefunction in filters_var_type:
-        if not os.path.exists(os.path.join(folder, "figures", vartype)):
-            os.mkdir(os.path.join(folder, "figures", vartype))
-        outdir = os.path.join(folder, "figures", vartype)
+        if not os.path.exists(os.path.join(folder, "tools_benchmark", vartype)):
+            os.mkdir(os.path.join(folder, "tools_benchmark", vartype))
+        outdir = os.path.join(folder, "tools_benchmark", vartype)
         df_v = vartypefunction(df_original).copy()
         for filtername, filterfunction in filters:
             df = filterfunction(df_v).copy()
             if df.shape[0] > 10:
                 plot_heatmap(df, filtername, thresholds, os.path.join(outdir, "heatmap_{}_{}.pdf".format(name,
-                                                                                            filtername)), absent_tools)
+                                                                                            filtername)))

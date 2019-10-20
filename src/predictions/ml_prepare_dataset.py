@@ -37,17 +37,22 @@ def build_converter(df, threshold_list):
     mapper = DataFrameMapper(fields)
     return mapper
 
+
 def convert_data(df, mapper):
     X = mapper.fit_transform(df)
     y = df['class'].values
     return X, y
 
+
 def prepare_dataset(df, threshold_list):
-    for tool in threshold_list:
+    thresholds_present = [tool for tool in threshold_list if tool[0] in df.columns]
+    for tool in thresholds_present:
         df[[tool[0]]] = df[[tool[0]]].fillna(value=MISSING_CONSTANT)
-    mapper = build_converter(df, threshold_list)
+
+    mapper = build_converter(df, thresholds_present)
     X, y = convert_data(df, mapper)
-    return X, y
+    return X, y, thresholds_present
+
 
 def undersample(X, y):
     rus = RandomUnderSampler(random_state=0)

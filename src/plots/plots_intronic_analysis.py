@@ -18,7 +18,6 @@ cmap = sns.diverging_palette(220, 10, as_cmap=True)
 
 def plot_general_bin_info(df, bins, fname):
 
-    print(df['class'].value_counts())
     if df[df['class'].isin([True])].empty or df[df['class'].isin([False])].empty:
         dic = {}
         for bin in bins:
@@ -161,7 +160,6 @@ def plot_allele_frequency(df, fname):
     try:
         df['grouper'] = df['outcome'].astype(str) + '\nN = ' + df['count_class'].astype(str)
         order = sorted(list(df['grouper'].unique()))
-        print(df["outcome"].value_counts())
         ax = sns.boxplot(data=df, x="grouper", order=order,  y="gnomAD_genomes")
         add_stat_annotation(ax, data=df, x="grouper", y="gnomAD_genomes",
                             order=order,

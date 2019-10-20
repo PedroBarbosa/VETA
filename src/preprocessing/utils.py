@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import os
 import fnmatch
+import logging
+import sys
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,  format='%(asctime)s %(message)s')
 
 
 def ratio(a, b):
@@ -17,11 +20,16 @@ def tuple2float(x):
 def check_dataset_arg(dataset):
     if os.path.isdir(dataset):
         if dataset.endswith('/'):
-            return os.path.dirname(dataset).rsplit('/', 1)[-1]
+            return os.path.dirname(dataset).rsplit('/', 1)[-1], False
         else:
-            return os.path.basename(dataset)
+            return os.path.basename(dataset), False
+    elif os.path.isfile(dataset):
+        logging.info("You set a file in the --dataset argument. By default, when this configuration is passed, VETA"
+                     " expects that file to be from Clinvar.")
+        return "clinvar", True
+
     else:
-        return dataset
+        return dataset, False
 
 
 def check_required_files(dir, analysis):
@@ -41,7 +49,7 @@ def check_required_files(dir, analysis):
     elif [filename for filename in os.listdir(dir) if fnmatch.fnmatch(filename,"*clinvar*gz")]:
         return os.path.join(dir, [filename for filename in os.listdir(dir) if fnmatch.fnmatch(filename,"*clinvar*gz")][0]), ""
 
-    print("The required files within {} directory are missing: (a) 2 files, 1 benign, other pathogenic. b) a sigle"
+    logging.info("The required files within {} directory are missing: (a) 2 files, 1 benign, other pathogenic. b) a sigle"
           "clinvar file with 'clinvar' string in the filename).".format(analysis))
     exit(1)
 
@@ -188,27 +196,17 @@ def spliceRegion_merge(spliceregion):
     return pd.to_numeric(final)
 
 
-def genesplicer_test(genesplicer): #Emailed author
-    final=[]
-    for v in genesplicer:
-        if isinstance(v, float):
-            final.append(v)
-        elif v:
-            print(v)
-    #print(len(final))
-
-
 def format_spliceai_fields(record, SYMBOL):
 
-    fields = [0]*10
+    fields = [0] * 10
     gname = record.INFO.get("gene_name")
     if gname and gname == SYMBOL or gname and ',' not in gname:
         fields = [record.ALT[0], gname, record.INFO.get("DS_AG"), record.INFO.get("DS_AL"),
-         record.INFO.get("DS_DG"), record.INFO.get("DS_DL"),
-         record.INFO.get("DP_AG"), record.INFO.get("DP_AL"),
-         record.INFO.get("DP_DG"), record.INFO.get("DP_DL")]
+                  record.INFO.get("DS_DG"), record.INFO.get("DS_DL"),
+                  record.INFO.get("DP_AG"), record.INFO.get("DP_AL"),
+                  record.INFO.get("DP_DG"), record.INFO.get("DP_DL")]
 
-    elif gname and ',' in gname: #if multiple predictions on different genes
+    elif gname and ',' in gname:  # if multiple predictions on different genes
         idx = ""
         for g in gname.split(","):
             if g == SYMBOL:
@@ -220,15 +218,16 @@ def format_spliceai_fields(record, SYMBOL):
                 idx = gname.split(",").index(gene_from_id)
 
             except ValueError:
-                print("Variant ({} {} {}/{}) has multiple SpliceAI scores, and it was not possible to extract the proper gene,"
-                      " both from the SYMBOL or ID fields. First ocurrence will be employed. SYMBOL:{}, ID:{}, SpliceAI_genes:{}".format(
-                    record.CHROM, record.POS, record.REF, record.ALT[0], SYMBOL, record.ID, gname))
+                logging.info( "Variant ({} {} {}/{}) has multiple SpliceAI scores, and it was not possible "
+                              "to extract the proper gene, both from the SYMBOL or ID fields. First ocurrence"
+                              " will be employed. SYMBOL:{}, ID:{}, SpliceAI_genes:{}".format(
+                        record.CHROM, record.POS, record.REF, record.ALT[0], SYMBOL, record.ID, gname))
                 idx = 0
 
         fields = [record.ALT[0], gname.split(",")[idx], record.INFO.get("DS_AG")[idx], record.INFO.get("DS_AL")[idx],
-          record.INFO.get("DS_DG")[idx], record.INFO.get("DS_DL")[idx],
-          record.INFO.get("DP_AG")[idx], record.INFO.get("DP_AL")[idx],
-          record.INFO.get("DP_DG")[idx], record.INFO.get("DP_DL")[idx]]
+                  record.INFO.get("DS_DG")[idx], record.INFO.get("DS_DL")[idx],
+                  record.INFO.get("DP_AG")[idx], record.INFO.get("DP_AL")[idx],
+                  record.INFO.get("DP_DG")[idx], record.INFO.get("DP_DL")[idx]]
 
     return '|'.join(map(str, [x for x in fields]))
 

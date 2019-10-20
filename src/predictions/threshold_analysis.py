@@ -11,11 +11,12 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,  format='%(asctime)s 
 BETA_CONFIGS = [1, 2, 3, 5, 10]
 
 
-def generate_threshold_analysis(dataset, filters, threshold_list, name, folder, nofpoints=100):
-    logging.info("#########################")
+def generate_threshold_analysis(dataset, filters, threshold_list, outdir, nofpoints=100):
+    logging.info("----------------------------")
     logging.info("Starting threshold analysis based on Clinvar data")
-    logging.info("#########################")
-
+    logging.info("----------------------------")
+    outdir = os.path.join(outdir, "thresholds_analysis")
+    os.mkdir(outdir)
     thresholds_to_return = {}
     for b in BETA_CONFIGS:
         thresholds_to_return[b] = {}
@@ -111,7 +112,7 @@ def generate_threshold_analysis(dataset, filters, threshold_list, name, folder, 
                 bf1,
                 recommended_threshold,
                 new_t,
-                folder
+                outdir
             )
             plot_threshold(
                 tool,
@@ -124,15 +125,15 @@ def generate_threshold_analysis(dataset, filters, threshold_list, name, folder, 
                 bf1,
                 recommended_threshold,
                 new_t,
-                folder,
+                outdir,
                 simple=True
 
             )
-        with open(os.path.join(folder, 'preprocessing', "proposed_thresholds_{}.tsv".format(filtern)), 'w') as out:
+        with open(os.path.join(outdir, "proposed_thresholds_{}.tsv".format(filtern)), 'w') as out:
             for tool, new_thresholds in final_thresholds.items():
                 out.write("{}\t{}\n".format(tool, '\t'.join([str(t) for t in new_thresholds])))
 
-        with open(os.path.join(folder, "generated_proposed_thresholds_{}.tex".format(filtern)), 'w') as out:
+        with open(os.path.join(outdir, "generated_proposed_thresholds_{}.tex".format(filtern)), 'w') as out:
             out.write("""\\begin{tabular}{ p{3cm} >{\\raggedleft\\arraybackslash}p{1.5cm} >{\\raggedleft\\arraybackslash}p{1cm} >{\\raggedleft\\arraybackslash}p{1cm} >{\\raggedleft\\arraybackslash}p{1cm} >{\\raggedleft\\arraybackslash}p{1cm} >{\\raggedleft\\arraybackslash}p{1cm}}
 \\hline
 Tool       & Original & 1/1   & 1/2   & 1/3   & 1/5   & 1/10  \\\\

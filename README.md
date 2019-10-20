@@ -15,7 +15,8 @@ VETA is a framework that analyses the performance of several variant prediction 
 
 <a name="installation"></a>
 ## Intallation
-VETA requires python3 and conda/pip is recommended to install all the dependencies. You can
+VETA requires python3 and conda/pip is recommended to install all the dependencies. We recommend to create a new conda environment for VETA, so that we make sure
+that dependencies versions will work.
 
 ~~~~
 conda create -n veta python=3.6

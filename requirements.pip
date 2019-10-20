@@ -1,7 +1,6 @@
-sklearn-pandas
-bleedml
-dtreeviz
-gplearn
-hgvs
-git+git://github.com/schlegelp/catheat@master
+hgvs==1.3.0
 git+git://github.com/webermarcolivier/statannot.git#egg=statannot
+gplearn==0.4.1
+bleedml==0.0.7
+sklearn-pandas==1.8.0
+dtreeviz==0.6

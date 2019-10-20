@@ -45,7 +45,7 @@ def plot_threshold(
     plt.title("Threshold analysis for {}".format(tool))
     plt.xlabel("Threshold values")
     plt.ylabel("Metrics")
-    fname = os.path.join(outdir, 'figures', "threshold_analysis_{}_{}{}.pdf".format(tool.replace(" ", "_"), filtern, simple and "_simple" or ""))
+    fname = os.path.join(outdir, "threshold_{}_{}{}.pdf".format(tool.replace(" ", "_"), filtern, simple and "_simple" or ""))
     plt.savefig(fname, bbox_inches='tight')
     plt.gcf().clear()
     plt.clf()

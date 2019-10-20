@@ -20,6 +20,7 @@ def plot_area(df, outdir):
     plt.savefig(os.path.join(outdir, 'areaplot.pdf'))
     plt.close()
 
+
 def plot_heatmap(df, outdir, displayAnnot):
     fig, ax = plt.subplots(1, 2, figsize=(5,7))
     #cbaxes = fig.add_axes([0.2, 0, 0, 1])
