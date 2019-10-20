@@ -1,4 +1,4 @@
-import copy
+import cqopy
 
 import matplotlib.pyplot as plt
 import seaborn as sns
