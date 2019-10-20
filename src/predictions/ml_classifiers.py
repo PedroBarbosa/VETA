@@ -1,5 +1,4 @@
-import cqopy
-
+import copy
 import matplotlib.pyplot as plt
 import seaborn as sns
 plt.switch_backend('agg')
