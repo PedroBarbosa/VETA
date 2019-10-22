@@ -5,12 +5,12 @@ import seaborn as sns
 plt.switch_backend('agg')
 
 
-def generate_ml_feature_correlation(df, threshold_list, outdir):
+def generate_ml_feature_correlation(df, threshold_list, filtern, outdir):
     """Generates Pearson's feature correlation"""
     plt.figure(figsize=(18, 12))
     sns.heatmap(df[[tool[0] for tool in threshold_list if tool[0] in df.columns]].corr(), cmap="YlGnBu",annot=False, fmt=".2f")
     plt.tight_layout()
-    plt.savefig(os.path.join(outdir, 'pearson_feat_corr.pdf'))
+    plt.savefig(os.path.join(outdir, 'pearson_feat_corr_{}.pdf').format(filtern))
     plt.close()
 
 

@@ -342,13 +342,13 @@ def generate_performance_comparison_with_new_thresholds(dataset, filters_var_typ
                          os.path.join(outdir, 'tools_performance_metrics_' + filtername + suffix),
                          metric_to_evaluate)
 
-            stats_all_df.drop(['filter'], axis=1).to_csv(os.path.join(outdir, "statistics_{}_{}.csv").
+            stats_all_df.drop(['filter'], axis=1).to_csv(os.path.join(outdir, "statistics_{}{}.csv").
                                                          format(filtername, suffix),
                                                          sep="\t", index=False)
 
             stats_all_df[["tool", "weighted_accuracy", "accuracy", "weighted_f1", "f1", "coverage"]].sort_values(
                 [metric_to_evaluate], ascending=False).to_csv(
-                os.path.join(outdir, "tools_ranking_{}_{}.csv").format(filtername, suffix),
+                os.path.join(outdir, "tools_ranking_{}{}.csv").format(filtername, suffix),
                 sep="\t", index=False)
 
     logging.info("Done!")

@@ -20,6 +20,8 @@ def generate_ml_analysis(df, filters, threshold_list, name, folder):
             continue
 
         logging.info("Looking at {} variants.".format(filtern))
+        logging.info("Generating features correlation")
+        generate_ml_feature_correlation(df_, threshold_list, filtern, folder)
         logging.info("Generating feature ranking.")
         featsel, tools_subset = generate_feature_ranking(df_.columns, X, y, threshold_list_present, filtern, folder)
         X_small = featsel.transform(X)

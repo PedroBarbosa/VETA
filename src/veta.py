@@ -69,7 +69,6 @@ def run_standard_analysis(dataset, all_data, out_dir, clinvarStars, intronic_ana
         logging.info("Generating feature correlation matrix from scores.")
         out_dir = os.path.join(out_dir, "machineLearning")
         os.mkdir(out_dir)
-        generate_ml_feature_correlation(df, threshold_list, out_dir)
         generate_ml_analysis(df, filters, threshold_list, dataset, out_dir)
         logging.info("All done!")
     return True if thresholdAnalysis else False

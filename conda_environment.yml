@@ -1,4 +1,4 @@
-name: veta
+name: base
 channels:
   - bioconda
   - districtdatalabs

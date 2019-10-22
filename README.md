@@ -15,15 +15,13 @@ VETA is a framework that analyses the performance of several variant prediction 
 
 <a name="installation"></a>
 ## Intallation
-VETA requires python3 and conda/pip is recommended to install all the dependencies. We recommend to create a new conda environment for VETA, so that we make sure
+VETA requires python3 and conda is advised to install all the dependencies. We recommend to create a new conda environment for VETA, so that we make sure
 that dependencies versions will work.
 
 ~~~~
-conda create -n veta python=3.6
-conda activate veta
 git clone https://github.com/PedroBarbosa/VETA.git
-conda install --yes --file requirements.conda
-pip install -r requirements.pip
+conda env create -f conda\_environment.yml
+conda activate veta
 ~~~~
 
 Alternatively, there is a docker image with all dependencies pre-installed:
@@ -36,8 +34,6 @@ To use VETA on your own data (local directory with benign and pathogenic variant
 docker run -it -v /local/dir/with/data/:/media pbarbosa/veta:latest
 root@e1d195af4858:/tools# veta --dataset /media [Other options..]
 ~~~~
-
-
 
 <a name="scores-annotation"></a>
 ## Scores annotation
@@ -71,19 +67,23 @@ List of tools available (more will be continuosly added)
 |                                 | MetaSVM           | > 0.5                | Yes                       | dbNSFP v4.02  |
 |                                 | MetaLR            | > 0.5                | Yes                       | dbNSFP v4.02  |
 | Functional genomics annotations | FATHMM-MKL        | > 0.5                | Yes                       | vcfanno       |
-|                                 | GWAVA             | > 0.4                | Yes                       | vcfanno       |
+|                                 | GWAVA             | > 0.5                | Yes                       | vcfanno       |
 |                                 | Eigen             | > 1                  | Yes                       | vcfanno       |
 |                                 | ReMM              | > 0.984              | Yes                       | custom_script |
+|				  | FunSeq2	      | > 1.5		     | Yes			 | vcfanno       |
 | Fitness measurement             | CADD v1.4         | > 15                 | Yes                       | VEP plugin    |
 |                                 | DANN              | > 0.9                | Yes                       | custom_script |
 |                                 | fitCons           | > 0.4                | No                        | vcfanno       |
 |                                 | LINSIGHT          | > 0.4                | Yes                       | vcfanno       |
-| Splicing                        | MaxEntScan        | \|MaxEntScan_diff\|> 1 | No                        | VEP plugin    |
+| Splicing                        | MaxEntScan        | \|MaxEntScan_diff\|> 1 | No                        | VEP plugin & kipoi |
 |                                 | dbscSNV           | > 0.6                | Yes                       | VEP plugin    |
 |                                 | SPIDEX            | \|dpsi_zscore\| > 2    | No                        | vcfanno       |
-|                                 | traP              | > 0.92               | Yes                       | vcfanno       |
+|                                 | traP              | > 0.458               | Yes                       | vcfanno       |
 |                                 | SpliceAI          | > 0.2                | No                        | vcfanno       |
-
+|				  | HAL               | \|deltaPSI| > 5	     | No			 | kipoi         |
+|                                 | S-CAP             | Different thresholds | Yes                       | vcfanno       |
+|                                 | MMSplice          | |deltaLogitPSI| > 1  | No                        | kipoi         |
+|                                 | kipoiSplice4      | > 0.5                | Yes                       | kipoi         |
 <a name="reference"></a>
 ## Running on reference datasets
 
