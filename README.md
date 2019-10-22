@@ -70,19 +70,19 @@ List of tools available (more will be continuosly added)
 |                                 | GWAVA             | > 0.5                | Yes                       | vcfanno       |
 |                                 | Eigen             | > 1                  | Yes                       | vcfanno       |
 |                                 | ReMM              | > 0.984              | Yes                       | custom_script |
-|				  | FunSeq2	      | > 1.5		     | Yes			 | vcfanno       |
+|				                             | FunSeq2	          | > 1.5		              | Yes			                    | vcfanno       |
 | Fitness measurement             | CADD v1.4         | > 15                 | Yes                       | VEP plugin    |
 |                                 | DANN              | > 0.9                | Yes                       | custom_script |
 |                                 | fitCons           | > 0.4                | No                        | vcfanno       |
 |                                 | LINSIGHT          | > 0.4                | Yes                       | vcfanno       |
 | Splicing                        | MaxEntScan        | \|MaxEntScan_diff\|> 1 | No                        | VEP plugin & kipoi |
 |                                 | dbscSNV           | > 0.6                | Yes                       | VEP plugin    |
-|                                 | SPIDEX            | \|dpsi_zscore\| > 2    | No                        | vcfanno       |
-|                                 | traP              | > 0.458               | Yes                       | vcfanno       |
+|                                 | SPIDEX            | \|dpsi_zscore\| > 2  | No                        | vcfanno       |
+|                                 | traP              | > 0.458              | Yes                       | vcfanno       |
 |                                 | SpliceAI          | > 0.2                | No                        | vcfanno       |
-|				  | HAL               | \|deltaPSI| > 5	     | No			 | kipoi         |
+|				                             | HAL               | \|deltaPSI\| > 5	     | No			                     | kipoi         |
 |                                 | S-CAP             | Different thresholds | Yes                       | vcfanno       |
-|                                 | MMSplice          | |deltaLogitPSI| > 1  | No                        | kipoi         |
+|                                 | MMSplice          | \|deltaLogitPSI\| > 1| No                        | kipoi         |
 |                                 | kipoiSplice4      | > 0.5                | Yes                       | kipoi         |
 <a name="reference"></a>
 ## Running on reference datasets
