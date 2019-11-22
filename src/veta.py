@@ -96,7 +96,7 @@ def main():
     parser.add_argument('--metric', metavar='metric', help="Metric to use to rank tools performance. Default:"
                                                            " weighted_accuracy. Choices: (weighted_accuracy, "
                                                            "accuracy, f1, weighted_f1, coverage)",
-                        choices=('weighted_accuracy', 'accuracy', 'f1', 'weighted_f1', 'coverage'),
+                        choices=('weighted_accuracy', 'accuracy', 'F1', 'weighted_F1', 'coverage'),
                         default='weighted_accuracy')
 
     referencesetmode = parser.add_argument_group('Tools performance on reference variant sets.')

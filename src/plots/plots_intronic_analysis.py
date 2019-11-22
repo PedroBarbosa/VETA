@@ -21,14 +21,14 @@ def plot_general_bin_info(df, bins, fname):
     if df[df['class'].isin([True])].empty or df[df['class'].isin([False])].empty:
         dic = {}
         for bin in bins:
-            if bin[0] != "all_intronic":
+            if bin[0] not in {"all_intronic", "all_except_0-10"}:
                 dic[bin[0]] = (df.intron_bin == bin[0]).sum()
 
         plt.bar(dic.keys(), dic.values(), color="silver")
     
     else:
         ax = sns.countplot(x="intron_bin", hue="outcome",
-                           order=[x[0] for x in bins if x[0] != "all_intronic"],
+                           order=[x[0] for x in bins if x[0] not in {"all_intronic", "all_except_0-10"}],
                            data=df,
                            palette={"Benign": "skyblue", "Pathogenic": "chocolate"})
         ax.get_legend().set_title('')
@@ -39,7 +39,8 @@ def plot_general_bin_info(df, bins, fname):
     plt.savefig(out)
     plt.close()
 
-    df['gnomAD_genomes'] = df['gnomAD_genomes'].astype('float64')
+    df['gnomAD_genomes'] = pd.to_numeric(df['gnomAD_genomes'], downcast='float')
+    # df['gnomAD_genomes'] = df['gnomAD_genomes'].astype('float64')
     # df['gnomAD_genomes'].apply(lambda x: '%.10f' % float(x))
     if df[df['class'].isin([True])].empty or df[df['class'].isin([False])].empty:
         ax = sns.scatterplot(x="intron_offset", y="gnomAD_genomes", data=df)
@@ -57,8 +58,8 @@ def plot_general_bin_info(df, bins, fname):
     plt.close()
 
 
-def plot_ROCs(df_metrics, fname, n_positive_class):
-
+def plot_ROCs(df_metrics, fname, n_positive_class, min_score_fraction=0.3):
+    df_metrics = df_metrics[df_metrics['fraction_nan'] <= min_score_fraction]
     df_metrics["tool_with_roc_auc"] = df_metrics["tool"] + " auROC=" + df_metrics["ROC-auc"].round(2).map(str) + ")"
     df_metrics["tool_with_pr_auc"] = df_metrics["tool"] + " prAUC=" + df_metrics["PR-auc"].round(2).map(str) + ")"
     df_metrics["tool_with_f1"] = df_metrics["tool"] + " F1=" + df_metrics["F1"].round(2).map(str) + ")"
@@ -104,12 +105,12 @@ def plot_ROCs(df_metrics, fname, n_positive_class):
 
 def plot_auROC_by_bin(df, fname):
 
-    sns.set_style("darkgrid")
+    #sns.set_style("darkgrid")
     sns.catplot(x="bin", y="auROC", kind='point',
-                order=[i[0] for i in filter_intronic_bins if i[0] != "all_intronic"],
-                data=df,
+                order=[i[0] for i in filter_intronic_bins if i[0] not in {"all_intronic", "all_except_0-10"}],
+                data=df, linestyles="--", scale=0.7, aspect=0.9,
                 hue="tool")
-    plt.xlabel("Intron bin")
+    plt.xlabel("Intron bin (bp)")
     plt.ylabel("auROC")
     plt.tight_layout()
     out = fname + '_auROC.pdf'
@@ -117,10 +118,11 @@ def plot_auROC_by_bin(df, fname):
     plt.close()
 
     sns.catplot(x="bin", y="prROC", kind='point',
-                order=[i[0] for i in filter_intronic_bins if i[0] != "all_intronic"],
+                order=[i[0] for i in filter_intronic_bins if i[0] not in {"all_intronic", "all_except_0-10"}],
                 data=df,
+                linestyles="--", scale=0.7, aspect=0.9,
                 hue="tool")
-    plt.xlabel("Intron bin")
+    plt.xlabel("Intron bin (bp)")
     plt.ylabel("prAUC")
     plt.tight_layout()
     out = fname + '_prROC.pdf'
@@ -129,25 +131,37 @@ def plot_auROC_by_bin(df, fname):
 
 
     sns.catplot(x="bin", y="F1", kind='point',
-                order=[i[0] for i in filter_intronic_bins if i[0] != "all_intronic"],
-                data=df,
+                order=[i[0] for i in filter_intronic_bins if i[0] not in {"all_intronic", "all_except_0-10"}],
+                data=df, linestyles="--", scale=0.7, aspect=0.9,
                 hue="tool",
-                color="grey",
                 )
 
-    plt.xlabel("Intron bin")
+    plt.xlabel("Intron bin (bp)")
     plt.ylabel("F1 score")
     plt.tight_layout()
-    out = fname + 'F1.pdf'
+    out = fname + '_F1.pdf'
+    plt.savefig(out)
+    plt.close()
+
+    sns.catplot(x="bin", y="weighted_F1", kind='point',
+                order=[i[0] for i in filter_intronic_bins if i[0] not in {"all_intronic", "all_except_0-10"}],
+                data=df, linestyles="--", scale=0.7, aspect=0.9,
+                hue="tool",
+                )
+
+    plt.xlabel("Intron bin (bp)")
+    plt.ylabel("F1 score (weighted)")
+    plt.tight_layout()
+    out = fname + '_weighted_F1.pdf'
     plt.savefig(out)
     plt.close()
 
     sns.catplot(x="bin", y="fraction_nan", kind='point',
-                order=[i[0] for i in filter_intronic_bins if i[0] != "all_intronic"],
-                data=df,
+                order=[i[0] for i in filter_intronic_bins if i[0] not in {"all_intronic", "all_except_0-10"}],
+                data=df, linestyles="--", scale=0.7, aspect=0.9, dodge=True,
                 hue="tool")
 
-    plt.xlabel("Intron bin")
+    plt.xlabel("Intron bin (bp)")
     plt.ylabel("Fraction of NaN")
     plt.ylim(-0.01, 1)
     plt.tight_layout()

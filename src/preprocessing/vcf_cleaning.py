@@ -30,7 +30,7 @@ def vcf_cleaning(df):
     df['DANN'] = df['DANN'].apply(process_spidex_remm_dann)
     df['MetaLR'] = simple_merge(df['MetaLR_score'],df['MetaLR_pred'])
     df['MetaSVM'] = simple_merge(df['MetaSVM_score'],df['MetaSVM_pred'])
-    df['Revel'] = pd.to_numeric(df['REVEL_score'])
+    df['REVEL'] = pd.to_numeric(df['REVEL_score'])
     df['Eigen'] = pd.to_numeric(df['Eigen'])
     #df['Eigen-PC'] = pd.to_numeric(df['Eigen-PC']) Didn't find reference threshold, thus not using
     df['ReMM'] = df['ReMM'].apply(process_spidex_remm_dann)
@@ -47,7 +47,7 @@ def vcf_cleaning(df):
     df['mmsplice-efficiency'] = df['mmsplice_efficiency'].apply(process_mmsplice)
     df['kipoiSplice4'] = df['kipoiSplice4'].apply(process_mmsplice)
     df['kipoiSplice4_cons'] = df['kipoiSplice4_cons'].apply(process_mmsplice)
-    df['traP'] = df['traP'].apply(get_max_if_multiple)
+    df['TraP'] = df['TraP'].apply(get_max_if_multiple)
     df['SPIDEX'] = df['dpsi_zscore'].apply(process_spidex_remm_dann)
     df['dbscSNV'] = dbscSNV_merge(df['ada_score'], df['rf_score'])
 

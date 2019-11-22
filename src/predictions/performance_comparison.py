@@ -28,7 +28,8 @@ def classify_all_variants(df, thresholds):
 
 
 def generate_statistics(df, statistics, filtername, tool):
-    s_df = df[~df[tool + '_prediction'].isnull()]
+    #s_df = df[~df[tool + '_prediction'].isnull()]
+    s_df = df[~df[tool].isnull()]
     statistics['filter'].append(filtername)
     statistics['tool'].append(tool)
 
@@ -72,12 +73,12 @@ def generate_statistics(df, statistics, filtername, tool):
     statistics['total_n'].append(np.sum(df['class'] == False))
 
     try:
-        statistics['f1'].append(round(2 * (precision * recall) / (precision + recall), 2))
-        statistics['weighted_f1'].append(
+        statistics['F1'].append(round(2 * (precision * recall) / (precision + recall), 2))
+        statistics['weighted_F1'].append(
             round((2 * (precision * recall) / (precision + recall)) * coverage, 2))
     except ZeroDivisionError:
-        statistics['f1'].append(0)
-        statistics['weighted_f1'].append(0)
+        statistics['F1'].append(0)
+        statistics['weighted_F1'].append(0)
     # if np.sum(df['class']) == np.sum(~df['class']):
     statistics['weighted_accuracy'].append(round(accuracy * coverage, 2))
     return statistics
@@ -118,7 +119,7 @@ def perform_intron_analysis(df, filter_intronic_bins, threshold_list, metric_to_
 
         for tool, direction, threshold, *args in threshold_list:
             try:
-                df_ = df_i_.loc[pd.notnull(df_i_[tool]),].copy()
+                df_ = df_i_.loc[pd.notnull(df_i_[tool + "_prediction"]), ].copy()
             except KeyError:
                 na[tool] = 1
                 continue
@@ -180,8 +181,8 @@ def perform_intron_analysis(df, filter_intronic_bins, threshold_list, metric_to_
                 # roc_auc = [np.trapz(tpr, fpr, dx=step)] * len(tool_metrics)
                 # pr_auc = [np.trapz(prc, tpr)] * len(tool_metrics)
 
-                f1_score = [stats_df.loc[stats_df['tool'] == tool, 'f1'].iloc[0]] * len(tool_metrics)
-                weighted_f1_score = [stats_df.loc[stats_df['tool'] == tool, 'weighted_f1'].iloc[0]] * len(tool_metrics)
+                f1_score = [stats_df.loc[stats_df['tool'] == tool, 'F1'].iloc[0]] * len(tool_metrics)
+                weighted_f1_score = [stats_df.loc[stats_df['tool'] == tool, 'weighted_F1'].iloc[0]] * len(tool_metrics)
                 nan = [na[tool]] * len(tool_metrics)
                 tool_metrics = [x + [y] + [z] + [f] + [wf] + [na] for x, y, z, f, wf, na in zip(tool_metrics, roc_auc,
                                                                                                 pr_auc,
@@ -193,7 +194,7 @@ def perform_intron_analysis(df, filter_intronic_bins, threshold_list, metric_to_
                                                                       "ROC-auc", "PR-auc",
                                                                       "F1", "weighted_F1", "fraction_nan"]))
 
-                if bin != "all_intronic" and bin is not None:
+                if bin != "all_intronic" and bin != "all_except_0-10" and bin is not None:
                     roc_per_bin[tool].append([bin, roc_auc[0], pr_auc[0], f1_score[0], weighted_f1_score[0], na[tool]])
             else:
                 logging.info("\t{} didn't score at least 20 variants in the {} bin".format(tool, bin))
@@ -212,6 +213,7 @@ def perform_intron_analysis(df, filter_intronic_bins, threshold_list, metric_to_
                       df_i_.loc[df_i_['outcome'] == "Pathogenic", 'count_class'].iloc[0])
         except IndexError:
             logging.info("No positive class instances, skipping ROC")
+
     df_roc_bins = pd.DataFrame([[k] + i for k, v in roc_per_bin.items() for i in v], columns=["tool", "bin", "auROC",
                                                                                               "prROC",
                                                                                               "F1",
@@ -265,7 +267,7 @@ def generate_performance_comparison(dataset, filtes_var_type, filters, threshold
             for tool, *args in thresholds:
                 try:
                     if (vartype == "snps" or vartype == "all_types") and \
-                            (filtername == 'all' or filtername == "splicesite"):
+                            (filtername == 'all' or filtername == "splicesite" or filtername == "coding"):
                         plot_density_by_class(df[[tool, "class"]],
                                               thresholds,
                                               os.path.join(outdir, 'class_dist_' + tool + "_" + filtername))
@@ -295,7 +297,7 @@ def generate_performance_comparison(dataset, filtes_var_type, filters, threshold
             stats_all_df.drop(['filter'], axis=1).to_csv(os.path.join(outdir, "statistics_{}.csv").format(filtername),
                                                          sep="\t", index=False)
 
-            stats_all_df[["tool", "weighted_accuracy", "accuracy", "weighted_f1", "f1", "coverage"]].sort_values(
+            stats_all_df[["tool", "weighted_accuracy", "accuracy", "weighted_F1", "F1", "coverage"]].sort_values(
                 [metric_to_evaluate], ascending=False).to_csv(
                 os.path.join(outdir, "tools_ranking_{}.csv").format(filtername), sep="\t", index=False)
 
@@ -346,7 +348,7 @@ def generate_performance_comparison_with_new_thresholds(dataset, filters_var_typ
                                                          format(filtername, suffix),
                                                          sep="\t", index=False)
 
-            stats_all_df[["tool", "weighted_accuracy", "accuracy", "weighted_f1", "f1", "coverage"]].sort_values(
+            stats_all_df[["tool", "weighted_accuracy", "accuracy", "weighted_F1", "F1", "coverage"]].sort_values(
                 [metric_to_evaluate], ascending=False).to_csv(
                 os.path.join(outdir, "tools_ranking_{}{}.csv").format(filtername, suffix),
                 sep="\t", index=False)

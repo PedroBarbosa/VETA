@@ -109,9 +109,11 @@ def plot_tools_paper(data, fname):
 
     axes[0].barh(ind, df['tp'], align='center', color='green', zorder=10, height=w, edgecolor='black', linewidth=0.75)
     axes[1].barh(ind, df['tn'], align='center', color='green', zorder=10, height=w, edgecolor='black', linewidth=0.75)
-
-    axes[0].set_xlim(0, df["tp"][0] + df["fn"][0])
-    axes[1].set_xlim(0, df["tn"][0] + df["fp"][0])
+    try:
+        axes[0].set_xlim(0, df["tp"][0] + df["fn"][0])
+        axes[1].set_xlim(0, df["tn"][0] + df["fp"][0])
+    except KeyError:
+        pass
     axes[0].set(yticks=ind, yticklabels=df['tool'])
     axes[0].set_xlabel('# Pathogenic Variants')
     axes[1].set_xlabel('# Benign Variants')

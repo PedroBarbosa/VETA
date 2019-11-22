@@ -49,8 +49,9 @@ def check_required_files(dir, analysis):
     elif [filename for filename in os.listdir(dir) if fnmatch.fnmatch(filename,"*clinvar*gz")]:
         return os.path.join(dir, [filename for filename in os.listdir(dir) if fnmatch.fnmatch(filename,"*clinvar*gz")][0]), ""
 
-    logging.info("The required files within {} directory are missing: (a) 2 files, 1 benign, other pathogenic. b) a sigle"
-          "clinvar file with 'clinvar' string in the filename).".format(analysis))
+    logging.info("The required files within {} directory are missing: either (a) 2 files, 1 benign, other pathogenic "
+                 "(must have those strings in the filenames or"
+                 " b) a single clinvar file with 'clinvar' string in the filename).".format(analysis))
     exit(1)
 
 

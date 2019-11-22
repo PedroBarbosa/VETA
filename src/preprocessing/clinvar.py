@@ -7,8 +7,10 @@ import hgvs.parser
 from .location import *
 from .vcf_cleaning import vcf_cleaning
 from .vcf_processing import process_vcf_scores
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,  format='%(asctime)s %(message)s')
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 from thresholds import threshold_list_complete
+
 
 def tuple2float(x):
     if not x:
@@ -31,7 +33,7 @@ def fix_columns(df):
 
 def remove_clinvar_useless(df):
     """ Removes conflicting, missing and uncertain interpretations """
-    return df.loc[df['CLNSIG'].isin(['Pathogenic', 'Benign', 'Likely_pathogenic', 'Likely_benign'])]
+    return df.loc[df['CLNSIG'].isin(['Pathogenic', 'Benign', 'Likely_pathogenic', 'Likely_benign'])].copy()
 
 
 def get_clinvar_cached(fname, loc, intronic_analysis):
@@ -47,7 +49,6 @@ def get_clinvar_cached(fname, loc, intronic_analysis):
 
 
 def get_clinvar(fname, loc, deeper_intronic_analysis):
-
     scores = process_vcf_scores(fname, is_clinvar=True)
     df = pd.DataFrame.from_dict(scores, orient='index')
     df = fix_columns(df)
@@ -76,30 +77,29 @@ def get_clinvar(fname, loc, deeper_intronic_analysis):
 
 
 def filter_clinvar_sure(df):
-    return df[df['CLNSIG'].isin(['Pathogenic', 'Benign'])].copy()
+    return df[df['CLNSIG'].isin(['Pathogenic', 'Benign'])].copy(deep=True)
 
 
 def filter_clinvar_1_star(df):
     # One submitter provided an interpretation with assertion criteria (criteria provided, single submitter)
     # or multiple submitters provided assertion criteria but there are conflicting interpretations in which case
     # the independent values are enumerated for clinical significance (criteria provided, conflicting interpretations)
-    #print(df["clinvar.rcv.review_status"].value_counts())
-    df1 = df[(~df["CLNREVSTAT"].str.contains('no_assertion_criteria_provided'))
-              | (~df["CLNREVSTAT"].str.contains('no_assertion_provided'))
-              | (~df["CLNREVSTAT"].str.contains('no_interpretation_for_the_single_variant'))]
+    # print(df["clinvar.rcv.review_status"].value_counts())
+    to_remove = ['no_assertion_criteria_provided', 'no_assertion_provided', 'no_interpretation_for_the_single_variant']
+    df1 = df[~df['CLNREVSTAT'].isin(to_remove)]
     return df1.copy()
 
 
 def filter_clinvar_2_stars(df):
     df1 = df[(df["CLNREVSTAT"].str.contains('criteria_provided,_multiple_submitters,_no_conflicts')) |
-              (df["CLNREVSTAT"].str.contains('reviewed_by_expert_panel')) |
-              (df["CLNREVSTAT"].str.contains('practice_guideline'))]
+             (df["CLNREVSTAT"].str.contains('reviewed_by_expert_panel')) |
+             (df["CLNREVSTAT"].str.contains('practice_guideline'))]
     return df1.copy()
 
 
 def filter_clinvar_3_stars(df):
     df1 = df[(df["CLNREVSTAT"].str.contains('reviewed_by_expert_panel'))]
-    return df1.copy()    
+    return df1.copy()
 
 
 def filter_clinvar_4_stars(df):

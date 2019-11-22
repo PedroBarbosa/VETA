@@ -100,7 +100,7 @@ def process_vcf_scores(vcf_file, is_clinvar=False):
                     scores[key].append(("Eigen-PC", record.INFO.get("Eigen-PC")))
                     scores[key].append(("FunSeq2", record.INFO.get("funseq2")))
                     scores[key].append(("dpsi_zscore", record.INFO.get("dpsi_zscore")))
-                    scores[key].append(("traP", record.INFO.get("traP")))
+                    scores[key].append(("TraP", record.INFO.get("traP")))
                     scores[key].append(("HAL", record.INFO.get("HAL_DIFF")))
                     scores[key].append(("S-CAP", record.INFO.get("SCAP")))
                     scores[key].append(("kipoiSplice4", record.INFO.get("kipoisplice_4")))
