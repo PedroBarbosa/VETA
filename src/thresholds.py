@@ -30,12 +30,12 @@ threshold_list_complete = [
     ('DANN', '>', 0.9, 'Functional', '#7f0000',','),
     ('GWAVA', '>', 0.5, 'Functional', '#7f0000','<'),
     ('FATHMM-MKL', '>', 0.5, 'Functional', '#084594','^'),
-    #('Eigen', '>', 1, 'Functional', '#7f0000','>'), #M-CAP paper
-    ('Eigen', '>', 10, 'Functional', '#7f0000','>'),
+    ('Eigen', '>', 1, 'Functional', '#7f0000','>'), #M-CAP paper
+    #('Eigen', '>', 10, 'Functional', '#7f0000','>'),
     #('Eigen-PC', '>', 1),  #Not found
     ('ReMM', '>', 0.984, 'Functional', '#7f0000','h'),
-    #('FunSeq2', '>', 1.5, 'Functional', '#7f0000','h'),
-    ('FunSeq2', '>', 1, 'Functional', '#7f0000','h'),
+    ('FunSeq2', '>', 1.5, 'Functional', '#7f0000','h'),
+    #('FunSeq2', '>', 1, 'Functional', '#7f0000','h'),
 
     #Splicing related scores
     ('HAL', '>1', 5, 'Splicing', '#4a1486', 'o'), #model scores alt5 PSI. kipoi veff scores the DIFF between the ALT and REF allele, thus we set 5 as the minimum threshold to account for PSI changes caused by variant
