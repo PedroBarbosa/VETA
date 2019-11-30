@@ -39,17 +39,20 @@ def plot_unscored(data, fname):
     plt.savefig(fname + ".pdf")
     plt.close()
 
-
 def plot_metrics(data, fname, metric_to_evaluate):
-    my_range = range(1, len(data.index) + 1)
+    my_range_coverage = list(range(1, len(data.index) + 1))
+    my_range_specificity = np.arange(1 - 0.2, len(data.index)).tolist()
+    my_range_sensitivity = np.arange(1 + 0.2, len(data.index) + 0.5).tolist()
+   # my_range_sensitivity[-1] = my_range_coverage[-1]
     data.sort_values(metric_to_evaluate, ascending=True, inplace=True)
     fig, ax = plt.subplots(figsize=(10, 10))
+
     #plt.hlines(y=my_range, xmin=data['specificity'], xmax=data['sensitivity'], color='grey', alpha=0.75)
-    plt.scatter(data['specificity'], my_range, color='skyblue', alpha=1, marker='s', edgecolors='black', linewidths=0.5,
+    plt.scatter(data['specificity'], my_range_specificity, color='skyblue', alpha=1, marker='s', edgecolors='black', linewidths=0.5,
                 label='Specificity')
-    plt.scatter(data['sensitivity'], my_range, color='yellow', alpha=0.75, marker='^', edgecolors='black',
+    plt.scatter(data['sensitivity'], my_range_sensitivity, color='yellow', alpha=0.75, marker='v', edgecolors='black',
                 linewidths=0.5, label='Sensitivity')
-    plt.scatter(data['coverage'], my_range, color='brown', alpha=0.75, marker='o', edgecolors='black', linewidths=0.5,
+    plt.scatter(data['coverage'], my_range_coverage, color='brown', alpha=0.75, marker='o', edgecolors='black', linewidths=0.5,
                 label='Fraction_predictable')
 
     i = 0
@@ -58,13 +61,13 @@ def plot_metrics(data, fname, metric_to_evaluate):
         width = [min(val_range), max(val_range)]
         height = 1
         ax.add_patch(
-            plt.Rectangle(xy=(width[0] - 0.01, my_range[i] - 0.4), width=width[1] - width[0] + 0.02, height=height,
+            plt.Rectangle(xy=(width[0] - 0.01, my_range_coverage[i] - 0.4), width=width[1] - width[0] + 0.02, height=height,
                           linewidth=0.75, color='gray', fill=False))
         i += 1
 
     ax.grid(axis='x', linestyle='dashed')
     plt.legend()
-    plt.yticks(my_range, data['tool'] + " (" + data[metric_to_evaluate].astype(str) + ")")
+    plt.yticks(my_range_coverage, data['tool'] + " (" + data[metric_to_evaluate].astype(str) + ")")
     plt.title("#variants: {} ({} pos, {} neg)".format(data["total"].iloc[0], data["total_p"].iloc[0],
                                                       data["total_n"].iloc[0]))
     plt.savefig(fname + ".pdf")

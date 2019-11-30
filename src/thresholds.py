@@ -39,8 +39,8 @@ threshold_list_complete = [
 
     #Splicing related scores
     ('HAL', '>1', 5, 'Splicing', '#4a1486', 'o'), #model scores alt5 PSI. kipoi veff scores the DIFF between the ALT and REF allele, thus we set 5 as the minimum threshold to account for PSI changes caused by variant
-    ('MMSplice', '>', 1, 'Splicing', '#4a1486', 'o'),
-    #('mmsplice-deltaLogitPSI', '>', 1, 'Splicing', '#4a1486', 'o'),
+    ('MMSplice', '>', 2, 'Splicing', '#4a1486', 'o'),
+    #('mmsplice-deltaLogitPSI', '>', 2, 'Splicing', '#4a1486', 'o'),
     #('mmsplice-pathogenicity', '>', 0.5, 'Splicing', '#4a1486', 'o'),
     #('mmsplice-efficiency', '>', 1, 'Splicing', '#4a1486', 'o'),
     ('kipoiSplice4', '>', 0.5, 'Splicing', '#4a1486', 'o'),
@@ -50,7 +50,7 @@ threshold_list_complete = [
     ('SpliceAI', '>', 0.2, 'Splicing', '#4a1486','o'),
     ('SPIDEX', '>', 2, 'Splicing', '#4a1486','o'), #dpsi zscore; dpsi_maxtissue >=5 is used in the paper.
     ('dbscSNV', '>', 0.6, 'Splicing', '#4a1486',','), #both ada_score and rf_score must be higher than 0.6. Check dbscSNV_merge method on how I dealt with exceptions
-    ('MaxEntScan','>', 1, 'Splicing', '#4a1486','p') #naive estimation of prediction score. It refers to those variants where the difference in the maximum entropy estimation between the REF and ALT
+    ('MaxEntScan', '>', 3, 'Splicing', '#4a1486','p') #naive estimation of prediction score. It refers to those variants where the difference in the maximum entropy estimation between the REF and ALT
     #  for splice site detection is higher than 1, be it for the gain (positive entropy value) or for the loss (negative entropy value). May not be ideal
     #('SpliceRegion','>',0.9) #splice region VEP plugin just detects and report if a variant is located within a splice region, thus this fixed value
 ]
