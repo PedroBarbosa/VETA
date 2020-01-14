@@ -44,6 +44,9 @@ def run_standard_analysis(dataset, all_data, out_dir, clinvarStars, intronic_ana
     generate_datasets_table(all_data, filters_var_type, out_dir)
     threshold_list = subset_toolset_by_scope(threshold_list_complete, scope_to_analyse=scope_to_predict)
     variant_types_to_evaluate = subset_variants_by_type(filters_var_type, types_to_analyse)
+
+    booleanDictionary = {True: 'Pathogenic', False: 'Benign'}
+    df_to_evaluate["outcome"] = df_to_evaluate["class"].map(booleanDictionary)
     generate_performance_comparison(df_to_evaluate, variant_types_to_evaluate, filters, threshold_list,
                                     metric_to_evaluate, dataset, out_dir)
 
@@ -87,7 +90,7 @@ def main():
     parser.add_argument('-t', metavar='types_of_variant', help='Restrict analysis to the given variant types. '
                                                                'By default, performance is measured for all variants '
                                                                'and each subtype.. Choices: (all_types, snps, indels'
-                                                               'insertions, deletions, mnps)',
+                                                               'cd insertions, deletions, mnps)',
                         nargs='+', choices=('all_types', 'snps', 'indels', 'insertions', 'deletions', 'mnps'))
     parser.add_argument('-i', '--intronic',
                         help='Perform additional analysis of intronic variants extracted from HGVSc '

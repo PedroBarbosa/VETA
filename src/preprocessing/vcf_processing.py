@@ -38,10 +38,9 @@ tools_map = {'CADD_phred': 'CADD_PHRED',
 
 def process_vcf_scores(vcf_file, is_clinvar=False):
     indexes, scores, absent = OrderedDict(), defaultdict(list), []
-    info_attributes_in_vcf = []
     vcf_data = VCF(vcf_file)
     if vcf_data.contains("ANN") or vcf_data.contains("CSQ"):
-        spliceai_scores_fromtool = False
+        spliceai_scores_single_field = False
         for field in vcf_data.header_iter():
             if field["HeaderType"] == "INFO" and field["ID"] == "ANN":
                 tools_annotated_with_vep = field["Description"].split("Format:")[1][:-1].strip().split("|")
@@ -51,15 +50,12 @@ def process_vcf_scores(vcf_file, is_clinvar=False):
                     else:
                         absent.append(tool)
             elif field["HeaderType"] == "INFO" and field["ID"] == "SpliceAI":
-                spliceai_scores_fromtool = True
+                spliceai_scores_single_field = True
 
         keys=[]
         for record in vcf_data:
 
-            try:
-                key = record.ID + "_" + str(record.POS) + "_" + str(record.ALT[0])
-            except TypeError:
-                key = record.CHROM + "_" + str(record.POS) + "_" + str(record.ALT[0])
+            key = record.CHROM + "_" + str(record.POS) + "_" + str(record.ALT[0])
             if key in keys:
                 print("Variant {},{},{},{} is repeated in the VCF. Keeping only first ocurrence".
                       format(record.CHROM, record.POS, record.REF, record.ALT[0]))
@@ -82,10 +78,12 @@ def process_vcf_scores(vcf_file, is_clinvar=False):
                     scores[key].append(info[tools_annotated_with_vep.index('SYMBOL')])
                     scores[key].append(info[tools_annotated_with_vep.index('Consequence')])
                     scores[key].append(info[tools_annotated_with_vep.index('gnomAD_AF')])
-                    scores[key].append(info[tools_annotated_with_vep.index('gnomADg_AF')])
+                    #scores[key].append(info[tools_annotated_with_vep.index('gnomADg_AF')])
+
                 except ValueError:
                     pass
                 if len(absent) > 0:
+                    scores[key].append(("gnomAD_genomes", record.INFO.get("gnomADg_AF")))
                     scores[key].append(("GERP", record.INFO.get("GERP")))
                     scores[key].append(("phyloP", record.INFO.get("phyloP")))
                     scores[key].append(("phastCons", record.INFO.get("phastCons")))
@@ -100,7 +98,7 @@ def process_vcf_scores(vcf_file, is_clinvar=False):
                     scores[key].append(("Eigen-PC", record.INFO.get("Eigen-PC")))
                     scores[key].append(("FunSeq2", record.INFO.get("funseq2")))
                     scores[key].append(("dpsi_zscore", record.INFO.get("dpsi_zscore")))
-                    scores[key].append(("TraP", record.INFO.get("traP")))
+                    scores[key].append(("TraP", record.INFO.get("TraP")))
                     scores[key].append(("HAL", record.INFO.get("HAL_DIFF")))
                     scores[key].append(("S-CAP", record.INFO.get("SCAP")))
                     scores[key].append(("kipoiSplice4", record.INFO.get("kipoisplice_4")))
@@ -110,8 +108,9 @@ def process_vcf_scores(vcf_file, is_clinvar=False):
                     scores[key].append(("mmsplice_deltaLogitPSI", record.INFO.get("mmsplice_deltaPSI")))
                     scores[key].append(("mmsplice_efficiency", record.INFO.get("mmsplice_efficiency")))
                     scores[key].append(("mmsplice_pathogenicity", record.INFO.get("mmsplice_patho")))
-                    if spliceai_scores_fromtool:
+                    if spliceai_scores_single_field:
                         scores[key].append(("SpliceAI", record.INFO.get("SpliceAI")))
+                        scores[key].append(("SpliceAI_ind", record.INFO.get("SpliceAI_ind")))
                     else:
                         scores[key].append(("SpliceAI", format_spliceai_fields(record,
                                                                     info[tools_annotated_with_vep.index('SYMBOL')])))
@@ -119,11 +118,9 @@ def process_vcf_scores(vcf_file, is_clinvar=False):
                 for pl, i in indexes.items():
                     scores[key].append((pl, info[i]))
 
- 
             if is_clinvar:
                 scores[key].append(('CLNREVSTAT', record.INFO.get("CLNREVSTAT")))
                 scores[key].append(('CLNSIG', record.INFO.get("CLNSIG")))
-
 
     else:
         logging.error("Program requires ANN field to be present in the INFO field of the input VCF file.\n")
@@ -139,10 +136,13 @@ def get_df_ready(vcf, isclinvar, isbenign, loc, deeper_intronic_analysis):
     df = pd.DataFrame.from_dict(scores, orient='index')
 
     new_col_names = ['hg19.chr', 'hg19.pos', 'ref', 'alt', 'id', 'type', 'subtype', 'rsID', 'HGVSc', 'Gene',
-                     'Consequence', 'gnomAD_exomes', 'gnomAD_genomes']
+                     'Consequence', 'gnomAD_exomes']
     for column in df:
         if isinstance(df[column].iloc[0], (tuple,)):
-            new_col_names.append(df[column].iloc[0][0])
+            if df[column].iloc[0][0] == "gnomADg_AF":
+                new_col_names.append("gnomAD_genomes")
+            else:
+                new_col_names.append(df[column].iloc[0][0])
             df[column] = df[column].map(tuple2float)
 
     rename_dict = {i: j for i, j in zip(list(df), new_col_names)}

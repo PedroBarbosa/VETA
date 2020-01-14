@@ -75,6 +75,7 @@ def preprocess(loc, ROOT_DIR, thresholdAnalysis, intronic_analysis, is_clinvar_f
         tools = [t[0] for t in threshold_list_complete]
         df.dropna(axis=1, how="all", inplace=True)
         logging.info("Tools with no scores found: {}".format(list(set(tools) - set(list(df)))))
+        print(dataset_name)
         dict[dataset_name] = df
 
     return dict

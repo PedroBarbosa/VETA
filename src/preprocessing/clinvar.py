@@ -20,12 +20,11 @@ def tuple2float(x):
 
 def fix_columns(df):
     new_col_names = ['hg19.chr', 'hg19.pos', 'ref', 'alt', 'id', 'type', 'subtype', 'rsID', 'HGVSc', 'Gene',
-                     'Consequence', 'gnomAD_exomes', 'gnomAD_genomes']
+                     'Consequence', 'gnomAD_exomes']
     for column in df:
         if isinstance(df[column].iloc[0], (tuple,)):
             new_col_names.append(df[column].iloc[0][0])
             df[column] = df[column].map(tuple2float)
-
     rename_dict = {i: j for i, j in zip(list(df), new_col_names)}
     df.rename(columns=rename_dict, inplace=True)
     return df

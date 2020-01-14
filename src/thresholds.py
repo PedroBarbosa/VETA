@@ -32,13 +32,12 @@ threshold_list_complete = [
     ('FATHMM-MKL', '>', 0.5, 'Functional', '#084594','^'),
     ('Eigen', '>', 1, 'Functional', '#7f0000','>'), #M-CAP paper
     #('Eigen', '>', 10, 'Functional', '#7f0000','>'),
-    #('Eigen-PC', '>', 1),  #Not found
     ('ReMM', '>', 0.984, 'Functional', '#7f0000','h'),
     ('FunSeq2', '>', 1.5, 'Functional', '#7f0000','h'),
     #('FunSeq2', '>', 1, 'Functional', '#7f0000','h'),
 
     #Splicing related scores
-    ('HAL', '>1', 5, 'Splicing', '#4a1486', 'o'), #model scores alt5 PSI. kipoi veff scores the DIFF between the ALT and REF allele, thus we set 5 as the minimum threshold to account for PSI changes caused by variant
+    ('HAL', '>', 5, 'Splicing', '#4a1486', 'o'), #model scores alt5 PSI. kipoi veff scores the DIFF between the ALT and REF allele, thus we set 5 as the minimum threshold to account for PSI changes caused by variant
     ('MMSplice', '>', 2, 'Splicing', '#4a1486', 'o'),
     #('mmsplice-deltaLogitPSI', '>', 2, 'Splicing', '#4a1486', 'o'),
     #('mmsplice-pathogenicity', '>', 0.5, 'Splicing', '#4a1486', 'o'),
@@ -46,7 +45,7 @@ threshold_list_complete = [
     ('kipoiSplice4', '>', 0.5, 'Splicing', '#4a1486', 'o'),
     ('kipoiSplice4_cons', '>', 0.5, 'Splicing', '#4a1486', 'o'),
     ('S-CAP', '>', 1, 'Splicing', '#4a1486', 'o'), #model has region specific thresholds. To generalize, if score is greater than its specific threshold, we sum up 1 to the score (see process_scap_scores method)
-    ('TraP', '>', 0.458, 'Splicing', '#4a1486','o'), #probably damaging the transcript >= 0.93
+    ('TraP', '>', 1, 'Splicing', '#4a1486','o'), #same as scap
     ('SpliceAI', '>', 0.2, 'Splicing', '#4a1486','o'),
     ('SPIDEX', '>', 2, 'Splicing', '#4a1486','o'), #dpsi zscore; dpsi_maxtissue >=5 is used in the paper.
     ('dbscSNV', '>', 0.6, 'Splicing', '#4a1486',','), #both ada_score and rf_score must be higher than 0.6. Check dbscSNV_merge method on how I dealt with exceptions

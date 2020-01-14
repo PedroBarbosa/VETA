@@ -16,6 +16,30 @@ plt.switch_backend('agg')
 cmap = sns.diverging_palette(220, 10, as_cmap=True)
 
 
+def plot_allele_frequency(df, fname):
+    try:
+        df['grouper'] = df['outcome'].astype(str) + '\nN = ' + df['count_class'].astype(str)
+        order = sorted(list(df['grouper'].unique()))
+        ax = sns.boxplot(data=df, x="grouper", order=order,  y="gnomAD_genomes")
+        add_stat_annotation(ax, data=df, x="grouper", y="gnomAD_genomes",
+                            order=order,
+                            box_pairs=[tuple(order)],
+                            test='Mann-Whitney',
+                            text_format='star',
+                            loc='inside',
+                            verbose=1,
+                            pvalue_format_string='{:.4f}')
+        plt.xlabel("")
+        plt.ylabel("gnomAD frequency")
+        plt.tight_layout()
+        out = fname + '.pdf'
+        plt.savefig(out)
+        plt.close()
+
+    except ValueError:
+        pass
+
+
 def plot_general_bin_info(df, bins, fname):
 
     if df[df['class'].isin([True])].empty or df[df['class'].isin([False])].empty:
@@ -37,6 +61,11 @@ def plot_general_bin_info(df, bins, fname):
     plt.ylabel("Variant counts")
     out = fname + '_bin_counts.pdf'
     plt.savefig(out)
+    df_zoom = df[(~df['intron_bin'].str.match('0-10')) & (df['outcome'] == "Pathogenic")]
+    ylim = df_zoom['intron_bin'].value_counts().max() + (df_zoom['intron_bin'].value_counts().max() * 0.05)
+    out_zoomed = fname + '_bin_counts_zoomed.pdf'
+    plt.ylim(0, ylim)
+    plt.savefig(out_zoomed)
     plt.close()
 
     df['gnomAD_genomes'] = pd.to_numeric(df['gnomAD_genomes'], downcast='float')
@@ -64,8 +93,13 @@ def plot_ROCs(df_metrics, fname, n_positive_class, min_score_fraction=0.3):
     df_metrics["tool_with_pr_auc"] = df_metrics["tool"] + " prAUC=" + df_metrics["PR-auc"].round(2).map(str) + ")"
     df_metrics["tool_with_f1"] = df_metrics["tool"] + " F1=" + df_metrics["F1"].round(2).map(str) + ")"
 
-    #plt.figure(figsize=(15, 11))
-    ax = sns.lineplot(x="recall", y="precision", data=df_metrics, hue="tool_with_pr_auc")
+    #Since S-CAP has several different reference threshold, S-CAP is removed from these analyses
+    df_metrics = df_metrics[~df_metrics.tool.str.contains("S-CAP")]
+    if df_metrics.tool.unique().size > 16:
+        sns.set_palette(sns.mpl_palette("GnBu_d", df_metrics.tool.unique().size))
+    ax = sns.lineplot(x="recall", y="precision", data=df_metrics,
+                            hue="tool_with_pr_auc")
+
     ax.get_legend().set_title('')
     plt.title("N positive = {}".format(n_positive_class))
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
@@ -91,8 +125,8 @@ def plot_ROCs(df_metrics, fname, n_positive_class, min_score_fraction=0.3):
     #    plt.savefig(out)
     #    plt.close()
 
-
-    ax = sns.lineplot(x="FPR", y="recall", data=df_metrics, hue="tool_with_roc_auc")
+    ax = sns.lineplot(x="FPR", y="recall", data=df_metrics,
+                          hue="tool_with_roc_auc")
     plt.xlabel("False Positive Rate (FPR)")
     plt.ylabel("True Positive Rate (TPR)")
     ax.get_legend().set_title('')
@@ -101,35 +135,10 @@ def plot_ROCs(df_metrics, fname, n_positive_class, min_score_fraction=0.3):
     out = fname + '.pdf'
     plt.savefig(out)
     plt.close()
-
+    sns.reset_defaults()
 
 def plot_auROC_by_bin(df, fname):
-
     #sns.set_style("darkgrid")
-    sns.catplot(x="bin", y="auROC", kind='point',
-                order=[i[0] for i in filter_intronic_bins if i[0] not in {"all_intronic", "all_except_0-10"}],
-                data=df, linestyles="--", scale=0.7, aspect=0.9,
-                hue="tool")
-    plt.xlabel("Intron bin (bp)")
-    plt.ylabel("auROC")
-    plt.tight_layout()
-    out = fname + '_auROC.pdf'
-    plt.savefig(out)
-    plt.close()
-
-    sns.catplot(x="bin", y="prROC", kind='point',
-                order=[i[0] for i in filter_intronic_bins if i[0] not in {"all_intronic", "all_except_0-10"}],
-                data=df,
-                linestyles="--", scale=0.7, aspect=0.9,
-                hue="tool")
-    plt.xlabel("Intron bin (bp)")
-    plt.ylabel("prAUC")
-    plt.tight_layout()
-    out = fname + '_prROC.pdf'
-    plt.savefig(out)
-    plt.close()
-
-
     sns.catplot(x="bin", y="F1", kind='point',
                 order=[i[0] for i in filter_intronic_bins if i[0] not in {"all_intronic", "all_except_0-10"}],
                 data=df, linestyles="--", scale=0.7, aspect=0.9,
@@ -169,28 +178,29 @@ def plot_auROC_by_bin(df, fname):
     plt.savefig(out)
     plt.close()
 
+    #Ploting auROCs and auROCpr requires removal of S-CAP
+    df = df[~df["tool"].str.contains("S-CAP")]
+    sns.catplot(x="bin", y="auROC", kind='point',
+                order=[i[0] for i in filter_intronic_bins if i[0] not in {"all_intronic", "all_except_0-10"}],
+                data=df, linestyles="--", scale=0.7, aspect=0.9,
+                hue="tool")
+    plt.xlabel("Intron bin (bp)")
+    plt.ylabel("auROC")
+    plt.tight_layout()
+    out = fname + '_auROC.pdf'
+    plt.savefig(out)
+    plt.close()
 
-def plot_allele_frequency(df, fname):
-    try:
-        df['grouper'] = df['outcome'].astype(str) + '\nN = ' + df['count_class'].astype(str)
-        order = sorted(list(df['grouper'].unique()))
-        ax = sns.boxplot(data=df, x="grouper", order=order,  y="gnomAD_genomes")
-        add_stat_annotation(ax, data=df, x="grouper", y="gnomAD_genomes",
-                            order=order,
-                            box_pairs=[tuple(order)],
-                            test='Mann-Whitney',
-                            text_format='star',
-                            loc='inside',
-                            verbose=0,
-                            pvalue_format_string='{:.4f}')
-        plt.xlabel("")
-        plt.ylabel("gnomAD frequency")
-        plt.tight_layout()
-        out = fname + '.pdf'
-        plt.savefig(out)
-        plt.close()
-
-    except ValueError:
-        pass
+    sns.catplot(x="bin", y="prROC", kind='point',
+                order=[i[0] for i in filter_intronic_bins if i[0] not in {"all_intronic", "all_except_0-10"}],
+                data=df,
+                linestyles="--", scale=0.7, aspect=0.9,
+                hue="tool")
+    plt.xlabel("Intron bin (bp)")
+    plt.ylabel("prAUC")
+    plt.tight_layout()
+    out = fname + '_prROC.pdf'
+    plt.savefig(out)
+    plt.close()
 
 

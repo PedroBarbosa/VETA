@@ -18,7 +18,7 @@ def get_location(x, hp):
             return '3primeUTR'
         elif v.posedit.pos.start.base > 0 and v.posedit.pos.start.offset == 0:
             return 'coding'
-        elif v.posedit.pos.start.base > 0 and abs(v.posedit.pos.start.offset) >= 100:
+        elif v.posedit.pos.start.base > 0 and abs(v.posedit.pos.start.offset) >= 20:
             return 'deepintronic'
         else:
             return 'splicesite'
@@ -64,17 +64,15 @@ def get_location_from_consequence(x):
 
 ranges = [(0, 10, '0-10'),
           (11, 30, '10-30'),
-          #(31, 60, '30-60'),
-          #(61, 100, '60-100'),
           (31, 100, '30-100'),
           (101, 200, '100-200'),
           (201, 500, '200-500'),
-          (501, 50000, '500+')]
+          (501, 5000000, '500+')]
 
 
 def assign_intronic_bins(hgvs, hp, location):
 
-    if location == "splicesite" or location == "deepintronic" or location == "5primeUTR" or location == "3primeUTR":
+    if location in {"splicesite", "deepintronic", "5primeUTR", "3primeUTR", "noncodingRNA"}:
         v = hp.parse_hgvs_variant(hgvs.split(" ")[0])
         offset = abs(v.posedit.pos.start.offset)
         for i in ranges:

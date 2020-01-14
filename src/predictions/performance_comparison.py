@@ -91,8 +91,6 @@ def perform_intron_analysis(df, filter_intronic_bins, threshold_list, metric_to_
     logging.info("---------------------------------------------")
     os.mkdir(os.path.join(out_dir, "intron_analysis"))
     df_i = df[~df['intron_bin'].isnull()]
-    booleanDictionary = {True: 'Pathogenic', False: 'Benign'}
-    df_i["outcome"] = df_i["class"].map(booleanDictionary)
     plot_general_bin_info(df_i, filter_intronic_bins, os.path.join(os.path.join(out_dir, "intron_analysis"),
                                                                    "intronic".format(dataset_name)))
 
@@ -258,6 +256,7 @@ def generate_performance_comparison(dataset, filtes_var_type, filters, threshold
         for filtername, filterfunction in filters:
             statistics = defaultdict(list)
             df = filterfunction(df_v).copy()
+            df['count_class'] = df.groupby('outcome')['outcome'].transform('size')
             if df.shape[0] < 10:
                 logging.info("{} has not a minimum number of {} {} variants (10) to evaluate tools performance. ({})".
                              format(name, vartype, filtername, df.shape[0]))
@@ -285,7 +284,8 @@ def generate_performance_comparison(dataset, filtes_var_type, filters, threshold
 
             stats_all_df = pd.DataFrame(statistics)
             stats_df = stats_all_df[stats_all_df.fraction_nan < 0.90]
-
+            plot_allele_frequency(df, os.path.join(os.path.join(outdir,
+                                                      "AF_{}".format(filtername))))
             plot_unscored(stats_all_df,
                               os.path.join(outdir, 'unscored_fraction_' + filtername))
             plot_tools(stats_df, os.path.join(outdir, 'tools_analysis_' + filtername ), metric_to_evaluate)

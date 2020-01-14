@@ -24,8 +24,6 @@ filter_intronic_bins = [
     ('all_except_0-10', lambda x: x[~x['intron_bin'].str.match('0-10')]),
     ('0-10', lambda x: x[x['intron_bin'].str.match('0-10')]),
     ('10-30', lambda x: x[x['intron_bin'].str.match('10-30')]),
-    # ('30-60', lambda x: x[x['intron_bin'].str.match('30-60')]),
-    # ('60-100', lambda x: x[x['intron_bin'].str.match('60-100')]),
     ('30-100', lambda x: x[x['intron_bin'].str.match('30-100')]),
     ('100-200', lambda x: x[x['intron_bin'].str.match('100-200')]),
     ('200-500', lambda x: x[x['intron_bin'].str.match('200-500')]),
