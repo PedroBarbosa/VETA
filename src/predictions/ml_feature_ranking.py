@@ -8,9 +8,9 @@ sns.set(style="white")
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.model_selection import StratifiedKFold
-from predictions.ml_cost_aware_rfecv import CostAwareRFECV
+from src.predictions.ml_cost_aware_rfecv import CostAwareRFECV
 from yellowbrick.model_selection import RFECV
-from plots.ml.plot_feature_correlation import plot_feature_importance
+from src.plots.ml.plot_feature_correlation import plot_feature_importance
 
 
 def information_gain(X, y, threshold_list, filtern, folder):

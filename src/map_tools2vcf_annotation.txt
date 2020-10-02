@@ -1,0 +1,71 @@
+# This config file maps the tool name 
+# to the corresponding annotation field
+# in the VCF. It allows to add custom 
+# methods, as long as the field exists 
+# in the VCF. First 2 column in this file
+# are required, where 1st col is the tool name,
+# the 2nd col is the VCF field on which the scores
+# for the tool are stored. 
+
+# Set the last three if custom tools should be used,
+# or if different thresholds of known tool should be
+# employed (caution with this, because default thresholds
+# in VETA should be fine, as they were manually extracted 
+# from literature).
+# 3rd column refers to the tool directionality, that is, 
+# whether the method detects relevant variants 
+# if the score if higher ('>') or lower ('<') than 
+# the threshold.  4th is the reference threshold that is 
+# used to detect functional variants, and 5th is the tool
+# scope ('Protein', 'Conservation', 'Splicing', 'Functional')
+
+# If multiple VCF fields refer to the same tool 
+#(e.g. dbscSNV) a comma must be set to use both.
+
+#Name	VCF_annotation	Directionality	Threshold	Scope
+# Conservation
+GERP	GERP
+phyloP	phyloP
+phastCons	phastCons
+SiPhy	SiPhy
+
+# Protein predictors
+LRT	LRT_score
+Sift	SIFT_score
+Polyphen2HVAR	Polyphen2_HVAR_score
+Polyphen2HDIV	Polyphen2_HDIV_score
+MutationTaster	MutationTaster_score
+MutationAssessor	MutationAssessor_score
+FATHMM	FATHMM_score
+Provean	PROVEAN_score
+Mutpred	MutPred_score
+CAROL	CAROL
+Condel	Condel
+M-CAP	M-CAP_score
+MetaSVM	MetaSVM_score
+MetaLR	MetaLR_score
+REVEL	REVEL_score
+VEST4	VEST4_score
+
+# Functional
+fitCons	fitcons
+LINSIGHT	linsight_g
+ReMM	ReMM
+GWAVA	GWAVA
+FATHMM-MKL	fathmmMKL
+Eigen	Eigen
+FunSeq2	funseq2
+CADD	CADD_PHRED
+DANN	DANN
+
+# Splicing
+HAL	HAL_DIFF
+SPIDEX	dpsi_zscore
+dbscSNV	ada_score,rf_score
+MaxEntScan	MaxEntScan_diff
+SpliceAI	SpliceAI,SpliceAI_ind
+S-CAP	SCAP
+TraP	TraP
+MMSplice	mmsplice_deltaPSI
+kipoiSplice4	kipoisplice_4
+_my	test	>	0.5	Splicing

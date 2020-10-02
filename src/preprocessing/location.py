@@ -5,6 +5,7 @@ import hgvs.exceptions
 import numpy as np
 import pandas as pd
 
+
 def get_location(x, hp):
     try:
         v = hp.parse_hgvs_variant(x.split(" ")[0])
@@ -29,9 +30,13 @@ def get_location(x, hp):
 
 def get_location_from_consequence(x):
     conseq = x.split("&")[0]
-    coding = ["coding_sequence_variant","missense_variant", "frameshift_variant", "inframe_deletion",
-              "inframe_insertion", "protein_altering_variant", "start_lost", "start_retained_variant", "stop_gained",
-              "stop_lost", "stop_retained_variant", "synonymous_variant", "transcript_ablation"]
+    coding = ["coding_sequence_variant", "missense_variant",
+              "frameshift_variant", "inframe_deletion",
+              "inframe_insertion", "protein_altering_variant",
+              "start_lost", "start_retained_variant",
+              "stop_gained", "stop_lost",
+              "stop_retained_variant", "synonymous_variant",
+              "transcript_ablation"]
     splice_site = ["splice_acceptor_variant", "splice_donor_variant", "splice_region_variant"]
     deep_intronic = ["intron_variant"]
     five_prime_utr = ["5_prime_UTR_variant"]

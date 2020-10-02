@@ -1,5 +1,5 @@
 from sklearn import dummy
-from predictions.ml_prepare_dataset import MISSING_CONSTANT
+from src.predictions.ml_prepare_dataset import MISSING_CONSTANT
 
 class SingleFeatureClassifier(dummy.DummyClassifier):
 

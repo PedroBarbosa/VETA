@@ -1,9 +1,9 @@
 from collections import OrderedDict, defaultdict
 import pandas as pd
 import numpy as np
-from preprocessing.utils import ratio
+from src.preprocessing.utils import ratio
 import os
-from plots.plots_threshold_analysis import plot_threshold
+from src.plots.plots_threshold_analysis import plot_threshold
 import sys
 import logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,  format='%(asctime)s %(message)s')
@@ -25,7 +25,7 @@ def generate_threshold_analysis(dataset, filters, threshold_list, outdir, nofpoi
 
     for filtern, filterf in filters:
         df_f = filterf(dataset).copy()
-        if df_f.shape[0] < 60 or not all(i >= 30 for i in df_f['class'].value_counts().tolist()):
+        if df_f.shape[0] < 60 or not all(i >= 30 for i in df_f['label'].value_counts().tolist()):
             logging.warning('WARN: {} Df has not minimum required size (and class balance) for threshold analysis'.format(filtern))
             continue
 
@@ -61,14 +61,14 @@ def generate_threshold_analysis(dataset, filters, threshold_list, outdir, nofpoi
                 classification = df_[tool].map(classification_f)
                 # df_ = df.copy()
 
-                correct = np.sum(classification.eq(df_['class']))
+                correct = np.sum(classification.eq(df_['label']))
                 total = df_.shape[0]
                 acc = ratio(correct, total)
 
-                tp = np.sum(classification.eq(df_['class']) & classification)
-                fp = np.sum(~df_['class'] & classification)
-                fn = np.sum(df_['class'] & ~classification)
-                tn = np.sum(classification.eq(df_['class']) & ~classification)
+                tp = np.sum(classification.eq(df_['label']) & classification)
+                fp = np.sum(~df_['label'] & classification)
+                fn = np.sum(df_['label'] & ~classification)
+                tn = np.sum(classification.eq(df_['label']) & ~classification)
                 ap = tp + fn
                 ap_predicted = np.sum(classification)  # == tp +fp, sensitivity was being calculated with this value
 
@@ -87,7 +87,7 @@ def generate_threshold_analysis(dataset, filters, threshold_list, outdir, nofpoi
                 # print(acc,sensitivity,precision,specificity)
                 f1.append(ratio(2.0 * (precision * sensitivity), (sensitivity + precision)))
 
-                r = ratio(np.sum(df_f['class']), df_f.shape[0])
+                r = ratio(np.sum(df_f['label']), df_f.shape[0])
 
             bf1, new_t = defaultdict(list), {}
             final_thresholds[tool] = []

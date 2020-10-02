@@ -24,8 +24,8 @@ from gplearn.genetic import SymbolicTransformer
 from xgboost import XGBClassifier
 from bleedml.classifiers import CascadeForest
 
-from predictions.ml_single_feature_classifier import SingleFeatureClassifier
-from plots.ml.plot_classifiers import plot_classifiers
+from src.predictions.ml_single_feature_classifier import SingleFeatureClassifier
+from src.plots.ml.plot_classifiers import plot_classifiers
 
 import sys
 import logging

@@ -18,7 +18,7 @@ def plot_heatmap_unlabelled(df):
     
 def prepare_dataset_for_heatmap(df, thresholds):
     df['blank'] = pd.Series(np.nan, index = np.arange(df.shape[0]))
-    df = df[['class'] + [col for col in df.columns if '_prediction' in col]].copy()
+    df = df[['label'] + [col for col in df.columns if '_prediction' in col]].copy()
     df.columns = [GT_LABEL] + [col.replace("_prediction", "") for col in df.columns if '_prediction' in col]
     f = lambda x: pd.isna(x) and np.nan or (1-int(x))
     for col in df.columns:

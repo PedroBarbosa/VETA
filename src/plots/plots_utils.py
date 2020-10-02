@@ -1,12 +1,6 @@
-from collections import Counter
-
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FuncFormatter, MaxNLocator
-
-import pandas as pd
 import seaborn as sns 
-from cycler import cycler
 
 
 def set_style():

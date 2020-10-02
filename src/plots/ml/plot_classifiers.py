@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 plt.switch_backend('agg')
 sns.set(style="white")
-from plots.plots_utils import *
+from src.plots.plots_utils import *
 import matplotlib.patches as mpatches
 
 

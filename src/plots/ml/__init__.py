@@ -1,7 +1,7 @@
 from .plot_feature_correlation import generate_ml_feature_correlation
-from predictions.ml_feature_ranking import generate_feature_ranking
-from predictions.ml_classifiers import generate_classifiers_analysis
-from predictions.ml_prepare_dataset import prepare_dataset, undersample
+from src.predictions.ml_feature_ranking import generate_feature_ranking
+from src.predictions.ml_classifiers import generate_classifiers_analysis
+from src.predictions.ml_prepare_dataset import prepare_dataset, undersample
 from .plot_tree_builder import generate_tree_plot
 import sys
 import logging

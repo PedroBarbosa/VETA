@@ -13,3 +13,5 @@ analysis/src
 figures/
 *.pyc
 dbs/*
+test_data/
+VETA.egg-info/

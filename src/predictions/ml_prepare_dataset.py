@@ -7,7 +7,7 @@ from imblearn.under_sampling import RandomUnderSampler
 MISSING_CONSTANT = -9
 forbidden_prefixes = [
     'clinvar',
-    'class'
+    'label'
 ]
 
 label_fields = []
@@ -40,7 +40,7 @@ def build_converter(df, threshold_list):
 
 def convert_data(df, mapper):
     X = mapper.fit_transform(df)
-    y = df['class'].values
+    y = df['label'].values
     return X, y
 
 
