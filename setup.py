@@ -1,11 +1,12 @@
-import setuptools
+import setuptools, shutil
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+
 setuptools.setup(
     name='veta',
-    version='0.5.0',
+    version='0.5.1',
     licence='MIT',
     author='Pedro Barbosa',
     author_email='pedro.barbosa@medicina.ulisboa',
@@ -19,6 +20,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License"
     ],
+
     python_requires='>=3.6',    
     install_requires=[
         'matplotlib>=3.3.3',
@@ -35,8 +37,9 @@ setuptools.setup(
         'gplearn>=0.4.1',
         'sklearn-pandas>=2.0.4',
         'dtreeviz>=1.1.3'],
+    include_package_data=True,
+    package_data={'src': ['config/tools_config.txt']},
     entry_points={
         'console_scripts': ['veta=src.veta:main']
     }
 )
-

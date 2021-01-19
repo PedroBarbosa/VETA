@@ -2,6 +2,7 @@ import argparse
 import logging
 import os.path
 import sys
+import pkgutil, pkg_resources
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 hgvs_logger = logging.getLogger('hgvs')
@@ -13,8 +14,7 @@ from src.benchmark import BenchmarkTools
 from src.inspect import PredictionsEval
 from src.preprocessing.osutils import print_clinvar_levels
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-
+CONFIG_PATH = pkg_resources.resource_filename('src', 'config/tools_config.txt')
 
 def main():
     """
@@ -82,12 +82,10 @@ def main():
                                     "If the dataset is large, this step takes quite a "
                                     "while. very long time.")
 
-    parent_parser.add_argument('--config', default=os.path.join(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__))), "tools_config.txt"),
+    parent_parser.add_argument('--config', default=CONFIG_PATH,
                                help='Path to the config file that maps tools to the corresponding '
-                                    'VCF annotation. Default: \'map_tools2vcf_annotation.txt\' file '
-                                    'in the src code directory')
-
+                                    'VCF annotation. Default: \'tools_config.txt\' file '
+                                    'in the src/config github directory')
     # Subparsers based on parent
     benchmark_parser = subparsers.add_parser("benchmark", help='Benchmark prediction tools based on labelled data.',
                                              parents=[parent_parser])

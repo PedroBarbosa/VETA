@@ -177,6 +177,7 @@ class Base(object):
         logging.info("Assigning variants location")
         if self.location_from == "HGVSc":
             hp = hgvs.parser.Parser()
+
             df['location'] = df['HGVSc'].apply(get_location, hp=hp)
             if self.is_intronic:
                 df[['intron_bin', 'intron_offset']] = df.apply(
@@ -381,6 +382,7 @@ class Base(object):
         _infile = open(config, 'r')
         data = defaultdict(list)
 
+
         for line in _infile:
             line = line.rstrip()
             if line.startswith("#") or not line:
@@ -429,5 +431,9 @@ class Base(object):
                                                               "line:\n{}".format(_fields[5], AVAILABLE_FUNCTIONS,
                                                                                  line)
                     data[_fields[0]].append(_fields[5])
+
+        if len(data) < 2:
+            print(data)
+            raise ValueError('Config file requires at least two tools to be compared.')
 
         return data

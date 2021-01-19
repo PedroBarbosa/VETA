@@ -3,6 +3,7 @@ from typing import List
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import seaborn as sns
 from matplotlib.lines import Line2D
 
@@ -20,7 +21,9 @@ def plot_area(df: pd.DataFrame, outdir: str):
     """
 
     fig, ax = plt.subplots(figsize=(12, 12))
+
     map_colors = {"unpredictable": "grey",
+                  np.nan: "grey",
                   "is_benign": "darkblue",
                   "is_pathogenic": "darkred"}
 

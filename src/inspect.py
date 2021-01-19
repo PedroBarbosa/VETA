@@ -3,7 +3,6 @@ from collections import defaultdict
 from typing import List
 
 import numpy as np
-import pandas as pd
 
 from src.base import Base
 from src.plots.plots_inspect_mode import *
@@ -12,9 +11,6 @@ from src.predictions.filters import filters_location
 from src.predictions.metrics import generate_statistics
 from src.preprocessing.osutils import check_file_exists
 from src.preprocessing.osutils import ensure_folder_exists
-
-TOOLS_CONFIG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                            "tools_config.txt")
 
 
 class PredictionsEval(Base):
@@ -36,7 +32,7 @@ class PredictionsEval(Base):
                  labels: str = None,
                  allele_frequency_col: str = "gnomADg_AF",
                  skip_heatmap: bool = False,
-                 tools_config: str = TOOLS_CONFIG):
+                 tools_config: str = "tools_config.txt"):
 
         """
         ----
@@ -150,10 +146,13 @@ class PredictionsEval(Base):
                 ratios_df = _df_just_pred.set_index('variant_id').drop(["location", "HGVSc"], axis=1).copy()
                 ratios_df = ratios_df.apply(lambda x: x.value_counts(True, dropna=False),
                                             axis=1).fillna(0).sort_values([True], ascending=False)
+
                 ratios_df.rename(columns={False: 'is_benign',
                                           True: 'is_pathogenic',
                                           np.nan: "unpredictable"},
                                  inplace=True)
+
+                ratios_df = self._fix_col_names(ratios_df)
 
                 _top_predicted_patho = ratios_df[ratios_df.is_pathogenic > 0.5]
                 if _top_predicted_patho.shape[0] > 0:
@@ -256,3 +255,17 @@ class PredictionsEval(Base):
                 stats_df = pd.DataFrame(statistics).drop(columns=['filter'])
                 stats_df.sort_values([self.metric], ascending=False).to_csv(outfile, sep="\t", index=False)
                 plot_accuracy(stats_df, self.metric, filter_name, outdir)
+
+    def _fix_col_names(self, ratios_df: pd.DataFrame):
+        """
+        Fixes colnames when unpredictable variants were not found
+
+        :param pd.DataFrame ratios_df: Input df
+        """
+
+        if "unpredictable" not in ratios_df.columns:
+            for i in range(0, len(ratios_df.columns)):
+                if ratios_df.columns[i] not in ['is_benign', 'is_pathogenic']:
+                    ratios_df = ratios_df.rename(columns={ratios_df.columns[i]: "unpredictable"})
+        return ratios_df
+
