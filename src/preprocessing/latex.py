@@ -1,6 +1,7 @@
+import logging
 import os
 import sys
-import logging
+
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,  format='%(asctime)s %(message)s')
 from typing import List
 
@@ -32,8 +33,9 @@ def generate_clinvar_table(datasets: dict, filters_var_type: List, out_dir: str)
         with open(fname, "w") as f:
             f.write("\\begin{tabular}{ | l | l | r r r | r r r | r r r | r  r  r | }\n")
             f.write("\\cline{3-14}")
-            f.write(" \\multicolumn{2}{c|}{} & \\multicolumn{3}{c|}{1*} & \\multicolumn{3}{c|}{2*} & \\multicolumn{3}{c|}{3*} & \\multicolumn{3}{c|}{4*} \\\\ \\cline{3-14}\n")
-            cols = " & ".join(4*["B & P & T"])
+            f.write("\\multicolumn{2}{c|}{} & \\multicolumn{3}{c|}{1*} & \\multicolumn{3}{c|}{2*} & \\multicolumn{3}{"
+                    "c|}{3*} & \\multicolumn{3}{c|}{4*} \\\\ \\cline{3-14}\n")
+            cols = " & ".join(4 * ["B & P & T"])
             f.write(" \\multicolumn{2}{c|}{} & " + cols + " \\\\ \\hline\n")
 
             for likely in ["", "_l"]:
@@ -60,3 +62,28 @@ def generate_clinvar_table(datasets: dict, filters_var_type: List, out_dir: str)
                         f.write("\\\\ \n")
 
             f.write("\\end{tabular}\n")
+
+
+def generate_proposed_thresholds_latex(thresholds: dict,
+                                       location: str,
+                                       out_dir: str):
+    """
+    Generates a ready latex table with new thresholds
+    for each tool at each beta value
+
+    :param dict thresholds: Dictionary with reference and
+        proposed thresholds for all the tools
+    :param str location: Location filter for the variants analysed
+
+    :param str out_dir: Output directory to write
+        the table
+    """
+    with open(os.path.join(out_dir, "proposed_thresholds_{}.tex".format(location)), 'w') as out:
+        out.write("""\\begin{tabular}{ p{3cm} >{\\raggedleft\\arraybackslash}p{1.5cm} >{\\raggedleft\\arraybackslash}p{1cm} >{\\raggedleft\\arraybackslash}p{1cm} >{\\raggedleft\\arraybackslash}p{1cm} >{\\raggedleft\\arraybackslash}p{1cm} >{\\raggedleft\\arraybackslash}p{1cm}}
+    \\hline
+    Tool       & Original & 1/1   & 1/2   & 1/3   & 1/5   & 1/10  \\\\
+    \\hline
+    """)
+        for tool, new_t in thresholds.items():
+            out.write("{}&\t{}\n".format(tool, '\t&'.join([str(t) for t in new_t])) + "\\\\\n")
+        out.write("\\end{tabular}")

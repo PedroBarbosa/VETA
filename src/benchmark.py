@@ -1,22 +1,23 @@
+import fnmatch
+from collections import defaultdict
 from typing import List
-from src.predictions.filters import filters_location
-from src.base import Base
-from src.predictions.apply import apply_tool_predictions
-from src.preprocessing.osutils import ensure_folder_exists
-from src.plots.plots_benchmark_mode import *
+
 import pandas as pd
+
+from src.base import Base
+from src.plots.plots_benchmark_mode import *
+from src.plots.plots_machine_learning import plot_feature_correlation
 from src.predictions import introns
 from src.predictions import metrics
-from collections import defaultdict
-import sys
-import logging
-import fnmatch
-
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
-from src.preprocessing.latex import generate_clinvar_table
+from src.predictions.apply import apply_tool_predictions
+from src.predictions.metapredictions import Metapredictions
+from src.predictions.thresholds import perform_threshold_analysis
 from src.preprocessing.clinvar import *
+from src.preprocessing.latex import generate_clinvar_table
+from src.preprocessing.osutils import ensure_folder_exists
+
 TOOLS_CONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "map_tools2vcf_annotation.txt")
+                            "tools_config.txt")
 
 
 class BenchmarkTools(Base):
@@ -27,7 +28,7 @@ class BenchmarkTools(Base):
 
     def __init__(self, dataset: str,
                  out_dir: str,
-                 scope_to_predict: List = None,
+                 scopes_to_predict: List = None,
                  types_of_variant: List = None,
                  metric: str = "weighted_accuracy",
                  location: str = "HGVSc",
@@ -36,6 +37,7 @@ class BenchmarkTools(Base):
                  clinvar_stars: str = "3s_l",
                  do_threshold_analysis: bool = False,
                  do_machine_learning: bool = False,
+                 allele_frequency_col: str = "gnomADg_AF",
                  skip_heatmap: bool = False,
                  tools_config: str = TOOLS_CONFIG):
 
@@ -44,24 +46,24 @@ class BenchmarkTools(Base):
         Base args described in Base class
         ----
 
-        :param  str clinvar_stars:
+        :param str clinvar_stars:
 
         :param bool do_threshold_analysis:
 
         :param bool do_machine_learning:
-
-        :param bool skip_heatmap:
         """
         dataset, is_clinvar = self.check_dataset_arg(dataset)
         super().__init__(vcf=dataset,
                          out_dir=out_dir,
-                         scope_to_predict=scope_to_predict,
+                         scopes_to_predict=scopes_to_predict,
                          types_of_variant=types_of_variant,
                          metric=metric,
                          location=location,
                          genome=genome,
                          is_intronic=is_intronic,
                          is_clinvar=is_clinvar,
+                         allele_frequency_col=allele_frequency_col,
+                         skip_heatmap=skip_heatmap,
                          tools_config=tools_config)
 
         self.clinvar_stars = clinvar_stars
@@ -99,29 +101,47 @@ class BenchmarkTools(Base):
                                          "level. Try a more relaxed value for the '-c'" \
                                          " arg.".format(self.clinvar_stars)
 
-        self.do_performance_comparison()
+        self.top_tools = self.do_performance_comparison()
 
         if self.is_intronic:
             introns.do_intron_analysis(self.df,
                                        thresholds=self.thresholds,
                                        metric=self.metric,
-                                       out_dir=self.out_dir)
+                                       out_dir=self.out_dir,
+                                       af_column=self.allele_frequency_col)
+
+        if self.do_threshold_analysis:
+            if self.is_clinvar:
+                # For now, threshold analysis is done using a highly confident set (3stars with likely)
+                new_thresholds = perform_threshold_analysis(self.clinvar_levels_dict['3s_l'],
+                                                            self.location_filters,
+                                                            self.thresholds,
+                                                            self.out_dir)
+                # TODO evaluate performance with new thresholds
+
+            else:
+                logging.info("Dataset is not from Clinvar. Threshold analysis will be skipped.")
+
+        if self.do_machine_learning:
+            self.do_ml_analysis()
 
     def do_performance_comparison(self):
         """
         Generates performance stats and plots
         for the processed df
 
-        :param pd.DataFrame df: Input df
-        :param dict kwargs: Arbitrary number
-            of args with all the attributes from
-            of the ToolBenchmark object
-        :return pd.DataFrame: df with predictions
+        :return dict: df with predictions
         """
         logging.info("----------------------------------")
         logging.info("Tools performance analysis started")
         logging.info("----------------------------------")
 
+        top_tools = {}
+        if self.is_clinvar:
+            logging.info("Evaluations are done with Clinvar variants that belong "
+                         "to the filtering strategy employed ({}). If you want to "
+                         "be more permissive or stringent, play with the '--clinvar_stars' "
+                         "argument.".format(self.clinvar_stars))
         for var_type, _var_type_func in self.variant_types:
             outdir = os.path.join(self.out_dir, "tools_benchmark", var_type)
             ensure_folder_exists(outdir)
@@ -138,34 +158,38 @@ class BenchmarkTools(Base):
                 df['count_class'] = df.groupby('outcome')['outcome'].transform('size')
 
                 if df.shape[0] < 10:
-                    logging.info("Less than 10 {} {} variants found ({})"
+                    logging.info("Less than 10 '{}' '{}' variants found ({})"
                                  ". Skipping!".format(var_type, _location, df.shape[0]))
                     continue
 
                 df = self.apply_thresholds(df, _location)
 
+                if not self.skip_heatmap:
+                    if df.shape[0] > 10:
+                        logging.info("Generating performance heatmaps for '{}' '{}' variants. "
+                                     "If dataset is large, this step will take long time.".format(var_type, _location))
+                        plot_heatmap(df, _location, outdir)
+                    else:
+                        logging.info("Less than 10 variants located in '{}' of type '{}'. " \
+                                     "Skipping heatmap generation.".format(_location, var_type))
+
                 for tool, *args in self.thresholds:
                     try:
+                        scored = np.sum(~df[tool + '_prediction'].isnull())
+                        if 0 < scored < df.shape[0] / 10:
+                            logging.info("{} scored some '{}' variants, but they account for less than "
+                                         "10% of the dataset size. Although stats file will include these results,"
+                                         "plots will not show those.".format(tool, _location))
+
                         # distributions of each class
                         # are only plotted for SNPs and
                         # all types for splicesite and
                         # coding locations
-                        if (filters_location == 'all' or
-                            filters_location == "splicesite" or
-                            filters_location == "coding") and (var_type == "snps" or
-                                                               var_type == "all_types"):
-
+                        if (_location in ['all', 'splicesite', 'coding'] and
+                                var_type in ['snps', 'all_types']):
                             plot_density_by_class(df[[tool, "label"]],
                                                   thresholds=self.thresholds,
-                                                  fname=os.path.join(outdir,
-                                                                     'class_dist_' + tool
-                                                                     + "_" + _location))
-
-                        scored = np.sum(~df[tool + '_prediction'].isnull())
-                        if 0 < scored < df.shape[0] / 10:
-                            logging.info("{} scored some {} variants, but they account for less than "
-                                         "10% of the dataset size. Although stats file will include these results,"
-                                         "plots will not show those.".format(tool, _location))
+                                                  fname=os.path.join(outdir, 'class_dist_' + tool + "_" + _location))
 
                         statistics = metrics.generate_statistics(df, statistics, _location, tool)
 
@@ -183,18 +207,23 @@ class BenchmarkTools(Base):
                 barplot_plot = os.path.join(outdir, "tools_analysis_{}_{}".format(var_type, _location))
                 metrics_plot = os.path.join(outdir, "tools_metrics_{}_{}".format(var_type, _location))
 
-                plot_allele_frequency(df, af_plot)
+                plot_allele_frequency(df, af_plot, self.allele_frequency_col)
                 plot_unscored(stats_all_df, unscored_plot)
                 plot_tools_barplot(stats_df, barplot_plot, self.metric)
                 plot_metrics(stats_df, metrics_plot, self.metric)
 
                 stats_all_df.drop(['filter'], axis=1).to_csv(out_stats, sep="\t", index=False)
-                stats_all_df[["tool", "weighted_accuracy", "accuracy",
-                              "weighted_F1", "F1", "coverage"]].sort_values([self.metric],
-                                                                            ascending=False).to_csv(out_ranks,
-                                                                                                    sep="\t",
-                                                                                                    index=False)
+
+                ranked_stats = stats_all_df[["tool", "weighted_accuracy", "accuracy",
+                                             "weighted_F1", "F1", "coverage",
+                                             "specificity", "sensitivity",
+                                             "precision"]].sort_values([self.metric], ascending=False)
+
+                top_tools[_location] = ranked_stats.head(5) if ranked_stats.shape[0] > 5 else ranked_stats
+                ranked_stats.to_csv(out_ranks, sep="\t", index=False)
+
         logging.info("Done!")
+        return top_tools
 
     def apply_thresholds(self, df: pd.DataFrame,
                          filter_location: str,
@@ -241,6 +270,7 @@ class BenchmarkTools(Base):
             refers to clinvar (if a file)
         """
         # if reference datasets are in directory
+        print(dataset)
         if os.path.isdir(dataset):
             fname_benign = [filename for filename in os.listdir(dataset) if
                             any(fnmatch.fnmatch(filename, pattern) for pattern in ["*benign*[vcf.bgz]",
@@ -262,3 +292,49 @@ class BenchmarkTools(Base):
         else:
             raise ValueError("Set a valid value for the input dataset "
                              "(directory or file)")
+
+    def do_ml_analysis(self):
+        """
+        Machine learning analysis of tools scores.
+        """
+        logging.info("---------------------------------")
+        logging.info("Starting meta-prediction analysis")
+        logging.info("---------------------------------")
+        out_dir = os.path.join(self.out_dir, "machine_learning")
+        ensure_folder_exists(out_dir)
+
+        for _loc, filter_func in self.location_filters:
+            df_f = filter_func(self.df).copy()
+
+            if df_f.shape[0] < 100:
+                logging.info("Less than 100 variants in '{}' dataframe. "
+                             "Machine learning analysis will be skipped.".format(_loc))
+                continue
+
+            logging.info("Analyzing '{}' variants.".format(_loc))
+            ml_data = Metapredictions(df_f, _loc, self.thresholds,
+                                      out_dir,
+                                      top_tools=self.top_tools,
+                                      rank_metric=self.metric)
+
+            plot_feature_correlation(ml_data.df, _loc, out_dir)
+
+            n_minority = min(ml_data.df.label.value_counts())
+            if n_minority < 50:
+                logging.info("Less than 50 variants of the minority class (only {}) in '{}' "
+                             "variants. Classifiers will not be trained.".format(n_minority, _loc))
+                continue
+
+            if ml_data.df.shape[1] < 3:
+                logging.info("Less than 3 features (aka tool scores) available"
+                             " ({}) after removing predictors with many missing "
+                             "values in '{}' variants. Classifiers will not be "
+                             "trained for such small array size.".format(ml_data.df.shape[1], _loc))
+
+            logging.info("Applying classifiers to data.")
+            trained_clfs = ml_data.do_classification()
+
+            logging.info("Generating feature ranking.")
+            ml_data.generate_feature_ranking(trained_clfs)
+            logging.info("Generating decision tree plot")
+            ml_data.generate_tree_plot(trained_clfs)

@@ -1,20 +1,24 @@
-import pandas as pd
-import numpy as np
-import sys
 import logging
-from src.preprocessing.utils import ratio
+import sys
+from typing import Union, List
+
+import numpy as np
+import pandas as pd
+
+from src.preprocessing.utils_tools import ratio
+
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 from collections import defaultdict
-from src.preprocessing import utils
+from src.preprocessing import utils_tools
 from sklearn.metrics import auc
-from scipy import integrate
 
 
 def generate_statistics(df: pd.DataFrame,
                         statistics: defaultdict,
                         filter_location: str,
                         tool: str,
-                        is_single_label: bool = False):
+                        is_single_label: bool = False,
+                        f_beta: Union[List, int] = None):
     """
     Compute all stats for a single tool
 
@@ -27,6 +31,8 @@ def generate_statistics(df: pd.DataFrame,
     :param bool is_single_label: Whether df refers
         to an analysis in the inspect mode with a
         single label. Default: `False`.
+    :param Union[List, int] f_beta: Calculate F beta score for the given
+    beta value(s). Default: `None`
     :return defaultdict: Updated dict
     """
     # s_df = df[~df[tool + '_prediction'].isnull()]
@@ -47,13 +53,13 @@ def generate_statistics(df: pd.DataFrame,
         nan = np.sum(df[tool + '_prediction'].isnull())
         correct = tp + tn
 
-        precision = utils.ratio(tp, tp + fp)
-        recall = utils.ratio(tp, tp + fn)
-        coverage = utils.ratio(tp + tn + fp + fn, total)
-        accuracy = utils.ratio(correct, (total - nan))
+        precision = utils_tools.ratio(tp, tp + fp)
+        recall = utils_tools.ratio(tp, tp + fn)
+        coverage = utils_tools.ratio(tp + tn + fp + fn, total)
+        accuracy = utils_tools.ratio(correct, (total - nan))
 
         statistics['precision'].append(precision)
-        statistics['specificity'].append(utils.ratio(tn, tn + fp))
+        statistics['specificity'].append(utils_tools.ratio(tn, tn + fp))
         statistics['sensitivity'].append(recall)
         statistics['tp'].append(tp)
         statistics['fp'].append(fp)
@@ -78,6 +84,22 @@ def generate_statistics(df: pd.DataFrame,
             statistics['F1'].append(0)
             statistics['weighted_F1'].append(0)
 
+        if f_beta is not None:
+            if isinstance(f_beta, int):
+                f_beta = [f_beta]
+
+            for _b in f_beta:
+                try:
+                    statistics['Fbeta_' + str(_b)].append(round((1.0 + _b ** 2) * (precision * recall) /
+                                                                ((precision * _b ** 2) + recall), 3))
+
+                    statistics['weighted_Fbeta_' + str(_b)].append(
+                        round(coverage * (1.0 + _b ** 2) * (precision * recall) /
+                              ((precision * _b ** 2) + recall), 3))
+                except ZeroDivisionError:
+                    statistics['Fbeta_' + str(_b)].append(0)
+                    statistics['weighted_Fbeta_' + str(_b)].append(0)
+
     else:
         correct = np.sum(s_df['label'].eq(s_df[tool]))
         nan = np.sum(df[tool].isnull())
@@ -96,7 +118,7 @@ def generate_statistics(df: pd.DataFrame,
     return statistics
 
 
-def do_ROC_analysis(data: pd.DataFrame,
+def do_roc_analysis(data: pd.DataFrame,
                     name: str,
                     direction: str,
                     n_thresholds: int = 100):

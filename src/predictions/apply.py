@@ -1,11 +1,7 @@
+from typing import List
+
 import numpy as np
 import pandas as pd
-from typing import List
-import logging
-import sys
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
-from collections import defaultdict
-from src.preprocessing import utils
 
 
 def apply_tool_predictions(df: pd.DataFrame, thresholds: List):
@@ -34,5 +30,3 @@ def apply_tool_predictions(df: pd.DataFrame, thresholds: List):
 
         df[tool + '_prediction'] = df[tool].apply(classification)
     return df
-
-

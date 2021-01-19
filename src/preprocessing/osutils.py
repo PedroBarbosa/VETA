@@ -1,8 +1,7 @@
-import os
-import sys
 import logging
-
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
+import os
+import tempfile
+from itertools import zip_longest
 from typing import Union
 
 
@@ -41,6 +40,47 @@ def setup_output_directory(directory: Union[str, None]):
     assert not os.path.isdir(out_dir), "Output directory {} exists. " \
                                        "Remove it or set a new one.".format(out_dir)
     return out_dir
+
+
+def split_file_in_chunks(file: str,
+                         header: list,
+                         n_variants: int,
+                         chunk_size: int = 2000):
+    """
+    Receives
+    :param str file: Input VCF to split without the header
+    :param list header: VCF header as an iterable
+    :param int n_variants: Number of variants in the input `file`
+    :param int chunk_size: Number of variants per each new smaller file. Default: `2000`
+
+    :return list: List with tmp file names created
+    """
+    # Output Files
+    outlist = []
+
+    # Ceil division
+    n_chunks = -(-n_variants // chunk_size)
+    logging.info("More than 5000 variants found ({}). "
+                 "Spliting file in {} chunks of {} variants".format(n_variants, n_chunks, chunk_size))
+
+    # Decode header
+    _header = [x.decode('utf-8') for x in header]
+
+    # Process variants
+    with open(file) as f:
+        for i, g in enumerate(grouper(n_chunks, f, fillvalue=''), 1):
+            with tempfile.NamedTemporaryFile('w', delete=False) as tmp:
+                tmp.writelines(_header)
+                tmp.writelines(g)
+            outlist.append(tmp.name)
+
+    return outlist
+
+
+def grouper(n, file_iterable, fillvalue=None):
+    "Collect data into fixed-length chunks or blocks"
+    args = [iter(file_iterable)] * n
+    return zip_longest(fillvalue=fillvalue, *args)
 
 
 def print_clinvar_levels():

@@ -1,91 +1,89 @@
-import os.path
 import argparse
-import sys
 import logging
-from src.preprocessing.osutils import print_clinvar_levels
-from src.inspect import PredictionsEval
-from src.benchmark import BenchmarkTools
+import os.path
+import sys
+
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
-from src.predictions.filters import *
+hgvs_logger = logging.getLogger('hgvs')
+hgvs_logger.setLevel(logging.CRITICAL)
+scikit_logger = logging.getLogger('sklearn')
+scikit_logger.setLevel(logging.CRITICAL)
 
-import warnings
+from src.benchmark import BenchmarkTools
+from src.inspect import PredictionsEval
+from src.preprocessing.osutils import print_clinvar_levels
 
-warnings.filterwarnings("ignore")
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-# def run_standard_analysis(dataset, all_data, out_dir, clinvarStars, intronic_analysis, thresholdAnalysis,
-#                           scope_to_predict,
-#                           types_to_analyse,
-#                           metric_to_evaluate,
-#                           machineLearning,
-#                           skipHeatmap,
-#                           new_thresholds_done,
-#                           clinvar_from_file=None):
-#
-#
-#     if skipHeatmap is False:
-#         generate_heatmap(df, variant_types_to_evaluate, filters, threshold_list, dataset, out_dir)
-#
-#     if thresholdAnalysis and new_thresholds_done is False:
-#         new_thresholds = generate_threshold_analysis(all_data['3s_l'], filters, threshold_list, out_dir, 100)
-#         generate_performance_comparison_with_new_thresholds(df_to_evaluate, variant_types_to_evaluate,
-#                                                             filters, threshold_list, metric_to_evaluate,
-#                                                             dataset, out_dir, new_thresholds[1])
-#
-#     if machineLearning:
-#         logging.info("---------------------------")
-#         logging.info("Starting ML analysis. ")
-#         logging.info("---------------------------")
-#         logging.info("Generating feature correlation matrix from scores.")
-#         out_dir = os.path.join(out_dir, "machineLearning")
-#         os.mkdir(out_dir)
-#         generate_ml_analysis(df, filters, threshold_list, dataset, out_dir)
-#         logging.info("All done!")
-#     return True if thresholdAnalysis else False
-
-
 def main():
-    parser = argparse.ArgumentParser(prog="veta", description='Simple tool to evaluate variant '
-                                                              'prediction methods')
+    """
+    Main function
+    """
+    parser = argparse.ArgumentParser(prog="veta",
+                                     description='Simple tool to evaluate variant '
+                                                 'prediction methods')
 
     subparsers = parser.add_subparsers(dest="command")
 
     # Parent subparser. Note `add_help=False` and creation via `argparse.`
     parent_parser = argparse.ArgumentParser(add_help=False)
-    parent_parser.add_argument('-o', metavar='--out_dir', help='Path to store all the output results. '
-                                                               'Default: "out_VETA"')
+    parent_parser.add_argument('-o', '--out_dir', metavar='', help='Path to store all the output results. '
+                                                                   'Default: "out_VETA"')
 
-    parent_parser.add_argument('-s', metavar='--scope_to_predict',
+    parent_parser.add_argument('-s', '--scopes_to_predict', metavar='',
                                help='Restrict analysis to a subset of tools based on their '
                                     'scope. Available options: {%(choices)s}. Default: Tools from '
                                     'all scores are used.',
                                nargs='+', choices=('Conservation', 'Functional', 'Protein', 'Splicing'))
 
-    parent_parser.add_argument('-t', metavar='types_of_variant',
+    parent_parser.add_argument('-t', '--types_of_variant', metavar='',
                                help='Restrict analysis to the given variant types. '
                                     'Available options: {%(choices)s}. Default: Performance '
                                     'is measured for all variants and each subtype.',
                                nargs='+', choices=('all_types', 'snps', 'indels', 'insertions', 'deletions', 'mnps'))
 
-    parent_parser.add_argument('-m', metavar='--metric', help='Metric to rank the tools. Available options: '
-                                                              '{%(choices)s}. Default: "weighted_accuracy."',
+    parent_parser.add_argument('-m', '--metric', metavar='',
+                               help='Metric to rank the tools. Available options: '
+                                    '{%(choices)s}. Default: "weighted_accuracy."',
                                choices=('weighted_accuracy', 'accuracy', 'F1', 'weighted_F1', 'coverage'),
                                default='weighted_accuracy')
 
-    parent_parser.add_argument('-l', metavar='--location', default="HGVSc", choices=("HGVSc", "Consequence"),
+    parent_parser.add_argument('-l', '--location', metavar='', default="HGVSc", choices=("HGVSc", "Consequence"),
                                help='VCF field to extract location of the variant. Available options: '
                                     '{%(choices)s}. Default: "HGVSc".')
 
-    parent_parser.add_argument('-g', metavar='--genome', default="hg19", choices=("hg19", "hg38"),
+    parent_parser.add_argument('-g', '--genome', metavar='', default="hg19", choices=("hg19", "hg38"),
                                help='Genome build of the VCF. Available options: {%(choices)s}. '
                                     'Default: "hg19".')
 
-    parent_parser.add_argument('-i', '--is_intronic', help='Perform additional analysis of '
-                                                           'intronic variants extracted from '
-                                                           'HGVSc field.', action='store_true')
-    parent_parser.add_argument('--config', default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                                "map_tools2vcf_annotation.txt"),
+    parent_parser.add_argument('-i', '--intronic_bins', help='Perform additional analysis of '
+                                                             'intronic variants extracted from '
+                                                             'HGVSc field in a bin-based faction. '
+                                                             'Bins are attributed based on the distance '
+                                                             'of the variant to the nearest splice junction',
+                               action='store_true')
+
+    parent_parser.add_argument('-a', '--allele_frequency', metavar='', default="gnomADg_AF",
+                               help='VCF field (within VEP annotations, or INFO field) '
+                                    'that measures frequency of the variant in a '
+                                    'population. If it exists in the input data, additional '
+                                    'plots will be drawn. If absent, VETA will simply ignore it. '
+                                    'Default: "gnomADg_AF". Note: Missing data will be treated as '
+                                    'if the variant is absent in population (converted to 0). '
+                                    'Fo example, if ExAC frequencies are given, intronic variants '
+                                    'will be given 0, but that does not mean that the variant does '
+                                    'not exist in gnomAD, for example. In this case, '
+                                    'it would be appropriate to just analyze the frequency plots of '
+                                    'coding variants.')
+
+    parent_parser.add_argument('--skip_heatmap', action="store_true",
+                               help="Skip heatmap generation for performance analysis. "
+                                    "If the dataset is large, this step takes quite a "
+                                    "while. very long time.")
+
+    parent_parser.add_argument('--config', default=os.path.join(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))), "tools_config.txt"),
                                help='Path to the config file that maps tools to the corresponding '
                                     'VCF annotation. Default: \'map_tools2vcf_annotation.txt\' file '
                                     'in the src code directory')
@@ -104,17 +102,13 @@ def main():
                                        '\'*benign*\' (or \'*neutral*\' and \'*pathogenic*\' (or \'*deleterious*\') '
                                        'tags must exist in their names.')
 
-    benchmark_parser.add_argument('-c', metavar='--clinvar_stars', default='3s_l',
+    benchmark_parser.add_argument('-c', '--clinvar_stars', metavar='', default='3s_l',
                                   help='Level of filtering when dataset refers to the clinvar database. '
                                        'By default, a high confidence clinvar subset (3 stars with likely '
                                        'annotations) is used for performance evaluation and reference '
                                        'threshold analysis (if --do_threshold_analysis is True). '
                                        'Default: "3s_l". All the possible filtering levels are visible '
                                        'with the argument \'--listClinvarLevels\'.')
-
-    benchmark_parser.add_argument('--list_clinvar_levels', action='store_true',
-                                  help='List the available clinvar filtering '
-                                       'levels to run the analysis.')
 
     benchmark_parser.add_argument('--do_threshold_analysis', action="store_true",
                                   help="Enable reference thresholds analysis when Clinvar is used. "
@@ -129,33 +123,30 @@ def main():
                                        "create an ensemble classifier that combines multiple"
                                        " scores. Default: False.")
 
-    benchmark_parser.add_argument('--skip_heatmap', action="store_true",
-                                  help="Skip heatmap generation for performance analysis. "
-                                       "If the dataset is large, this step takes quite a "
-                                       "while. very long time.")
-
     predict_parser = subparsers.add_parser("inspect", help='Evaluate predictions from unlabelled variants.',
                                            parents=[parent_parser])
 
     predict_parser.add_argument(dest='vcf', help="VCF file to evaluate tools predictions.")
 
-    predict_parser.add_argument('-b', metavar='--best_tools',
-                                help="Restrict analysis to the best set of tools "
+    predict_parser.add_argument('-b', '--best_tools', metavar='',
+                                help="Restrict heatmap analysis to the best set of tools "
                                      "obtained from a previous run using a reference "
                                      "catalog (e.g. Clinvar). It must refer to the file "
                                      "\'tools_ranking*.csv\' that is written when running "
                                      "the aforementioned analysis. Default: Use all tools "
-                                     "available in the analysis.")
+                                     "available in the analysis. It requires '--skip_heatmap' "
+                                     "is 'False'")
 
-    predict_parser.add_argument('-n', metavar='--n_best_tools', type=int, default=5,
+    predict_parser.add_argument('-n', '--n_best_tools', metavar='', type=int, default=5,
                                 help="Number of best tools selected from the ranking "
                                      "provided in the \'--best_tools\' argument. Default: 5.")
 
     predict_parser.add_argument('--plot_these_tools', metavar='tool_name', nargs='+',
                                 help="Plot scores distribution for the given tools.")
 
-    predict_parser.add_argument('--labels', metavar='vcf_has_labels',
-                                choices=("Benign", "Pathogenic"),
+    predict_parser.add_argument('--labels', metavar='label_type',
+                                choices=("Benign", "Neutral", "Pathogenic",
+                                         "Deleterious", "Functional"),
                                 help="If VCF represents a list of labelled variants, "
                                      "additional metrics will be inferred. This "
                                      "argument asks for the label type of input vcf. "
@@ -168,91 +159,48 @@ def main():
     args = parser.parse_args()
 
     clinvar_stars = ['1s', '2s', '3s', '4s', '1s_l', '2s_l', '3s_l', 'clinvar', 'clinvar_l']
-    is_clinvar_from_file = False
-
     ##############################
     ## Argparse args processing ##
     ##############################
-
     if args.command == "inspect":
         PredictionsEval(args.vcf,
-                        args.o,
-                        args.s,
-                        args.t,
-                        args.m,
-                        args.l,
-                        args.g,
-                        args.is_intronic,
-                        args.b,
-                        args.n,
+                        args.out_dir,
+                        args.scopes_to_predict,
+                        args.types_of_variant,
+                        args.metric,
+                        args.location,
+                        args.genome,
+                        args.intronic_bins,
+                        args.best_tools,
+                        args.n_best_tools,
                         args.plot_these_tools,
                         args.labels,
-                        args.config
-                        )
+                        args.allele_frequency,
+                        args.skip_heatmap,
+                        args.config)
+
     elif args.command == "benchmark":
-        if args.list_clinvar_levels:
+        if args.clinvar_stars not in clinvar_stars:
+            logging.info("Error. Set a valid value for the '--clinvar_stars' argument. Possible options "
+                         "(value with a simple description):")
             print_clinvar_levels()
 
-        assert args.c in clinvar_stars, "Set a valid value for the '--clinvar_stars' argument."
+        assert args.clinvar_stars in clinvar_stars, "Set a valid value for the '--clinvar_stars' argument."
 
         BenchmarkTools(args.dataset,
-                       args.o,
-                       args.s,
-                       args.t,
-                       args.m,
-                       args.l,
-                       args.g,
-                       args.is_intronic,
-                       args.c,
+                       args.out_dir,
+                       args.scopes_to_predict,
+                       args.types_of_variant,
+                       args.metric,
+                       args.location,
+                       args.genome,
+                       args.intronic_bins,
+                       args.clinvar_stars,
                        args.do_threshold_analysis,
                        args.do_machine_learning,
+                       args.allele_frequency,
                        args.skip_heatmap,
                        args.config)
-
-
-
-
-    # ##################################
-    # #####Reference datasets analysis##
-    # ##################################
-    # if reference_vcf_analysis:
-    #     if args.datasets:
-    #         # variable set to run threshold analysis only once, even if multiple datasets are provided
-    #         new_thresholds_done = False
-    #         for dataset in args.datasets:
-    #             if dataset in possible_datasets:
-    #                 all_data = preprocess(args.location, ROOT_DIR, args.thresholdAnalysis,
-    #                                       args.intronic,
-    #                                       is_clinvar_from_file,
-    #                                       dataset=dataset)
-    #
-    #             else:
-    #                 all_data = preprocess(args.location, ROOT_DIR, args.thresholdAnalysis,
-    #                                       args.intronic,
-    #                                       is_clinvar_from_file,
-    #                                       dataset=dataset, newDataset=True)
-    #
-    #             new_thresholds_done = run_standard_analysis(dataset, all_data, OUT_DIR, args.clinvarStars,
-    #                                                         args.intronic,
-    #                                                         args.thresholdAnalysis,
-    #                                                         args.s,
-    #                                                         args.t,
-    #                                                         args.metric,
-    #                                                         args.machineLearning,
-    #                                                         args.skipHeatmap,
-    #                                                         new_thresholds_done,
-    #                                                         clinvar_from_file=is_clinvar_from_file)
-    #
-    #     else:
-    #         clinvar_data = preprocess(args.location, ROOT_DIR, args.thresholdAnalysis,
-    #                                   args.intronic, is_clinvar_from_file)
-    #         run_standard_analysis("3s_l", clinvar_data, OUT_DIR, args.clinvarStars, args.intronic,
-    #                               args.thresholdAnalysis,
-    #                               args.s,
-    #                               args.t,
-    #                               args.metric,
-    #                               args.machineLearning,
-    #                               args.skipHeatmap, False)
 
 
 if __name__ == '__main__':

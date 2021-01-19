@@ -1,8 +1,11 @@
-import sys
-import os
-import pandas as pd
 import logging
+import os
+import sys
+
+import pandas as pd
+
 from src.preprocessing.location import *
+
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 
 
@@ -23,12 +26,11 @@ def get_clinvar_cached(fname: str):
     """
     Reads cached processed clinvar file if
     it exists. Else, processes original VCF
-    :param str fname: Path to the input File
 
+    :param str fname: Path to the input File
     :return pd.DataFrame: Processed clinvar df
     """
-
-    tsv_file = fname if fname.endswith('tsv') else fname + 'tsv'
+    tsv_file = fname if fname.endswith('tsv') else fname + '.tsv'
 
     # If clinvar was processed before
     if os.path.exists(tsv_file):

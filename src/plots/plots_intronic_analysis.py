@@ -1,7 +1,9 @@
+import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
 
 plt.switch_backend('agg')
 cmap = sns.diverging_palette(220, 10, as_cmap=True)
@@ -9,13 +11,14 @@ from src.plots.plots_utils import *
 from src.predictions.filters import filter_intronic_bins
 
 
-def plot_general_bin_info(df: pd.DataFrame, outdir: str):
+def plot_general_bin_info(df: pd.DataFrame, outdir: str, af_column: str):
     """
     Barplot with variant counts on each
     intronic bin
     
     :param pd.DataFrame df: Input df
     :param str outdir: Output directory
+    :param str af_column: Allele frequency column
     """
 
     # if there are no two labels
@@ -53,32 +56,31 @@ def plot_general_bin_info(df: pd.DataFrame, outdir: str):
     plt.savefig(out_zoomed)
     plt.close()
 
-    df['gnomAD_genomes'] = pd.to_numeric(df['gnomAD_genomes'], downcast='float')
-    # df['gnomAD_genomes'] = df['gnomAD_genomes'].astype('float64')
-    # df['gnomAD_genomes'].apply(lambda x: '%.10f' % float(x))
+    if af_column in df.columns:
+        df[af_column] = pd.to_numeric(df[af_column], downcast='float')
+        # df[af_column] = df[af_column].astype('float64')
+        # df[af_column].apply(lambda x: '%.10f' % float(x))
 
-    if df[df['label'].isin([True])].empty or df[df['label'].isin([False])].empty:
-        ax = sns.scatterplot(x="intron_offset",
-                             y="gnomAD_genomes",
-                             data=df)
+        if df[df['label'].isin([True])].empty or df[df['label'].isin([False])].empty:
+            ax = sns.scatterplot(x="intron_offset",
+                                 y=af_column,
+                                 data=df)
 
-    else:
-        ax = sns.scatterplot(x="intron_offset",
-                             y="gnomAD_genomes",
-                             data=df,
-                             hue="outcome",
-                             palette={"Benign": "skyblue",
-                                      "Pathogenic": "chocolate"
-                                      },
-                             s=20
-                             )
-        ax.get_legend().set_title('')
+        else:
+            ax = sns.scatterplot(x="intron_offset",
+                                 y=af_column,
+                                 data=df,
+                                 hue="outcome",
+                                 s=20,
+                                 palette={"Benign": "skyblue",
+                                          "Pathogenic": "chocolate"})
+            ax.get_legend().set_title('')
 
-    ax.set(xlabel='Variant intronic offset', ylabel="gnomAD allele frequency")
-    plt.tight_layout()
-    out = os.path.join(outdir, 'intronic_offset_distribution.pdf')
-    plt.savefig(out)
-    plt.close()
+        ax.set(xlabel='Variant intronic offset', ylabel="{} allele frequency".format(af_column))
+        plt.tight_layout()
+        out = os.path.join(outdir, 'intronic_offset_distribution.pdf')
+        plt.savefig(out)
+        plt.close()
 
 
 def plot_ROCs(df: pd.DataFrame, fname: str,
@@ -192,6 +194,7 @@ def plot_metrics_by_bin(df: pd.DataFrame, fname: str):
                     data=df, linestyles="--", scale=0.7, aspect=0.9,
                     hue="tool")
 
+        plt.legend(bbox_to_anchor=(1.05, 1))
         plt.xlabel("Intron bin (bp)")
         plt.ylabel(description)
         plt.tight_layout()

@@ -1,10 +1,10 @@
-import sys
 import logging
+import sys
+
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 from collections import defaultdict
 from typing import List
 import pandas as pd
-import os
 from src.plots.plots_intronic_analysis import *
 from src.plots.plots_benchmark_mode import plot_allele_frequency, plot_unscored, plot_metrics
 from src.predictions import metrics
@@ -13,6 +13,7 @@ from src.predictions.apply import apply_tool_predictions
 
 def do_intron_analysis(df: pd.DataFrame, thresholds: List, metric: str,
                        out_dir: str,
+                       af_column: str,
                        min_variants: int = 20):
     """
     Perform analysis of intronic variants
@@ -24,6 +25,7 @@ def do_intron_analysis(df: pd.DataFrame, thresholds: List, metric: str,
     :param str metric: Metric to rank the
         tools in the metrics plot
     :param str out_dir: Output directory
+    :param str af_column: Allele frequency column
     :param int min_variants: Minimum number
     of variants required to do ROC analysis.
     Default: `20`
@@ -38,10 +40,13 @@ def do_intron_analysis(df: pd.DataFrame, thresholds: List, metric: str,
     os.makedirs(out_dir)
 
     # intronic variants
-    df_i = df[~df['intron_bin'].isnull()]
+    df_i = df[~df['intron_bin'].isnull()].copy()
     df_i = apply_tool_predictions(df_i, thresholds)
 
-    plot_general_bin_info(df_i, out_dir)
+    try:
+        plot_general_bin_info(df_i, out_dir, af_column)
+    except ValueError:
+        logging.info("Problem plotting info about intronic bins. Skipping.")
 
     roc_per_bin = defaultdict(list)
     na = {}
@@ -60,10 +65,11 @@ def do_intron_analysis(df: pd.DataFrame, thresholds: List, metric: str,
 
         list_df_metrics_per_tool = []
         statistics = defaultdict(list)
-        for tool, direction, threshold, _ in thresholds:
+        stats_df = ""
+        for tool, direction, threshold, *args in thresholds:
 
             try:
-                _no_null_df = _df_i_bin.loc[pd.notnull(_df_i_bin[tool + "_prediction"]), ].copy()
+                _no_null_df = _df_i_bin.loc[pd.notnull(_df_i_bin[tool + "_prediction"]),].copy()
             except KeyError:
                 na[tool] = 1
                 continue
@@ -76,7 +82,7 @@ def do_intron_analysis(df: pd.DataFrame, thresholds: List, metric: str,
             if df_tool.shape[0] > min_variants:
 
                 # Do ROC
-                tool_metrics, roc_auc, pr_auc = metrics.do_ROC_analysis(df_tool[[tool, 'label']],
+                tool_metrics, roc_auc, pr_auc = metrics.do_roc_analysis(df_tool[[tool, 'label']],
                                                                         tool,
                                                                         direction)
 
@@ -118,7 +124,7 @@ def do_intron_analysis(df: pd.DataFrame, thresholds: List, metric: str,
         unscored_plot = os.path.join(out_dir, "unscored_fraction_{}".format(_bin))
         metrics_plot = os.path.join(out_dir, "tools_metrics_{}".format(_bin))
 
-        plot_allele_frequency(_df_i_bin, af_plot)
+        plot_allele_frequency(_df_i_bin, af_plot, af_column)
         plot_unscored(stats_df, unscored_plot)
         plot_metrics(stats_df, metrics_plot, metric)
 

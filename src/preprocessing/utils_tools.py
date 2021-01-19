@@ -1,7 +1,9 @@
-import numpy as np
-import pandas as pd
 import logging
 import sys
+
+import numpy as np
+import pandas as pd
+
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 
 
@@ -62,7 +64,7 @@ def to_numeric(preds: list, absolute: bool = True):
 
     _p = preds[0]
     if isinstance(_p, float):
-        score = round(_p, 3)
+        score = round(_p, 4)
 
     else:
         try:
@@ -71,7 +73,7 @@ def to_numeric(preds: list, absolute: bool = True):
                                  'for a tool that expects a single '
                                  'numeric value: {}'.format(_p))
 
-            score = round(float(_p), 3)
+            score = round(float(_p), 4)
 
         except (TypeError, ValueError):
             return np.nan
@@ -196,7 +198,7 @@ def get_top_pred(preds: list,
                                             _val=_top,
                                             absolute=absolute,
                                             average=average)
-    return round(_top, 3)
+    return round(_top, 4)
 
 
 def process_condel_carol(preds: list):
@@ -213,8 +215,8 @@ def process_condel_carol(preds: list):
     like this by default, although VETA
     expects the dbNSFP format for that tool)
 
-    :param scores:
-    :return:
+    :param list preds: List of predictions
+    :return float: Final prediction
     """
 
     if len(preds) > 1:
@@ -241,7 +243,7 @@ def process_condel_carol(preds: list):
             raise ValueError('Unknown string at the beginning '
                              'when processing Condel-like scores: {}'.format(_p))
 
-    return round(score, 3)
+    return round(score, 4)
 
 
 def format_spliceai_fields(record, symbol: str):
@@ -313,13 +315,15 @@ def process_spliceai(preds: pd.Series):
     :return float: Top prediction
     """
 
-    if all(v is None for v in preds.SpliceAI):
+    tool = [t for t in preds.index if t != "location"][0]
+
+    if all(v is None or v == "." for v in preds[tool]):
         return np.nan
 
     # Iterate over SNVs and Indels:
-    for _p in preds.SpliceAI:
+    for _p in preds[tool]:
 
-        if _p is not None:
+        if _p is not None and _p != ".":
             if _p.split("|")[1] == "0" and (preds.location == "unknown" or
                                             preds.location == "regulatory_variant" or
                                             preds.location == "mithocondrial"):
@@ -332,7 +336,7 @@ def process_scap(preds: pd.Series):
     """
     Process S-CAP scores so that
     different reference thresholds
-    thresholds are taken into account
+    are taken into account
     for pathogenicity prediction
 
     If prediction is above the reference
@@ -443,6 +447,7 @@ def process_trap(preds: pd.Series):
                          'predictions. Error: {}'.format(preds.TraP))
 
     _p = preds.TraP[0]
+    score = ""
     try:
         score = float(_p)
     except ValueError:
@@ -491,10 +496,10 @@ def process_kipoi_tools(x: list, _max: bool = True):
             return np.nan
 
         elif "," in elem and _max is True:
-            return round(max([abs(float(v)) for v in elem.split(",")]), 3)
+            return round(max([abs(float(v)) for v in elem.split(",")]), 4)
 
         elif "," in elem:
-            return round(min([abs(float(v)) for v in elem.split(",")]), 3)
+            return round(min([abs(float(v)) for v in elem.split(",")]), 4)
 
         else:
             return abs(float(elem))
