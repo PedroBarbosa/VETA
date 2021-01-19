@@ -8,8 +8,8 @@
 **/__pycache__
 *.stackdump
 *.idea
-main.pdf
-analysis/src
-figures/
 *.pyc
-dbs/*
+test_data/
+VETA.egg-info/
+build/
+dist/
