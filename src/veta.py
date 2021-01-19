@@ -99,7 +99,7 @@ def main():
                                        'addition of \'tsv\' will exist, thus making processed clinvar data '
                                        'to be loaded much quicker. If a directory is '
                                        'provided instead, veta looks for labelled files within it. The '
-                                       '\'*benign*\' (or \'*neutral*\' and \'*pathogenic*\' (or \'*deleterious*\') '
+                                       '\'*benign*\' (or \'*neutral*\') and \'*pathogenic*\' (or \'*deleterious*\') '
                                        'tags must exist in their names.')
 
     benchmark_parser.add_argument('-c', '--clinvar_stars', metavar='', default='3s_l',
