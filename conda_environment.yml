@@ -4,20 +4,20 @@ channels:
   - conda-forge
   - anaconda 
 dependencies:
-  - python=3.8
+  - python<3.8
   - pip
-  - matplotlib
-  - numpy
+  - matplotlib>=3.3.3
+  - numpy>=1.19.5
   - pandas
-  - seaborn
-  - cyvcf2
+  - seaborn>=0.11.1
+  - cyvcf2>=0.30.4
   - bcftools
-  - scikit-learn
-  - imbalanced-learn
+  - scikit-learn>=0.24.0
+  - imbalanced-learn>=0.7.0
   - pip:
-      - hgvs
-      - fastcluster
-      - statannot
-      - gplearn
-      - sklearn-pandas
-      - dtreeviz
+      - hgvs>=1.5.1
+      - fastcluster>=1.1.26
+      - statannot>=0.2.3
+      - gplearn>=0.4.1
+      - sklearn-pandas>=2.0.4
+      - dtreeviz>=1.1.3

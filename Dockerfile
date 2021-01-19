@@ -11,3 +11,4 @@ ENV PATH="$PATH:/tools/miniconda3/bin/"
 ADD conda_environment.yml /tmp/
 RUN conda env update -n base -f /tmp/conda_environment.yml
 RUN git clone https://github.com/PedroBarbosa/VETA.git
+RUN python setup.py install
