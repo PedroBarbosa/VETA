@@ -10,7 +10,7 @@ VETA is a tool that analyses the performance of several variant prediction metho
   * 4) Apply machine learning to combine scores and improve predictions on a labeled dataset. It is useful to see which features (prediciton tools) are most important for the task, thus potentially informing which tools are relevant (and how many are sufficient) to predict variant effects in a clinical setting.
   
 What VETA is not:
-   * 1) VCF annotator. For that you have [VEP](https://www.ensembl.org/info/docs/tools/vep/index.html), [vcfanno](https://github.com/brentp/vcfanno) or [bcftools annotate](http://samtools.github.io/bcftools/bcftools.html). 
+   * VCF annotator. For that you have [VEP](https://www.ensembl.org/info/docs/tools/vep/index.html), [vcfanno](https://github.com/brentp/vcfanno) or [bcftools annotate](http://samtools.github.io/bcftools/bcftools.html). 
    
 
 # Table of Contents
@@ -57,8 +57,7 @@ docker run pbarbosa/veta:latest veta --help
 ~~~~
 When using the docker image, please make sure to map the input data onto the container by seting up a bindmount volume:
 ~~~~
-docker run -it -v /local/dir/with/data/:/media pbarbosa/veta:latest
-root@e1d195af4858:/tools# veta benchmark [Other options..] --out_dir /media/veta_output /media/local/dir/with/data/ 
+docker run -v /local/dir/with/data/:/media pbarbosa/veta:latest veta benchmark [Other options..] --out_dir /media/veta_output /media/local/dir/with/data/ 
 ~~~~
 
 <a name="requirements"></a>
@@ -66,13 +65,13 @@ root@e1d195af4858:/tools# veta benchmark [Other options..] --out_dir /media/veta
 
 VETA has one main requirement: it only accepts VCF files annotated with Ensembl VEP. Particularly, it is required that VEP is run with the `--hgvs` flag. Some fields are extracted from VEP annotations, particularly the location of the variants (either from ```Consequence``` or ```HGVSc``` fields), so that VETA can employ different evaluations depending on the variant location (e.g. 5'UTR, coding, etc). Besides that, there are no special requirements. 
 
-Internally, VETA takes care of the fact that some tools may be annotated withint VEP annotations field (ANN or CSQ), and others as indepent INFO fields. As long as they are correctly set in the `--config` file, the user should not worry about that
+Internally, VETA takes care of the fact that some tools may be annotated within VEP field (ANN or CSQ), and others as independent INFO fields. As long as they are correctly set in the `--config` file, the user should not worry about that.
 
 <a name="benchmark"></a>
 ## Running on reference datasets
 
-Benchmark mode refers to the comparison of tools when reference labels are known, meaning we have a set of pathogenic (or functional) and benign variants.
-Multiple plots will be drawn and several tab-separated tables with several performance statistics will be produced.
+Benchmark mode refers to the comparison of tools when reference labels are known, meaning we have a set of pathogenic and benign variants.
+Multiple plots will be drawn and several tab-separated tables with performance statistics will be produced.
 
 By default, analysis of all variant types is performed, but that can be restricted by selecting which variant types you are interested in:
 
@@ -86,7 +85,7 @@ Additionaly, VETA can restrict analysis to a subset of tools based on their scop
 
 ```veta benchmark --scopes_to_evaluate Splicing```
 
-As an alternative, one can restrict the tools to analyse (and add custom methods) via a configuration file `--config`, which is further explained in the <a name="scores_annotation"></a> section.
+As an alternative, one can restrict the tools to analyse (and add custom methods) via a configuration file `--config`, which is further explained in the [Manual config](#manual-config-file) section.
 
 <p float="left">
   <img src="src/config/example_imgs/benchmark_performance.png" height="200"/>
@@ -110,11 +109,11 @@ Be aware that predictions from tools that are just present in one of the files w
 <a name="threshold_analysis"></a>
 #### Reference threshold analysis
 
-The benchmark of prediciton tools is possible because a threshold for significance is pre-determined (in VETA reference thresholds for the supported tools are provided in the table displayed at <a name="scores_annotation"></a> section, or provided by the user in the `--config` file). The decision threshold is usually provided by the authors of each tool. If not, there are papers that specifically address that and infer the best decision threshold given the data at hands. We argue that strict reference thresholds may not be ideal, therefore we provide a means to evaluate how appropriate reference thresholds are using Clinvar.
+The benchmark of prediciton tools is possible because a threshold for significance is pre-determined (in VETA reference thresholds for the supported tools are provided in the table displayed in the [default tools](#tools-supported-by-default) section, or provided by the user in the `--config` file). Uusally, these decision thresholds are usually provided by the authors of each tool. If not, there are papers that specifically address that and infer the best decision threshold given the data at hands. We argue that strict reference thresholds may not be ideal, therefore we provide a means to evaluate how appropriate reference thresholds are using Clinvar.
 
 Here, we force a subset of highly confident Clinvar variants (3 stars with likely assignments, `3s_l`) to be used as reference dataset, regardless of what the user sets in the ```--clinvar_stars```. Then, new thresholds for each tool are inferred based on different ratios of True Positives / False Positives the user desires using the [F beta formula](https://en.wikipedia.org/wiki/F-score). For example, this analysis can reveal different optimal thresholds for coding and intronic variants, as revealed by [TraP](http://trap-score.org/about) and [S-CAP](https://www.nature.com/articles/s41588-019-0348-4).
 
-Different values of Beta are used (1, 2, 3, 5, 10) to lend increasing importance on sensitivity. For each Beta, the threshold value that maximizes the Fβ function is selected as the best. In practice, increasing this value will improve the number of true positives found at the cost of adding *Beta* false positives. This is clinically relevant as the user may want to be more or less stringent in his analysis, and fixed thresholds would limit the scope of the score interpretation.
+Different values of Beta are used (1, 2, 3, 5, 10) to lend increasing importance on sensitivity. For each Beta, the threshold value that maximizes the FBeta function is selected as the best. In practice, increasing this value will improve the number of true positives found at the cost of adding *Beta* false positives. This is clinically relevant as the user may want to be more or less stringent in his analysis, and fixed thresholds would limit the scope of the score interpretation.
 
 Threshold analysis is activated using the corresponding flag in the benchmark mode:
 
@@ -229,15 +228,15 @@ Lines starting with '#' are skipped. For tools with native support within VETA (
 * 2nd column - VCF field for the tool.
 * 3rd column - Tool directionality: whether the method detects relevant variants if the score if higher ('>') or lower ('<') than the reference threshold. 
 * 4th column - Reference threshold used to distinguish functional vs benign variants.
-* 5th column - Tool scope. Available options: 'Protein', 'Conservation', 'Splicing', 'Functional'
-* 6th column - Decision function. How the scores should be processed internally.  Check section below in detail.
+* 5th column - Tool scope. Available options: 'Protein', 'Conservation', 'Splicing', 'Functional'.
+* 6th column - Processing function. How the scores should be processed internally to select one single prediction per tool (for each variant).  Check section below for details.
 
-If multiple VCF fields refer to the same tool (e.g. dbscSNV), a comma must be set to use both.
+Note: If multiple VCF fields refer to the same tool (e.g. dbscSNV), a comma must be set to use both in the 2nd column.
 
 <a name="processing_functions"></a> 
 #### Providing custom functions
 
-6th column in the config file must refer to the function to apply to the VCF field to extract a single prediction. For now, valid functions are:
+6th column in the config file must refer to the processing function to apply for single prediction extraction. For now, valid functions are:
 
 * `to_numeric` - If the VCF field refers to a single numeric value. The most common case.
 * `top_max` - Fields that are annotated like `0.922&0.65&.&.&.`, selects the max value (in this case 0.922)
