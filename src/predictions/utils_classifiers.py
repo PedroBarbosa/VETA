@@ -261,10 +261,10 @@ class Classifiers(object):
         elif name == "Naive_Bayes":
             return self.naive_bayes()
 
-        elif name == "Linear_Discrimant_Analysis":
+        elif name == "LDA":
             return self.linear_discrimant_analysis()
 
-        elif name == "Quadratic_Discrimant_Analysis":
+        elif name == "QDA":
             return self.quadratic_discriminant_analysis()
 
         elif name == "Decision_Tree":
@@ -276,7 +276,7 @@ class Classifiers(object):
         elif name == "Ada_Boost":
             return self.ada_boost()
 
-        elif name == "Support_Vector_Machine":
+        elif name == "SVM":
             return self.svm()
 
         elif name == "Logistic_Regression":

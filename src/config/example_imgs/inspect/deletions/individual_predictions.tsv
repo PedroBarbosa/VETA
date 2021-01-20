@@ -1,0 +1,2 @@
+variant_id	GERP	phyloP	phastCons	SiPhy	LRT	Sift	Polyphen2HVAR	Polyphen2HDIV	MutationTaster	MutationAssessor	FATHMM	Provean	Mutpred	CAROL	Condel	M-CAP	MetaSVM	MetaLR	REVEL	VEST4	fitCons	LINSIGHT	ReMM	GWAVA	Eigen	FunSeq2	CADD	DANN	HAL	SPIDEX	dbscSNV	MaxEntScan	SpliceAI	S-CAP	TraP	MMSplice	kipoiSplice4	HGVSc	location
+chr11_108141209_GGTAA_G	False	False	False	False																	False	False	False			True	False						True					ENST00000278616.4:c.2839-579_2839-576del	deepintronic

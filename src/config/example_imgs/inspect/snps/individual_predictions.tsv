@@ -1,0 +1,128 @@
+variant_id	GERP	phyloP	phastCons	SiPhy	LRT	Sift	Polyphen2HVAR	Polyphen2HDIV	MutationTaster	MutationAssessor	FATHMM	Provean	Mutpred	CAROL	Condel	M-CAP	MetaSVM	MetaLR	REVEL	VEST4	fitCons	LINSIGHT	ReMM	GWAVA	Eigen	FunSeq2	CADD	DANN	HAL	SPIDEX	dbscSNV	MaxEntScan	SpliceAI	S-CAP	TraP	MMSplice	kipoiSplice4	HGVSc	location
+chr1_22215993_G_A	False	False	False	False																	False	False	False		True	False	False	False					True		True			ENST00000374695.3:c.574+481C>T	deepintronic
+chr1_94484082_T_C	False	False		False																	False	False	False		True	False	False	False					True	True	False			ENST00000370225.3:c.5196+1056A>G	deepintronic
+chr1_94492973_G_A	False	False		False																	False	False	False		True	False	False	False					False		False			ENST00000370225.3:c.4539+2028C>T	deepintronic
+chr1_94493000_C_T	False	False		False																	False	False	False		True	False	False	False					False		False			ENST00000370225.3:c.4539+2001G>A	deepintronic
+chr1_94493895_G_A	False	False		False																	False	False	False		True	False	False	False					True		False			ENST00000370225.3:c.4539+1106C>T	deepintronic
+chr1_94493901_T_C	False	False	False	False																	False	False	False		True	True	False	False					True		False			ENST00000370225.3:c.4539+1100A>G	deepintronic
+chr1_94495923_C_T	False	False		False																	False	False	False		True	False	False	False	False	False			True		False		True	ENST00000370225.3:c.4352+61G>A	deepintronic
+chr1_94496509_C_T	False	False		False																	False	False	False	False	True	False	False	False	False	True			False	False	False		False	ENST00000370225.3:c.4253+43G>A	deepintronic
+chr1_94509799_G_A	True	False		False																	False	False	False		True	False	False	False					True		True			ENST00000370225.3:c.3050+370C>T	deepintronic
+chr1_94511126_A_T	True	True		False																	False	False	False		False	False	False	False					True		False			ENST00000370225.3:c.2919-826T>A	deepintronic
+chr1_94526934_T_C	False	True		False																	False	False	False		True	False	False	False	True				True		True		False	ENST00000370225.3:c.1938-619A>G	deepintronic
+chr1_94527698_G_C	False	False	True	False																	False	True	False		True	False	False	False					False		False			ENST00000370225.3:c.1937+435C>G	deepintronic
+chr1_94546780_C_G	False	False	False																		False	False	False		True	False	False	False					False		False			ENST00000370225.3:c.859-506G>C	deepintronic
+chr1_94549781_G_A	True	False		False																	False	False	False	False	False	False	False	False					False		False			ENST00000370225.3:c.769-784C>T	deepintronic
+chr1_98045449_G_C	False	False	False	False																	False	False	False	False	True	False	False	False					True		True			ENST00000370192.3:c.1129-5923C>G	deepintronic
+chr1_100672742_T_C	False	False	False	False																	False	False	False		True	False	False	False					True		True			ENST00000370132.4:c.1018-550A>G	deepintronic
+chr1_215967783_T_C	False	False	False	False																	False	False	False		True	False	False	False					True		False			ENST00000307340.3:c.9959-4159A>G	deepintronic
+chr1_216039721_G_A	False	False		False																	False	False	False		True	False	False	False					True		True			ENST00000307340.3:c.8845+628C>T	deepintronic
+chr1_216064540_T_C	True	True	True	True																	False	True	False		True	False	True	False					True		True			ENST00000307340.3:c.7595-2144A>G	deepintronic
+chr1_216247476_T_C	False	False		False																	False	False	False		True	False	False	False					True		False			ENST00000307340.3:c.5573-834A>G	deepintronic
+chr10_126100239_G_C	False	False	False																		False	False	False		True	False	False	False					True		True			ENST00000368845.5:c.199+303C>G	deepintronic
+chr11_5247102_A_C	False	False		False																	False	False	False	False	True	False	False	False					True		False			ENST00000335295.4:c.316-146T>G	deepintronic
+chr11_17465872_T_C	False	False		False																	False	False	False		True	False	False	False	False				True		True		True	ENST00000389817.3:c.1333-1013A>G	deepintronic
+chr11_47361954_G_A	False	False	False																		False	False	False		True	False	False	False					False		True			ENST00000545968.1:c.1927+600C>T	deepintronic
+chr11_47364893_C_T	True	True		False																	False	False	False		True	False	False	False		False			True		False			ENST00000545968.1:c.1224-80G>A	deepintronic
+chr11_47368616_C_T	False	False		True																	False	False	False		True	False	False	False	False				True	True	False		False	ENST00000545968.1:c.906-36G>A	deepintronic
+chr11_57365567_G_T	True	True	True	True																	False	True	True		True	True	True	True		False			True		True			ENST00000278407.4:c.-22-155G>T	5primeUTR
+chr11_67816907_G_A	True	False		False																	False	False	False		True	False	False	False		False			True		False			ENST00000265686.3:c.1887+146G>A	deepintronic
+chr11_68697719_C_A	False	False		False																	False	False	False		True	False	False	False					True		False			ENST00000255078.3:c.1235+894C>A	deepintronic
+chr11_108158168_A_G	False	True		False																	False	False	False		True	False	False	False		False			True		False			ENST00000278616.4:c.3994-159A>G	deepintronic
+chr12_21604039_A_G	False	False		False																	False	False	False		True	False	False	False					True		False			ENST00000240651.9:c.415-976A>G	deepintronic
+chr12_48380015_A_C	True	False		False																	False	False	False		True	False	False	False		False			True		False			ENST00000380518.3:c.1527+104T>G	deepintronic
+chr12_88494960_T_C	False	False	False	False																	False	False	False		True	False	False	False					False		False			ENST00000552810.1:c.2991+1655A>G	deepintronic
+chr12_108961426_G_C	False	False	False	False																	False	False	False		True	True	False	False			False		False	True	True		False	ENST00000311893.9:c.418+382G>C	deepintronic
+chr13_32919384_T_G	False	False	False	False																	False	False	False	False	True	False	False	False					True		False			ENST00000544455.1:c.6937+594T>G	deepintronic
+chr13_49046098_A_G	False	False	True	False																	False	False	False		True	True	True	False					False		True			ENST00000267163.4:c.2490-1398A>G	deepintronic
+chr13_100958030_A_G	False	False	False	False																	True		False		True		False	True	False				True	True	False		False	ENST00000376285.1:c.1285-1416A>G	deepintronic
+chr13_113770192_G_A	False	False	False	False																	False	False	False		True	False	False	False	False	False			True		False		True	ENST00000375581.3:c.571+78G>A	deepintronic
+chr13_113770688_C_G	True	False		False																	False	False	False		True	False	False	False					True		True			ENST00000375581.3:c.572-392C>G	deepintronic
+chr15_42697047_G_C	False	False		False																	False	False	False		True	True	False	False	False				False		False		True	ENST00000397163.3:c.1782+1072G>C	deepintronic
+chr15_48721629_T_C	False	False	False	False																	False	False	False		True	False	False	False					True		True			ENST00000316623.5:c.6872-961A>G	deepintronic
+chr16_2107460_C_T	False	False		False																	False	False	False	False	True	False	False	False		False			True		True			ENST00000219476.3:c.848+281C>T	deepintronic
+chr16_8926102_C_T	False	False	False	False																	False	False	False		True	True	False	False					True		True			ENST00000268261.4:c.640-15479C>T	deepintronic
+chr16_56917770_C_T	False	False		False																	False	False	False		True	False	False	False		False			True		True			ENST00000438926.2:c.1670-191C>T	deepintronic
+chr16_56927219_C_T	False	False		False																	False	False	False		True	False	False	False		False			True		True			ENST00000438926.2:c.2548+253C>T	deepintronic
+chr16_88898676_T_C	False	False		False																	False	False	False		True	False	False	False		False			True		True			ENST00000268695.5:c.899-167A>G	deepintronic
+chr16_89577853_A_G	False	False	False	False																	False	False	False		True	False	False	False					True		False			ENST00000268704.2:c.286+853A>G	deepintronic
+chr17_26728068_A_C	False	False		False																	False	False	False		True	False	False	False	False				False		False		True	ENST00000440501.1:c.1166-285T>G	deepintronic
+chr17_29487248_C_T	False	False	False	False																	False	False	False		True	False	False	False					True		True			ENST00000358273.4:c.288+1137C>T	deepintronic
+chr17_29580296_A_G	True	True	True	True																	False	True	False		True	False	True	False		False			True		True			ENST00000358273.4:c.4173+278A>G	deepintronic
+chr17_78090422_A_G	False	False	False	False																	False	False	False		True	False	False	False					True		False			ENST00000302262.3:c.2190-345A>G	deepintronic
+chr17_79213749_C_T	False	False		False																	False	False	False		True	False	False	False	False	False			True		True		False	ENST00000431388.2:c.195+271C>T	deepintronic
+chr18_21132700_C_T	False	False		False																	False	False	False		True	False	False	False					True		False			ENST00000269228.5:c.1554-1009G>A	deepintronic
+chr18_55239810_T_G	False	False	False	False																	False	False	False		True	False	False	False					False		False			ENST00000382873.3:c.332+668A>C	deepintronic
+chr18_67815044_C_T	False	False		False																	False	False	False		False	False	False	False					True		False			ENST00000255674.6:c.2309+1093G>A	deepintronic
+chr18_77470825_C_T	False	False	False																		False	False	False	False	False	False	False	False					False		True			ENST00000299543.7:c.863+389C>T	deepintronic
+chr19_1386643_C_G	False	False																			False	False	False		False	False	False	False	True		False		True	True	True		False	ENST00000233627.9:c.17-1167C>G	deepintronic
+chr19_39074134_A_G	False	False	False																		False	False	False	False	True	False	False	False					False		True			ENST00000359596.3:c.14647-1449A>G	deepintronic
+chr19_54633399_C_G	False	False	False	False																	False	False	False		False	False	False	False					True		True			ENST00000321030.4:c.1374+654C>G	deepintronic
+chr2_26500642_A_G	False	False		False																	False	False	False		True	False	False	False					True		False			ENST00000317799.5:c.442+614A>G	deepintronic
+chr2_47635062_T_G	False	False	False																		False	False	False		True	False	False	False					True		True			ENST00000233146.2:c.212-478T>G	deepintronic
+chr2_71889030_G_T	False	False	False	False																	False	True	False		True	False	False	False					True		True			ENST00000410020.3:c.5003+1249G>T	deepintronic
+chr2_71900503_C_T	True	False		False																	False	False	False		True	False	False	False					True		True			ENST00000410020.3:c.5785-824C>T	deepintronic
+chr2_112582942_G_A	False	False	False	False																	False	False	False		True	False	False	False		False			True		False			ENST00000341068.3:c.2705-198C>T	deepintronic
+chr2_220289644_G_A	False	False		False																	False	False	False		False	False	False	False					True		False			ENST00000373960.3:c.1289-741G>A	deepintronic
+chr20_6074846_C_T	True	False		False																	False	False	False		True	False	False	False					True		False		False	ENST00000217289.4:c.1139+740G>A	deepintronic
+chr21_33039383_C_G	True	True		False																	False	False	False		False	False	False	False		False			False		False			ENST00000270142.6:c.240-188C>G	deepintronic
+chr21_34957110_C_T	False	False		False																	False	False	False		True	False	False	False		False			True	True	False		False	ENST00000303071.5:c.607-36G>A	deepintronic
+chr21_47409881_C_T	False	True		False																	False	False	False		False	False	False	False		False			True		True			ENST00000361866.3:c.930+189C>T	deepintronic
+chr22_30070689_T_A	False	False		False																	False	False	False		True	False	False	False		False			False		False			ENST00000338641.4:c.1341-136T>A	deepintronic
+chr22_50502853_A_C	False	False		False																	False	False	False		True	False	False	False		False			True		False			ENST00000311597.5:c.895-226T>G	deepintronic
+chr3_136003251_A_G	True	False		False																	False	False	False		True	False	False	False					True		False			ENST00000469217.1:c.714+462A>G	deepintronic
+chr3_150660197_A_C	False	False	False	False																	False	False	False		True	False	False	False					True		False			ENST00000328863.4:c.254-649T>G	deepintronic
+chr3_193335986_G_A	False	False	False	False																	False	False	False		False	False	False	False					True		False			ENST00000361908.3:c.557-672G>A	deepintronic
+chr3_193335990_G_A	False	False		False																	False	False	False		False	False	False	False					True		False			ENST00000361908.3:c.557-668G>A	deepintronic
+chr4_15989860_T_C	False	False		False																	False	False	False		True	False	False	False					True		True			ENST00000510224.1:c.2077-521A>G	deepintronic
+chr4_17500790_T_C	False	True		False																	False	False	False		False	False	False	False					True		True			ENST00000281243.5:c.436+2552A>G	deepintronic
+chr4_56284334_G_A	False	False		False																	False	False	False		True	False	False	False	False	False	False		True		True		False	ENST00000381334.5:c.792+182G>A	deepintronic
+chr4_108945190_G_T	False	False		False																	False	False	False		True	False	False	False					True		True			ENST00000603302.1:c.636+471G>T	deepintronic
+chr4_155486360_A_G	False	False		False																	False	False	False		True	False	False	False	False				True	True	False		False	ENST00000302068.4:c.115-600A>G	deepintronic
+chr4_155530122_T_A	False	False	False	False																	False	False	False		True	False	False	False					True		False			ENST00000336098.3:c.667-320A>T	deepintronic
+chr5_7883859_T_C	False	False		False																	False	False	False		True	False	False	False					False		False			ENST00000264668.2:c.984+469T>C	deepintronic
+chr5_37012396_C_T																					False	False	False		True	False	False	False					True		True			ENST00000282516.8:c.4560+2069C>T	deepintronic
+chr5_42700896_A_G	False	False	False	False																	False	False	False		True	False	False	False					True		False			ENST00000230882.4:c.618+792A>G	deepintronic
+chr5_60223572_C_G	False	False		False																	False	False	False		True	False	False	False					False		False			ENST00000265038.5:c.173+1119G>C	deepintronic
+chr5_112115546_G_A	False	False	False	False																	False	False	False		True	False	False	False					True		False			ENST00000457016.1:c.532-941G>A	deepintronic
+chr5_112158419_C_T	False	True	True	False																	False	True	True		True	True	True	False					True		True			ENST00000457016.1:c.1408+731C>T	deepintronic
+chr5_112158423_A_T	False	True	False	False																	False	True	True		True	True	True	False					True		False			ENST00000457016.1:c.1408+735A>T	deepintronic
+chr6_35477388_C_T	False	False		False																	False	False	False		True	False	False	False	False	False			True	True	False		False	ENST00000229771.6:c.718+23G>A	deepintronic
+chr6_49404228_G_T	False	False	False																		False	False	False		True	False	False	False					True		False			ENST00000274813.3:c.1957-892C>A	deepintronic
+chr6_51746236_A_G	False	False		False																	False	False	False		True	False	False	False					False		False			ENST00000371117.3:c.7350+1655T>C	deepintronic
+chr6_76593963_T_G	False	False	False	False																	False	False	False		True	False	False	False					True		True			ENST00000369977.3:c.2417-1758T>G	deepintronic
+chr7_117229521_A_G	False	False		False																	False	False	False		True	False	False	False					True		True			ENST00000003084.6:c.1680-886A>G	deepintronic
+chr7_117280015_C_T	False	False		False																	False	False	False	False	True	False	False	False					False		True			ENST00000003084.6:c.3718-2477C>T	deepintronic
+chr8_30999982_A_G	False	False	False	False																	False	False	False		True	False	False	False		False			False		False			ENST00000298139.5:c.3234-160A>G	deepintronic
+chr8_42328683_C_T	False	False	False	False																	False	False	False		True	False	False	False					True	True	False			ENST00000342228.3:c.289+937G>A	deepintronic
+chr8_87617644_C_T	False	False		False																	False	False	False		True	False	False	False					True		False			ENST00000320005.5:c.1663-1205G>A	deepintronic
+chr8_87618576_G_A	False	False																			False	False	False		True	False	False	False					True		False			ENST00000320005.5:c.1663-2137C>T	deepintronic
+chr8_96048588_C_T	False	False	False	False																	False	False	False		True	False	False	False			False		True	True	False		False	ENST00000396124.4:c.420+784C>T	deepintronic
+chr9_21968346_T_C	False	True		False																	False	False	False		True	False	False	False		False			True		True			ENST00000579755.1:c.*102-105A>G	3primeUTR
+chr9_21968795_A_C	False	True		False																	False	False	False		True	False	False	False		False			True	True	False		False	ENST00000304494.5:c.458-554T>G	deepintronic
+chr9_98226337_T_C	False	False		False																	False	False	False		True	False	False	False					True		True			ENST00000331920.6:c.2561-2057A>G	deepintronic
+chrX_9708630_C_T	False	False	False																			False	False			False	False	False					True		False			ENST00000467482.1:c.885+748G>A	deepintronic
+chrX_9711844_A_C	False	False		False																		False	False			False	False	False		False			True		False			ENST00000467482.1:c.659-131T>G	deepintronic
+chrX_13768358_A_G	False	False	False	False																		False	False			False	False	False					True		False			ENST00000340096.6:c.935+706A>G	deepintronic
+chrX_20191268_A_C	False	True	False	False																		False	False			False	False	False		False			True		False			ENST00000379565.3:c.1228-279T>G	deepintronic
+chrX_24744696_A_G	False	False	False	False																		False	False			False	False	False					True		False			ENST00000379059.3:c.1375-354A>G	deepintronic
+chrX_31200680_A_T	False	False	False	False																		False	False			False	False	False		False			True		False			ENST00000357033.4:c.9974+175T>A	deepintronic
+chrX_31219364_G_A	False	False	False																			False	False			False	False	False					True		True			ENST00000357033.4:c.9807+2714C>T	deepintronic
+chrX_31279418_T_C	False	False	False	False																		False	False			False	False	False		False			True		False			ENST00000357033.4:c.9225-285A>G	deepintronic
+chrX_32360889_T_C	True	True	True	False																		False	False	False		False	True	False					True		True			ENST00000357033.4:c.5739+362A>G	deepintronic
+chrX_32366860_A_C	True	True	False	False																		True	False			False	False	False		False			True		True			ENST00000357033.4:c.5326-215T>G	deepintronic
+chrX_32460274_G_T	False	False		False																		False	False			False	False	False					True		False			ENST00000357033.4:c.3787-843C>A	deepintronic
+chrX_32470726_C_G	False	False		False																		False	False			False	False	False					False		False			ENST00000357033.4:c.3603+2053G>C	deepintronic
+chrX_33032666_A_T	False	True	False	False																		False	False			False	False	False					True		True			ENST00000357033.4:c.93+5590T>A	deepintronic
+chrX_37657051_A_G	False	False	False	False																		False	False			False	False	False					True		False			ENST00000378588.4:c.675-1157A>G	deepintronic
+chrX_38260946_G_A	False	False	False	False																		False	False			False	False	False		False			True		True			ENST00000039007.4:c.540+265G>A	deepintronic
+chrX_66942551_A_G	False	False		False																		False	False			True	False	False					True		False			ENST00000374690.3:c.2450-118A>G	deepintronic
+chrX_77269725_A_G	False	False	False																			False	False			False	False	False					False		False			ENST00000341514.6:c.2407-434A>G	deepintronic
+chrX_85223644_A_T	False	False		False																		False	False			False	False	False					True		False			ENST00000357749.2:c.315-4587T>A	deepintronic
+chrX_100654735_C_T	False	False	False	False																		False	False	True		False	False	False	False				True	True	False		False	ENST00000218516.3:c.640-801G>A	deepintronic
+chrX_107813924_G_A	False	False		False																		False	False	True		False	False	False					True		False			ENST00000328300.6:c.385-719G>A	deepintronic
+chrX_107852872_A_G	False	True	True	False																		False	False	False		False	False	False					True		True			ENST00000328300.6:c.2395+2750A>G	deepintronic
+chrX_133628822_T_A	False	False	False	False																		False	False			False	False	False					True		False			ENST00000298556.7:c.485+1202T>A	deepintronic
+chrX_135737600_A_T	False	False		False																		False	False			False	False	False					True		True			ENST00000370629.2:c.347-915A>T	deepintronic
+chrX_148568762_T_C	False	False	False	False																		False	False			False	False	False		False			True		False			ENST00000340855.6:c.1007-133A>G	deepintronic
+chrX_153641699_G_A	True	False	False	False																		True	True				True	False	False	False			True		True		False	ENST00000299328.5:c.284+110G>A	deepintronic
