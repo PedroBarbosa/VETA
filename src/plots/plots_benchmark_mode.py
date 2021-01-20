@@ -461,6 +461,8 @@ def plot_heatmap(df, location, output_dir,
 
     _name = "heatmap_" if prefix is None else "{}_heatpmap_".format(prefix)
     outfile = os.path.join(output_dir, "heatmap_" + location + '.pdf')
+    if len(df.columns) < 2:
+        return
 
     if skip_preparation is False:
         df = prepare_dataset_for_heatmap(df)

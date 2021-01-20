@@ -16,9 +16,6 @@ from src.preprocessing.clinvar import *
 from src.preprocessing.latex import generate_clinvar_table
 from src.preprocessing.osutils import ensure_folder_exists
 
-TOOLS_CONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "tools_config.txt")
-
 
 class BenchmarkTools(Base):
     """
@@ -39,7 +36,7 @@ class BenchmarkTools(Base):
                  do_machine_learning: bool = False,
                  allele_frequency_col: str = "gnomADg_AF",
                  skip_heatmap: bool = False,
-                 tools_config: str = TOOLS_CONFIG):
+                 tools_config: str = "tools_config.txt"):
 
         """
         ----
@@ -325,11 +322,13 @@ class BenchmarkTools(Base):
                              "variants. Classifiers will not be trained.".format(n_minority, _loc))
                 continue
 
-            if ml_data.df.shape[1] < 3:
+            if len(ml_data.features) < 3:
                 logging.info("Less than 3 features (aka tool scores) available"
                              " ({}) after removing predictors with many missing "
                              "values in '{}' variants. Classifiers will not be "
-                             "trained for such small array size.".format(ml_data.df.shape[1], _loc))
+                             "trained for such small array size.".format(len(ml_data.features),
+                                                                         _loc))
+                continue
 
             logging.info("Applying classifiers to data.")
             trained_clfs = ml_data.do_classification()
