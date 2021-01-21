@@ -255,7 +255,7 @@ Note: If multiple VCF fields refer to the same tool (e.g. dbscSNV), a comma must
 
 By default, VETA draws hierarchically-clustered heatmaps, which allows the user to evaluate how similar predictions from different tools are. If run on `benchmark` mode or `inspect` with `--labels`, ground truth information will be included. This enables the user to easily visualize which tools clustered in proximity to the ground truth data. If the dataset is large (thousands of variants), this step may take long time. You can skip it with `--skip_heatmap` flag.
 
-<img src="src/config/example_imgs/heatmap.png" height="400"/>
+<img src="src/config/example_imgs/heatmap.png" height="450"/>
 
 
 <a name="AF"></a>
