@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='veta',
-    version='0.5.1',
+    version='0.5.2',
     licence='MIT',
     author='Pedro Barbosa',
     author_email='pedro.barbosa@medicina.ulisboa',
