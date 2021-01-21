@@ -1,3 +1,7 @@
+[![GitHub license](https://img.shields.io/github/license/PedroBarbosa/VETA)](https://github.com/PedroBarbosa/VETA/blob/master/LICENCE)
+![PyPI](https://img.shields.io/pypi/v/veta)
+![Docker Pulls](https://img.shields.io/docker/pulls/pbarbosa/veta)
+
 <img src="src/config/example_imgs/logo.png" height="300"/>
 
 
