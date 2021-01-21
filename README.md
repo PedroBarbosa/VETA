@@ -88,8 +88,8 @@ Additionaly, VETA can restrict analysis to a subset of tools based on their scop
 As an alternative, one can restrict the tools to analyse (and add custom methods) via a configuration file `--config`, which is further explained in the [Manual config](#manual-config-file) section.
 
 <p float="left">
-  <img src="src/config/example_imgs/benchmark_performance.png" height="200"/>
-  <img src="src/config/example_imgs/benchmark_dist.png" height="200"/>
+  <img src="src/config/example_imgs/benchmark_performance.png" height="350"/>
+  <img src="src/config/example_imgs/benchmark_dist.png" height="250"/>
 </p>
 
 <a name="clinvar"></a>
@@ -120,7 +120,7 @@ Threshold analysis is activated using the corresponding flag in the benchmark mo
 ```
 veta benchmark clinvar_file.vcf.gz --do_threshold_analysis
 ```
-<img src="src/config/example_imgs/benchmark_thresholds.png" height="300"/>
+<img src="src/config/example_imgs/benchmark_thresholds.png" height="400"/>
 
 <a name="metapredictions"></a>
 #### Using machine learning to improve predictions 
@@ -158,8 +158,8 @@ If you are sure the dataset is labeled (e.g. all variants in the VCF are pathoge
 In addition, If you have run before a benchmark analysis on a reference dataset, it is possible to automatically pick the best tools from that analysis and ensure that the ```veta inspect``` run only cares about the best tools selected. For example, if you know from a ```veta benchmark``` run that deep intronic variants are well predicted by just two methods, you can set ```veta inspect --best_tools tools_ranking_deep_intronic.csv --n_best_tools 2``` to ignore any other method. Tools scores histograms can be drawn for multiple tools by using another argument ```veta inspect --plot_these_tools CADD GERP```.
 
 <p float="left">
-  <img src="src/config/example_imgs/inspect_ratios.png" height="200"/>
-  <img src="src/config/example_imgs/inspect_ratios2.png" height="200"/>
+  <img src="src/config/example_imgs/inspect_ratios.png" height="300"/>
+  <img src="src/config/example_imgs/inspect_ratios2.png" height="300"/>
 </p>
 
 <a name="scores-annotation"></a>
@@ -255,7 +255,7 @@ Note: If multiple VCF fields refer to the same tool (e.g. dbscSNV), a comma must
 
 By default, VETA draws hierarchically-clustered heatmaps, which allows the user to evaluate how similar predictions from different tools are. If run on `benchmark` mode or `inspect` with `--labels`, ground truth information will be included. This enables the user to easily visualize which tools clustered in proximity to the ground truth data. If the dataset is large (thousands of variants), this step may take long time. You can skip it with `--skip_heatmap` flag.
 
-<img src="src/config/example_imgs/heatmap.png" height="300"/>
+<img src="src/config/example_imgs/heatmap.png" height="400"/>
 
 
 <a name="AF"></a>
