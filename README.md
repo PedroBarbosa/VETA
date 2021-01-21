@@ -1,3 +1,7 @@
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![PyPI](https://img.shields.io/pypi/v/veta)
+![Docker Pulls](https://img.shields.io/docker/pulls/pbarbosa/veta)
+
 <img src="src/config/example_imgs/logo.png" height="300"/>
 
 
