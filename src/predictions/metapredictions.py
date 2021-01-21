@@ -164,12 +164,12 @@ class Metapredictions(object):
             clf = Classifiers(train_X, train_y, scoring_metrics, refit_metric)
 
             classifier_list = ['KNN', 'Naive_Bayes',
-                               'Linear_Discrimant_Analysis',
-                               'Quadratic_Discrimant_Analysis',
+                               'LDA',
+                               'QDA',
                                'Decision_Tree',
                                'Random_Forest',
                                'Ada_Boost',
-                               'Support_Vector_Machine',
+                               'SVM',
                                'Logistic_Regression']
             # , 'Genetic_Programming']
 

@@ -63,25 +63,24 @@ def plot_density_by_class(data: pd.DataFrame,
 
 def plot_allele_frequency(df: pd.DataFrame,
                           fname: str,
-                          gnomad_col: str = "gnomAD_genomes"):
+                          af_col: str = "gnomADg_AF"):
     """
     Plots allele frequencies for each class
 
     :param pd.DataFrame df: Input df
     :param str fname: Output basemame
-    :param str gnomad_col: Column name that accounts
+    :param str af_col: Column name that accounts
         for allele frequencies. Default: `gnomAD_genomes`.
         If column does not exist, analysis will be skipped.
     """
-    if gnomad_col not in df.columns:
+    if af_col not in df.columns:
         return
 
-    df[gnomad_col] = pd.to_numeric(df[gnomad_col])
     df['grouper'] = df['outcome'].astype(str) + '\nN = ' + df['count_class'].astype(str)
     order = sorted(list(df['grouper'].unique()))
-    ax = sns.boxplot(data=df, x="grouper", order=order, y=gnomad_col)
+    ax = sns.boxplot(data=df, x="grouper", order=order, y=af_col)
     try:
-        add_stat_annotation(ax, data=df, x="grouper", y=gnomad_col,
+        add_stat_annotation(ax, data=df, x="grouper", y=af_col,
                             order=order,
                             box_pairs=[tuple(order)],
                             test='Mann-Whitney',

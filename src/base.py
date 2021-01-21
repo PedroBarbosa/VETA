@@ -126,15 +126,26 @@ class Base(object):
 
         # Replace missing AF with 0 for AF plots
         if self.allele_frequency_col in self.df.columns:
-            self.df[self.allele_frequency_col] = self.df[self.allele_frequency_col]. \
-                apply(lambda x: x[0] if isinstance(x, list) else x).replace(r'^\s*$', "0", regex=True).fillna(0)
+
+            if self.df[self.allele_frequency_col].dtype == object:
+                self.df[self.allele_frequency_col] = self.df[self.allele_frequency_col].\
+                    apply(lambda x: [0 if v is None else x[0] for v in x][0])
 
         # Replace missing AF if AF is used as a tool itself to evaluate performance
         if self.allele_frequency_col in [v[0][0] for v in self.tools_config.values()]:
             name = [tool for tool, v in self.tools_config.items() if v[0][0] == self.allele_frequency_col][0]
             # If tool name is different than vcf field (it it is the same, it's dealt above)
-            if name != self.allele_frequency_col:
-                self.df[name] = self.df[name].fillna(0)
+            try:
+                if name != self.allele_frequency_col:
+                    self.df[name] = self.df[name].fillna(0)
+            except KeyError:
+                raise KeyError('Unknown column {} in the processed dataframe. '
+                               'Remove *tsv file and run again Clinvar analysis '
+                               'with the added tool.'.format(name))
+
+        if self.is_clinvar:
+            # cache processed df
+            self.df.to_csv(vcf + '.tsv', index=False)
 
     def get_df_ready(self, vcf: str, is_benign: bool = False):
         """
@@ -200,10 +211,6 @@ class Base(object):
         booleanDictionary = {True: 'Pathogenic', False: 'Benign'}
         df["outcome"] = df["label"].map(booleanDictionary)
 
-        if self.is_clinvar:
-            # cache processed df
-            print(list(df))
-            df.to_csv(vcf + '.tsv', index=False)
         return df
 
     def _fix_column_names(self, df: pd.DataFrame):

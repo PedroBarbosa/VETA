@@ -49,6 +49,9 @@ class BenchmarkTools(Base):
 
         :param bool do_machine_learning:
         """
+        #print("HERER")
+        #print(allele_frequency_col)
+        #exit(1)
         dataset, is_clinvar = self.check_dataset_arg(dataset)
         super().__init__(vcf=dataset,
                          out_dir=out_dir,

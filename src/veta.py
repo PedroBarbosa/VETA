@@ -31,7 +31,7 @@ def main():
     parent_parser.add_argument('-o', '--out_dir', metavar='', help='Path to store all the output results. '
                                                                    'Default: "out_VETA"')
 
-    parent_parser.add_argument('-s', '--scopes_to_predict', metavar='',
+    parent_parser.add_argument('-s', '--scopes_to_evaluate', metavar='',
                                help='Restrict analysis to a subset of tools based on their '
                                     'scope. Available options: {%(choices)s}. Default: Tools from '
                                     'all scores are used.',
@@ -187,7 +187,7 @@ def main():
 
         BenchmarkTools(args.dataset,
                        args.out_dir,
-                       args.scopes_to_predict,
+                       args.scopes_to_evaluate,
                        args.types_of_variant,
                        args.metric,
                        args.location,
