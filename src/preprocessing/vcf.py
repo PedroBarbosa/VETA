@@ -5,7 +5,8 @@ import subprocess
 import tempfile
 from collections import OrderedDict, defaultdict
 from functools import partial
-
+import hgvs.parser
+import pandas as pd
 from cyvcf2 import VCF
 from tqdm import tqdm
 
@@ -180,8 +181,7 @@ def process_vcf(vcf: str,
             'all_vep_annotations': all_vep_annotations,
             'present_in_INFO': present_in_INFO,
             'vep_indexes': vep_indexes,
-            'is_clinvar': is_clinvar
-            }
+            'is_clinvar': is_clinvar}
 
     # Variant processing
     if n_variants > 5000:
@@ -225,8 +225,14 @@ def _iter_variants(vcf: str, **kwargs):
     keys = []
 
     vcf_data = VCF(vcf)
+
     # Iterate over VCF
     for record in vcf_data:
+
+        # Only keep variants with VEP annotations
+        vep_annotation = record.INFO.get(kwargs['VEP_TAG'])
+        if not vep_annotation:
+            continue
 
         key = record.CHROM + "_" + str(record.POS) + "_" + str(record.REF) + "_" + str(record.ALT[0])
         if key in keys:
@@ -258,58 +264,52 @@ def _iter_variants(vcf: str, **kwargs):
                                 record.var_type,
                                 record.var_subtype])
 
-        annotation = record.INFO.get(kwargs['VEP_TAG'])
-        if annotation:
-            info = annotation.split(",")[0].split("|")
+        vep_info = _select_consequence(vep_annotation)
+        # Add some VEP fields, if they exist
+        for _field in ['Existing_variation', 'HGVSc', 'SYMBOL', 'Consequence']:
+            try:
+                scores[key].append(vep_info[kwargs['all_vep_annotations'].index(_field)])
 
-            # Add some VEP fields, if they exist
-            for _field in ['Existing_variation', 'HGVSc', 'SYMBOL', 'Consequence']:
-                try:
-                    scores[key].append(info[kwargs['all_vep_annotations'].index(_field)])
+            except ValueError:
+                pass
 
-                except ValueError:
-                    pass
+        # Look for externally annotated scores
+        # that are single fields in the INFO field
+        if len(kwargs['present_in_INFO']) > 0:
 
-            # Look for externally annotated scores
-            # that are single fields in the INFO field
-            if len(kwargs['present_in_INFO']) > 0:
+            for _tool, _fields in kwargs['present_in_INFO'].items():
+                tool_out = []
+                for _f in _fields:
+                    tool_out.append(record.INFO.get(_f))
+                scores[key].append((_tool, tool_out))
 
-                for _tool, _fields in kwargs['present_in_INFO'].items():
-                    tool_out = []
-                    for _f in _fields:
-                        tool_out.append(record.INFO.get(_f))
-                    scores[key].append((_tool, tool_out))
+        # Append fields from VEP annotation
+        for _tool, idx in kwargs['vep_indexes'].items():
+            # If tool has multiple fields
+            # and at least 1 is within VEP annot
+            # and other in the INFO annot.
+            if _tool in kwargs['present_in_INFO'].keys():
+                scores_so_far = scores[key]
+                _updated = []
+                for _v in scores_so_far:
+                    if isinstance(_v, tuple) and _v[0] == _tool:
+                        val = _v[1] + [vep_info[i] for i in idx]
+                        _updated.append((_v[0], val))
+                    else:
+                        _updated.append(_v)
 
-            # Append fields from VEP annotation
-            for _tool, idx in kwargs['vep_indexes'].items():
-                # If tool has multiple fields
-                # and at least 1 is within VEP annot
-                # and other in the INFO annot.
-                if _tool in kwargs['present_in_INFO'].keys():
-                    scores_so_far = scores[key]
-                    _updated = []
-                    for _v in scores_so_far:
-                        if isinstance(_v, tuple) and _v[0] == _tool:
-                            val = _v[1] + [info[i] for i in idx]
-                            _updated.append((_v[0], val))
-                        else:
-                            _updated.append(_v)
+                scores[key] = _updated
 
-                    scores[key] = _updated
-
-                else:
-                    scores[key].append((_tool, [info[i] for i in idx]))
+            else:
+                scores[key].append((_tool, [vep_info[i] for i in idx]))
 
         if kwargs['is_clinvar']:
             scores[key].append(('CLNREVSTAT', record.INFO.get("CLNREVSTAT")))
             scores[key].append(('CLNSIG', record.INFO.get("CLNSIG")))
 
-        # if 'pbar' in kwargs:
-        #     print(kwargs['pbar'])
-        #     kwargs['pbar'].update(1)
-
     vcf_data.close()
     return scores
+
 
 def _check_if_field_exists(field: list, available: list):
     """
@@ -342,3 +342,21 @@ def _check_if_field_exists(field: list, available: list):
             absent.append(_f)
 
     return present, absent
+
+
+def _select_consequence(vep_annotations: str):
+    """
+    Selects top VEP consequence block. Right
+    now just selects the first consequence.
+
+    :param str vep_annotations: Str with VEP
+     annotations. If multiple blocks, "," splits
+     them
+
+    :return str: Top block
+    """
+    if "," in vep_annotations:
+        return vep_annotations.split(",")[0].split("|")
+
+    else:
+        return vep_annotations.split("|")

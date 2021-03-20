@@ -79,11 +79,12 @@ class Metapredictions(object):
         # Remove score transformation in both S-CAP and TrAP,
         # if still present after NA removal
         self.s_cap_pred, self.trap_pred = [], []
-        if "S-CAP" in self.df:
+
+        if "S-CAP" in self.df.columns:
             self.s_cap_pred = self.df['S-CAP'].copy().to_numpy()
             self.df.loc[:, 'S-CAP'] = self.df['S-CAP'].apply(lambda x: x - 1 if x > 1 else x)
 
-        elif "TraP" in self.df:
+        if "TraP" in self.df.columns:
             self.trap_pred = self.df['TraP'].copy().to_numpy()
             self.df.loc[:, 'TraP'] = self.df['TraP'].apply(lambda x: x - 1 if x > 1 else x)
 
@@ -171,6 +172,7 @@ class Metapredictions(object):
                                'Ada_Boost',
                                'SVM',
                                'Logistic_Regression']
+
             # , 'Genetic_Programming']
 
             out_metrics = {}
@@ -211,11 +213,10 @@ class Metapredictions(object):
                 _clf = _c[1]
                 _clf.fit(train_X, train_y)
 
-                # Dummy predictions
-
                 # Recover pathogenic predictions made by multi threshold tools
                 # (pathogenic predictions transformed (+1))
                 if _name == "TraP":
+
                     m = np.median(self.trap_pred[~np.isnan(self.trap_pred)])
                     self.trap_pred[np.isnan(self.trap_pred)] = m
                     test_x_single_feature = self.trap_pred[test_idx].reshape(-1, 1)

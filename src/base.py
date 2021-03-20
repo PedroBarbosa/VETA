@@ -30,7 +30,7 @@ class Base(object):
                  metric: str = "weighted_accuracy",
                  location: str = "HGVSc",
                  genome: str = "hg19",
-                 is_intronic: bool = False,
+                 do_intronic_analysis: bool = False,
                  is_clinvar: bool = False,
                  allele_frequency_col: str = "gnomADg_AF",
                  skip_heatmap: bool = False,
@@ -64,7 +64,7 @@ class Base(object):
         :param str genome: Genome build where variants are mapped
             Available options: ['hg19', 'hg38']. Default: `hg19`.
 
-        :param bool is_intronic: Whether additional analysis of
+        :param bool do_intronic_analysis: Whether additional analysis of
             intronic variants extracted from HGVSc field will
             be performed
 
@@ -88,9 +88,10 @@ class Base(object):
         self.metric = metric
         self.location_from = location
         self.genome = genome
-        self.is_intronic = is_intronic
+        self.do_intronic_analysis = do_intronic_analysis
         self.location_filters = filters_location
         self.is_clinvar = is_clinvar
+
         self.out_dir = setup_output_directory(out_dir)
         ensure_folder_exists(self.out_dir)
         self.allele_frequency_col = allele_frequency_col
@@ -98,14 +99,14 @@ class Base(object):
 
         tools_config = self._parse_tools_config(tools_config)
         self.thresholds = update_thresholds(tools_config)
-        self.thresholds = subset_toolset_by_scope(self.thresholds, scopes_to_predict, self.is_intronic)
+        self.thresholds = subset_toolset_by_scope(self.thresholds, scopes_to_predict, self.do_intronic_analysis)
         self.available_tools = [t[0] for t in self.thresholds]
 
         # TODO change global thresholds list to remove excess of fields when custom models are provided
         self.tools_config = {k: v for k, v in tools_config.items() if k in self.available_tools}
         self.variant_types = subset_variants_by_type(types_of_variant)
 
-        if self.location_from == "Consequence" and self.is_intronic:
+        if self.location_from == "Consequence" and self.do_intronic_analysis:
             raise ValueError('If \'--is_intronic\' is set, \'--location\' '
                              'must be \'HGVSc\' because intronic bin analysis '
                              'will be performed based on the HGVS nomenclature.')
@@ -189,8 +190,10 @@ class Base(object):
         if self.location_from == "HGVSc":
             hp = hgvs.parser.Parser()
 
-            df['location'] = df['HGVSc'].apply(get_location, hp=hp)
-            if self.is_intronic:
+            df['location'] = df.apply(get_location, hp=hp,
+                                      axis=1,
+                                      result_type='expand')
+            if self.do_intronic_analysis:
                 df[['intron_bin', 'intron_offset']] = df.apply(
                     lambda x: assign_intronic_bins(x['HGVSc'], hp, x['location']), axis=1)
 
@@ -224,11 +227,8 @@ class Base(object):
                                        'rsID', 'HGVSc', 'Gene', 'Consequence']
 
         for column in df:
-
             if isinstance(df[column].iloc[0], (tuple,)):
-                # if df[column].iloc[0][0] == "gnomADg_AF":
-                #     new_col_names.append("gnomAD_genomes")
-                # else:
+
                 new_col_names.append(df[column].iloc[0][0])
                 df[column] = df[column].map(tuple2float)
 
@@ -271,6 +271,7 @@ class Base(object):
             "phyloP": available_functions['top_max'],
             "phastCons": available_functions['top_max'],
             "SiPhy": available_functions['to_numeric'],
+            "CDTS": available_functions['to_numeric'],
 
             "LRT": available_functions['to_numeric'],
             "Sift": available_functions['top_min_abs'],
@@ -288,6 +289,9 @@ class Base(object):
             "MetaSVM": available_functions['to_numeric'],
             "REVEL": available_functions['to_numeric'],
             "VEST4": available_functions['to_numeric'],
+            "MVP": available_functions['to_numeric'],
+            "CardioBoost": available_functions['to_numeric'],
+            "PrimateAI": available_functions['to_numeric'],
 
             "fitCons": available_functions['to_numeric'],
             "LINSIGHT": available_functions['to_numeric'],
@@ -371,11 +375,13 @@ class Base(object):
         :return defaultdict: Dict with
         info about each tool
         """
-        AVAILABLE_TOOLS_NAMES = ["GERP", "phyloP", "phastCons", "SiPhy", "LRT",
-                                 "Sift", "Polyphen2HVAR", "Polyphen2HDIV",
-                                 "MutationTaster", "MutationAssessor", "FATHMM",
-                                 "Provean", "Mutpred", "CAROL", "Condel",
-                                 "M-CAP", "MetaSVM", "MetaLR", "REVEL", "VEST4",
+        AVAILABLE_TOOLS_NAMES = ["GERP", "phyloP", "phastCons", "SiPhy",
+                                 "CDTS", "LRT", "Sift", "Polyphen2HVAR",
+                                 "Polyphen2HDIV", "MutationTaster",
+                                 "MutationAssessor", "FATHMM", "Provean",
+                                 "Mutpred", "CAROL", "Condel", "M-CAP",
+                                 "MetaSVM", "MetaLR", "REVEL", "VEST4",
+                                 "MVP", "PrimateAI", "CardioBoost",
                                  "fitCons", "LINSIGHT", "ReMM", "GWAVA", "FATHMM-MKL",
                                  "Eigen", "FunSeq2", "CADD", "DANN", "HAL", "SPIDEX",
                                  "dbscSNV", "MaxEntScan", "SpliceAI", "S-CAP", "TraP",
@@ -388,7 +394,6 @@ class Base(object):
 
         _infile = open(config, 'r')
         data = defaultdict(list)
-
 
         for line in _infile:
             line = line.rstrip()
@@ -440,7 +445,6 @@ class Base(object):
                     data[_fields[0]].append(_fields[5])
 
         if len(data) < 2:
-            print(data)
             raise ValueError('Config file requires at least two tools to be compared.')
 
         return data

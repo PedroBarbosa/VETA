@@ -1,9 +1,10 @@
 #Name	VCF_annotation_field	Directionality	Threshold	Scope	Processing_function
-# Conservation
+#Conservation
 GERP	GERP
 phyloP	phyloP
 phastCons	phastCons
 SiPhy	SiPhy
+CDTS	CDTS_percentile
 
 # Protein predictors
 LRT	LRT_score
@@ -22,6 +23,9 @@ MetaSVM	MetaSVM_score
 MetaLR	MetaLR_score
 REVEL	REVEL_score
 VEST4	VEST4_score
+MVP	MVP
+PrimateAI	PrimateAI
+CardioBoost	CardioBoost
 
 # Functional
 fitCons	fitcons

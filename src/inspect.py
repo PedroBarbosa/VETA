@@ -25,7 +25,7 @@ class PredictionsEval(Base):
                  metric: str = "weighted_accuracy",
                  location: str = "HGVSc",
                  genome: str = "hg19",
-                 is_intronic: bool = False,
+                 do_intronic_analysis: bool = False,
                  best_tools: str = None,
                  n_best_tools: int = None,
                  plot_these_tools: List = None,
@@ -66,7 +66,7 @@ class PredictionsEval(Base):
                          metric=metric,
                          location=location,
                          genome=genome,
-                         is_intronic=is_intronic,
+                         do_intronic_analysis=do_intronic_analysis,
                          is_clinvar=False,
                          allele_frequency_col=allele_frequency_col,
                          skip_heatmap=skip_heatmap,
@@ -175,7 +175,7 @@ class PredictionsEval(Base):
             ### Performance ###
             ###################
             if self.labels is not None:
-                logging.info("Inspecting tools performance based in the label provided ({})".format(self.labels))
+                logging.info("Inspecting tools performance based on the label provided ({})".format(self.labels))
                 _df_just_pred['label'] = False if self.labels in ["Benign", "Neutral"] else True
                 self.generate_performance_with_label(_df_just_pred,
                                                      outdir=outdir)
@@ -213,7 +213,7 @@ class PredictionsEval(Base):
                                                  thresholds=self.thresholds,
                                                  outdir=outdir)
 
-        if self.is_intronic:
+        if self.do_intronic_analysis:
             logging.info("For now, intronic analysis is not available "
                          "in the inspect mode. Skipping it.")
 

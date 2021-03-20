@@ -22,6 +22,7 @@ def update_thresholds(config_dict: defaultdict):
         ('phyloP', '>', 1.6, 'Conservation'),
         ('SiPhy', '>', 12.17, 'Conservation'),
         ('phastCons', '>', 0.99, 'Conservation'),
+        ('CDTS', '<', 10, 'Conservation'),
         ('fitCons', '>', 0.4, 'Functional'),
         ('LINSIGHT', '>', 0.4, 'Functional'),
 
@@ -41,6 +42,9 @@ def update_thresholds(config_dict: defaultdict):
         ('MetaLR', '>', 0.5, 'Protein'),
         ('MetaSVM', '>', 0.5, 'Protein'),
         ('M-CAP', '>', 0.025, 'Protein'),
+        ('MVP', '>', 0.7, 'Protein'),
+        ('CardioBoost', '>', 0.9, 'Protein'),
+        ('PrimateAI', '>', 0.8, 'Protein'),
 
         ('CADD', '>', 15, 'Functional'),
         ('DANN', '>', 0.9, 'Functional'),
@@ -119,14 +123,14 @@ def update_thresholds(config_dict: defaultdict):
 
     return _updated_list
 
-
 filters_location = [
     ('all', lambda x: x),
     ('coding', lambda x: x[x['location'].str.match('coding')]),
-    ('splicesite', lambda x: x[x['location'].str.match('splicesite')]),
+    ('splice_site', lambda x: x[x['location'].str.match('splice_site')]),
+    ('splice_region', lambda x: x[x['location'].str.match('splice_region')]),
     ('5primeUTR', lambda x: x[x['location'].str.match('5primeUTR')]),
     ('3primeUTR', lambda x: x[x['location'].str.match('3primeUTR')]),
-    ('deepintronic', lambda x: x[x['location'].str.match('deepintronic')]),
+    ('deep_intronic', lambda x: x[x['location'].str.match('deep_intronic')]),
     ('noncodingRNA', lambda x: x[x['location'].str.match('noncodingRNA')]),
     ('mithocondrial', lambda x: x[x['location'].str.match('mithocondrial')]),
     ('unknown', lambda x: x[x['location'].str.match('unknown')])
@@ -143,12 +147,14 @@ filters_var_type = [
 
 filter_intronic_bins = [
     ('all_intronic', lambda x: x[~x['intron_bin'].isnull()]),
+    ('all_except_0-2', lambda x: x[~x['intron_bin'].str.match('0-2')]),
     ('all_except_0-10', lambda x: x[~x['intron_bin'].str.match('0-10')]),
-    ('0-10', lambda x: x[x['intron_bin'].str.match('0-10')]),
-    ('10-30', lambda x: x[x['intron_bin'].str.match('10-30')]),
-    ('30-100', lambda x: x[x['intron_bin'].str.match('30-100')]),
-    ('100-200', lambda x: x[x['intron_bin'].str.match('100-200')]),
-    ('200-500', lambda x: x[x['intron_bin'].str.match('200-500')]),
+    ('0-2', lambda x: x[x['intron_bin'].str.match('0-2')]),
+    ('3-10', lambda x: x[x['intron_bin'].str.match('3-10')]),
+    ('11-30', lambda x: x[x['intron_bin'].str.match('11-30')]),
+    ('31-100', lambda x: x[x['intron_bin'].str.match('31-100')]),
+    ('101-200', lambda x: x[x['intron_bin'].str.match('101-200')]),
+    ('201-500', lambda x: x[x['intron_bin'].str.match('201-500')]),
     ('500+', lambda x: x[x['intron_bin'].str.match('500\+')])
 ]
 
@@ -196,4 +202,7 @@ def subset_toolset_by_scope(threshold_list: List,
     if scopes is not None:
         _to_analyse = list(set(_to_analyse).intersection(scopes))
 
-    return [tool for tool in threshold_list if tool[3] in _to_analyse]
+    try:
+        return [tool for tool in threshold_list if tool[3] in _to_analyse]
+    except IndexError:
+        raise IndexError('Scope is missing in the config file for some custom provided tool')

@@ -15,7 +15,11 @@ def plot_feature_correlation(df: pd.DataFrame, location: str, outdir: str):
     :param str outdir: Output directory
     """
     cmap = sns.diverging_palette(220, 10, as_cmap=True)
-    corr = df.drop('label', axis=1).corr()
+
+    if 'intron_offset' in df.columns:
+        corr = df.drop(['label', 'intron_offset'], axis=1).corr()
+    else:
+        corr = df.drop('label', axis=1).corr()
 
     # Generate a mask for the upper triangle
     mask = np.zeros_like(corr, dtype=np.bool)

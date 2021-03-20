@@ -1,9 +1,8 @@
 import logging
 import sys
-
+from typing import Union
 import numpy as np
 import pandas as pd
-
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 
 
@@ -24,6 +23,7 @@ def tuple2float(x: tuple):
 
     :return list: List of predictions (2nd elem)
     """
+
     return x[1] if x[1] != '.' or x[1] != '' or x[1] else np.nan
 
 
@@ -484,14 +484,17 @@ def process_kipoi_tools(x: list, _max: bool = True):
     single VCF field, returns a single value
     """
 
-    def _get_prediction(elem: str):
+    def _get_prediction(elem: Union[str, float]):
         """
         Returns top prediction for a single
         element
 
         :param str elem: Score(s)
-        :return:
+        :return float:
         """
+        if isinstance(elem, float):
+            return abs(elem) if _max is True else elem
+
         if not elem or elem == "." or elem == "None":
             return np.nan
 
@@ -501,8 +504,11 @@ def process_kipoi_tools(x: list, _max: bool = True):
         elif "," in elem:
             return round(min([abs(float(v)) for v in elem.split(",")]), 4)
 
-        else:
+        elif _max is True:
             return abs(float(elem))
+
+        else:
+            return float(elem)
 
     out = []
     for e in x:

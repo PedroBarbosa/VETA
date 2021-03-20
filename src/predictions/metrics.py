@@ -10,7 +10,7 @@ from src.preprocessing.utils_tools import ratio
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 from collections import defaultdict
 from src.preprocessing import utils_tools
-from sklearn.metrics import auc
+from sklearn.metrics import auc, average_precision_score, roc_auc_score, roc_curve, precision_recall_curve
 
 
 def generate_statistics(df: pd.DataFrame,
@@ -119,19 +119,13 @@ def generate_statistics(df: pd.DataFrame,
 
 
 def do_roc_analysis(data: pd.DataFrame,
-                    name: str,
-                    direction: str,
-                    n_thresholds: int = 100):
+                    name: str):
     """
     Perform ROC analysis a given tool
 
     :param pd.Dataframe data: Scores for a given tool
     with corresponding labels
     :param str name: Tool name
-    :param str direction: Direction of pathogenicity
-        score
-    :param int n_thresholds: Number of different
-        thresholds to measure. Default: `100`
     """
     max_thr = data[name].max()  # + (df_tool[tool].max()) - df_tool[tool].min()) * 0.001
     min_thr = data[name].min()  # - (df_tool[tool].max()) - df_tool[tool].min()) * 0.001
@@ -144,51 +138,26 @@ def do_roc_analysis(data: pd.DataFrame,
         logging.info("{} has the the same min/max score".format(name))
         return
 
-    _step = (max_thr - min_thr) / float(n_thresholds)
-    threshold_range = np.arange(min_thr, max_thr, _step)
+    fpr, tpr, thresh_roc = roc_curve(data.label, data[name])
+    precision, recall, thresh_pr = precision_recall_curve(data.label, data[name])
 
-    tool_metrics = []
+    label = name + "(n=" + str(data.shape[0]) + ","
 
-    for _thresh in threshold_range:
+    if len(thresh_roc) > 400:
+        idx = np.round(np.linspace(0, len(thresh_roc) - 1, 200)).astype(int)
+        thresh_roc = thresh_roc[idx]
+        tpr = tpr[idx]
+        fpr = fpr[idx]
 
-        if direction == ">":
-            classification_f = lambda x: x == np.nan and np.nan or x >= _thresh
-        else:
-            classification_f = lambda x: x == np.nan and np.nan or x <= _thresh
+    precision = precision[:-1]
+    recall = recall[:-1]
+    if len(thresh_pr) > 400:
+        idx = np.round(np.linspace(0, len(thresh_pr) - 1, 200)).astype(int)
+        thresh_pr = thresh_pr[idx]
+        precision = precision[idx]
+        recall = recall[idx]
 
-        classification = data[name].map(classification_f)
-        tp = np.sum(classification.eq(data['label']) & classification)
-        fp = np.sum(~data['label'] & classification)
-        fn = np.sum(data['label'] & ~classification)
-        tn = np.sum(classification.eq(data['label']) & ~classification)
-        ap = tp + fn
-        ap_predicted = np.sum(classification)
+    roc_curve_data = [label, list(thresh_roc), list(tpr), list(fpr)]
+    pr_curve_data = [label, list(thresh_pr), list(recall), list(precision)]
 
-        sensitivity = ratio(tp, ap)
-        precision = ratio(tp, ap_predicted)
-
-        an = tn + fp
-        an_predicted = np.sum(~classification)
-        specificity = ratio(tn, an)
-
-        tool_metrics.append([name + "(n=" + str(data.shape[0]) + ",",
-                             _thresh,
-                             precision,
-                             sensitivity,
-                             1 - specificity])
-
-    prc = [val_at_thresh[2] for val_at_thresh in tool_metrics]
-    tpr = [val_at_thresh[3] for val_at_thresh in tool_metrics]
-    fpr = [val_at_thresh[4] for val_at_thresh in tool_metrics]
-
-    roc_auc = [auc(sorted(fpr), sorted(tpr))] * len(tool_metrics)
-    # roc_auc = [np.trapz(tpr, fpr, dx=_step)] * len(tool_metrics)
-
-    pr_auc = [auc(sorted(tpr), sorted(prc))] * len(tool_metrics)
-
-    # pr_auc = [integrate.simps(prc, dx=_step)] * len(tool_metrics)
-    # trapz gives the same are, but with negative values.
-    # Need to reverse X
-    # pr_auc = [np.trapz(prc, tpr)] * len(tool_metrics)
-
-    return tool_metrics, roc_auc, pr_auc
+    return roc_curve_data, pr_curve_data, roc_auc_score(data.label, data[name]), average_precision_score(data.label, data[name])

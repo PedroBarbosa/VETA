@@ -35,6 +35,11 @@ def do_intron_analysis(df: pd.DataFrame, thresholds: List, metric: str,
     logging.info("-------------------------")
     logging.info("Intronic analysis started")
     logging.info("-------------------------")
+    assert "intron_bin" in df.columns, "Intronic bins not in the data. " \
+                                       "Probably a first run of Clinvar " \
+                                       "was performed without --intronic-bins " \
+                                       "args. To fix, just remove the 'tsv' in " \
+                                       "the input directory and try again."
 
     out_dir = os.path.join(out_dir, "intron_analysis")
     os.makedirs(out_dir)
@@ -60,61 +65,53 @@ def do_intron_analysis(df: pd.DataFrame, thresholds: List, metric: str,
                          "at {} bin ({})".format(_bin, _df_i_bin.shape[0]))
             continue
 
-        logging.info("Pathogenic: {}".format(_df_i_bin["label"].sum()))
-        logging.info("Benign: {}".format((~ _df_i_bin["label"]).sum()))
+        n_pos = _df_i_bin["label"].sum()
+        n_neg = (~ _df_i_bin["label"]).sum()
+        logging.info("Pathogenic: {}".format(n_pos))
+        logging.info("Benign: {}".format(n_neg))
 
-        list_df_metrics_per_tool = []
+        list_df_metrics_per_tool, roc_metrics_per_tool, pr_metrics_per_tool, general_metrics_per_tool = [], [], [], []
         statistics = defaultdict(list)
         stats_df = ""
         for tool, direction, threshold, *args in thresholds:
 
             try:
-                _no_null_df = _df_i_bin.loc[pd.notnull(_df_i_bin[tool + "_prediction"]),].copy()
+                _no_null_df = _df_i_bin.loc[pd.notnull(_df_i_bin[tool + "_prediction"]), ].copy()
             except KeyError:
                 na[tool] = 1
-                continue
 
             statistics = metrics.generate_statistics(_df_i_bin, statistics, _bin, tool)
             stats_df = pd.DataFrame(statistics)
 
             na[tool] = stats_df.loc[stats_df['tool'] == tool, 'fraction_nan'].iloc[0]
             df_tool = _no_null_df[~_no_null_df[tool + "_prediction"].isnull()]
-            if df_tool.shape[0] > min_variants:
 
-                # Do ROC
-                tool_metrics, roc_auc, pr_auc = metrics.do_roc_analysis(df_tool[[tool, 'label']],
-                                                                        tool,
-                                                                        direction)
+            ####################
+            ### ROC analysis ###
+            ####################
+            if df_tool.shape[0] > min_variants and min(n_pos, n_neg) > 10:
 
-                f1_score = [stats_df.loc[stats_df['tool'] == tool, 'F1'].iloc[0]] * len(tool_metrics)
-                weighted_f1_score = [stats_df.loc[stats_df['tool'] == tool, 'weighted_F1'].iloc[0]] * len(tool_metrics)
-                nan = [na[tool]] * len(tool_metrics)
+                roc_curve, pr_curve, roc_auc, ap_score = metrics.do_roc_analysis(df_tool[[tool, 'label']],
+                                                                                 tool)
+                roc_metrics_per_tool.append([tool, float(na[tool]), roc_curve[0], roc_curve[1],
+                                             roc_curve[2], roc_curve[3], roc_auc])
+                pr_metrics_per_tool.append([tool, float(na[tool]), pr_curve[0], pr_curve[1],
+                                            pr_curve[2], pr_curve[3], ap_score])
 
-                tool_metrics = [x + [y] + [z] + [f] + [wf] + [na] for x, y, z, f, wf, na in zip(tool_metrics, roc_auc,
-                                                                                                pr_auc,
-                                                                                                f1_score,
-                                                                                                weighted_f1_score,
-                                                                                                nan)]
-                list_df_metrics_per_tool.append(pd.DataFrame(tool_metrics,
-                                                             columns=["tool", "threshold",
-                                                                      "precision", "recall",
-                                                                      "FPR", "ROC-auc", "PR-auc",
-                                                                      "F1", "weighted_F1",
-                                                                      "fraction_nan"]))
-
-                if not _bin in ["all_intronic", "all_except_0-10", None]:
-                    roc_per_bin[tool].append([_bin,
-                                              roc_auc[0],
-                                              pr_auc[0],
-                                              f1_score[0],
-                                              weighted_f1_score[0],
-                                              na[tool]]
-                                             )
             else:
-                logging.info("Not enough variants predicted by {} "
-                             "for ROC analysis at {} bin".format(tool,
-                                                                 _bin))
-                continue
+                logging.info("ROC analysis will be skipped for {} at {} bin. Not enough variants were predicted "
+                             "(minimum accepted: {}; predicted: {}) or the number of counts in the minority class "
+                             "is less than 10 ({} variants).".format(tool, _bin, min_variants,
+                                                                     df_tool.shape[0], min(n_pos, n_neg)))
+
+            f1_score = stats_df.loc[stats_df['tool'] == tool, 'F1'].iloc[0]
+            weighted_f1_score = stats_df.loc[stats_df['tool'] == tool, 'weighted_F1'].iloc[0]
+            if not _bin in ["all_intronic", "all_except_0-2", "all_except_0-10", None]:
+
+                roc_per_bin[tool].append([_bin,
+                                          f1_score,
+                                          weighted_f1_score,
+                                          na[tool]])
 
         stats_df.drop(['filter'], axis=1).to_csv(os.path.join(out_dir, "statistics_{}.csv".format(_bin)),
                                                  sep="\t",
@@ -128,18 +125,18 @@ def do_intron_analysis(df: pd.DataFrame, thresholds: List, metric: str,
         plot_unscored(stats_df, unscored_plot)
         plot_metrics(stats_df, metrics_plot, metric)
 
-        final_df_metrics = pd.concat(list_df_metrics_per_tool)
+        if roc_metrics_per_tool:
+            plot_curve(roc_metrics_per_tool,
+                       os.path.join(out_dir, "{}_ROC".format(_bin)),
+                       (n_pos, n_neg))
 
-        try:
-            plot_ROCs(final_df_metrics,
-                      os.path.join(out_dir, "{}_ROC".format(_bin)),
-                      _df_i_bin.loc[_df_i_bin['outcome'] == "Pathogenic", 'count_class'].iloc[0]
-                      )
-        except IndexError:
-            logging.info("No positive class instances at {} bin, skipping ROC.".format(_bin))
+        if pr_metrics_per_tool:
+            plot_curve(pr_metrics_per_tool,
+                       os.path.join(out_dir, "{}_ROC_pr".format(_bin)),
+                       (n_pos, n_neg),
+                       is_roc=False)
 
     df_roc_bins = pd.DataFrame([[k] + i for k, v in roc_per_bin.items() for i in v],
-                               columns=["tool", "bin", "auROC", "prROC",
-                                        "F1", "weighted_F1",  "fraction_nan"])
+                               columns=["tool", "bin", "F1", "weighted_F1", "fraction_nan"])
 
-    plot_metrics_by_bin(df_roc_bins, os.path.join(out_dir, "per_bin_evol"))
+    plot_metrics_by_bin(df_roc_bins, os.path.join(out_dir, "per_bin"))

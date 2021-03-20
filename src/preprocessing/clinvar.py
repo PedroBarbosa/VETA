@@ -34,7 +34,7 @@ def get_clinvar_cached(fname: str):
 
     # If clinvar was processed before
     if os.path.exists(tsv_file):
-        return pd.read_csv(tsv_file)
+        return pd.read_csv(tsv_file, low_memory=False)
 
     return
 
@@ -56,8 +56,6 @@ def filter_clinvar_1_star(df: pd.DataFrame):
     # are conflicting interpretations. In such cases
     # the independent values are enumerated for clinical
     # significance (criteria provided, conflicting interpretations)
-    # print(df["clinvar.rcv.review_status"].value_counts())
-
     to_remove = ['no_assertion_criteria_provided',
                  'no_assertion_provided',
                  'no_interpretation_for_the_single_variant']

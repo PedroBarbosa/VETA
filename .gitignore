@@ -9,6 +9,7 @@
 *.stackdump
 *.idea
 *.pyc
+results/
 test_data/
 VETA.egg-info/
 build/

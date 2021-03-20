@@ -51,6 +51,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
             thresholds_to_return[beta][location] = {}
 
     for _loc, filter_func in location_filters:
+
         df_f = filter_func(dataset).copy()
 
         # Do threshold analysis only if dataset has a minimum size
@@ -68,7 +69,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
                 continue
 
             # Do threshold analysis for tools with sufficient prediction power
-            df_per_tool = df_f.loc[pd.notnull(df_f[tool]),][[tool, 'label']].copy()
+            df_per_tool = df_f.loc[pd.notnull(df_f[tool]), ][[tool, 'label']].copy()
 
             # Transform TraP scores for proper threshold analysis
             if tool == "TraP":

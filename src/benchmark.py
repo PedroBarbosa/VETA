@@ -30,7 +30,7 @@ class BenchmarkTools(Base):
                  metric: str = "weighted_accuracy",
                  location: str = "HGVSc",
                  genome: str = "hg19",
-                 is_intronic: bool = False,
+                 do_intronic_analysis: bool = False,
                  clinvar_stars: str = "3s_l",
                  do_threshold_analysis: bool = False,
                  do_machine_learning: bool = False,
@@ -42,16 +42,8 @@ class BenchmarkTools(Base):
         ----
         Base args described in Base class
         ----
-
-        :param str clinvar_stars:
-
-        :param bool do_threshold_analysis:
-
-        :param bool do_machine_learning:
         """
-        #print("HERER")
-        #print(allele_frequency_col)
-        #exit(1)
+
         dataset, is_clinvar = self.check_dataset_arg(dataset)
         super().__init__(vcf=dataset,
                          out_dir=out_dir,
@@ -60,7 +52,7 @@ class BenchmarkTools(Base):
                          metric=metric,
                          location=location,
                          genome=genome,
-                         is_intronic=is_intronic,
+                         do_intronic_analysis=do_intronic_analysis,
                          is_clinvar=is_clinvar,
                          allele_frequency_col=allele_frequency_col,
                          skip_heatmap=skip_heatmap,
@@ -103,7 +95,7 @@ class BenchmarkTools(Base):
 
         self.top_tools = self.do_performance_comparison()
 
-        if self.is_intronic:
+        if self.do_intronic_analysis:
             introns.do_intron_analysis(self.df,
                                        thresholds=self.thresholds,
                                        metric=self.metric,
@@ -113,7 +105,7 @@ class BenchmarkTools(Base):
         if self.do_threshold_analysis:
             if self.is_clinvar:
                 # For now, threshold analysis is done using a highly confident set (3stars with likely)
-                new_thresholds = perform_threshold_analysis(self.clinvar_levels_dict['3s_l'],
+                new_thresholds = perform_threshold_analysis(self.clinvar_levels_dict['2s_l'],
                                                             self.location_filters,
                                                             self.thresholds,
                                                             self.out_dir)
@@ -183,9 +175,9 @@ class BenchmarkTools(Base):
 
                         # distributions of each class
                         # are only plotted for SNPs and
-                        # all types for splicesite and
+                        # all types for splice_site and
                         # coding locations
-                        if (_location in ['all', 'splicesite', 'coding'] and
+                        if (_location in ['all', 'splice_site', 'splice_region', 'coding'] and
                                 var_type in ['snps', 'all_types']):
                             plot_density_by_class(df[[tool, "label"]],
                                                   thresholds=self.thresholds,
@@ -270,7 +262,6 @@ class BenchmarkTools(Base):
             refers to clinvar (if a file)
         """
         # if reference datasets are in directory
-        print(dataset)
         if os.path.isdir(dataset):
             fname_benign = [filename for filename in os.listdir(dataset) if
                             any(fnmatch.fnmatch(filename, pattern) for pattern in ["*benign*[vcf.bgz]",
@@ -312,6 +303,7 @@ class BenchmarkTools(Base):
                 continue
 
             logging.info("Analyzing '{}' variants.".format(_loc))
+
             ml_data = Metapredictions(df_f, _loc, self.thresholds,
                                       out_dir,
                                       top_tools=self.top_tools,

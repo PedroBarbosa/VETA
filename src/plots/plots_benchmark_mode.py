@@ -9,6 +9,7 @@ plt.switch_backend('agg')
 sns.set(style="white")
 cmap = sns.diverging_palette(220, 10, as_cmap=True)
 from matplotlib.lines import Line2D
+import matplotlib.colors as c
 import matplotlib.patches as mpatches
 from statannot import add_stat_annotation
 from src.plots.plots_utils import *
@@ -33,26 +34,29 @@ def plot_density_by_class(data: pd.DataFrame,
     df_ = data[~data.iloc[:, 0].isnull()]
 
     if df_.shape[0] > min_predicted:
-        pathogenic = df_.loc[df_['label']]
-        benign = df_.loc[~df_['label']]
 
-        sns.kdeplot(benign.iloc[:, 0],
+        sns.kdeplot(x=df_.columns[0],
+                    data=df_,
+                    palette={True: 'firebrick', False: 'royalblue'},
                     shade=True,
-                    linewidth=3,
-                    label="Benign")
+                    linewidth=1.5,
+                    hue='label',
+                    legend=False)
 
-        sns.kdeplot(pathogenic.iloc[:, 0],
-                    shade=True,
-                    linewidth=3,
-                    label="Pathogenic")
+        plt.axvline(x=[x[2] for x in thresholds if x[0] == list(df_)[0]][0], color='k', linestyle="--")
+        legend_d = {'Pathogenic': 'firebrick',
+                    'Benign': 'royalblue',
+                    'Reference threshold': 'black'}
 
-        plt.axvline([x[2] for x in thresholds if x[0] == list(df_)[0]], color='r', linestyle="--")
+        handles = []
+        for _l, _c in legend_d.items():
+            style = '--' if _l not in ['Benign', 'Pathogenic'] else '-'
 
-        thresh_line = Line2D([], [], color='r', linestyle='--',
-                             markersize=10,
-                             markeredgewidth=1.5,
-                             label='Reference threshold')
-        plt.legend(handles=[thresh_line])
+            handles.append(Line2D([], [], color=_c, linestyle=style,
+                                  markersize=10,
+                                  markeredgewidth=1.5,
+                                  label=_l))
+        plt.legend(handles=handles)
 
         plt.xlabel(list(df_)[0] + " ({}% missing data)".format(fraction_nan))
         ends = (max(df_.iloc[:, 0]) - min(df_.iloc[:, 0])) * 0.05
@@ -73,11 +77,13 @@ def plot_allele_frequency(df: pd.DataFrame,
         for allele frequencies. Default: `gnomAD_genomes`.
         If column does not exist, analysis will be skipped.
     """
+
     if af_col not in df.columns:
         return
 
     df['grouper'] = df['outcome'].astype(str) + '\nN = ' + df['count_class'].astype(str)
     order = sorted(list(df['grouper'].unique()))
+
     ax = sns.boxplot(data=df, x="grouper", order=order, y=af_col)
     try:
         add_stat_annotation(ax, data=df, x="grouper", y=af_col,
@@ -108,11 +114,13 @@ def plot_unscored(data: pd.DataFrame, fname: str):
         for each tool
     :param str fname: Output file
     """
-
+    fig = plt.figure(figsize=(8, 7))
     ax = sns.barplot(x="fraction_nan",
                      y="tool",
                      color="skyblue",
-                     data=data)
+                     linewidth=1.5,
+                     edgecolor="k",
+                     data=data.sort_values('fraction_nan', ascending=False))
 
     ax.set(xlabel='Fraction of unscored variants', ylabel='')
     plt.xlim(0, 1)
@@ -131,11 +139,11 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
     :param str metric: Metric used
         to rank the tools
     """
+    data = data.sort_values(metric)
+
     my_range_coverage = list(range(1, len(data.index) + 1))
     my_range_specificity = np.arange(1 - 0.2, len(data.index)).tolist()
     my_range_sensitivity = np.arange(1 + 0.2, len(data.index) + 0.5).tolist()
-
-    data = data.sort_values(metric)
 
     fig, ax = plt.subplots(figsize=(10, 8)) if data.shape[0] > 25 else plt.subplots(figsize=(8, 6))
 
@@ -430,7 +438,7 @@ def prepare_dataset_for_heatmap(df):
     df['blank'] = pd.Series(np.nan, index=np.arange(df.shape[0]))
     df = df[['label'] + [col for col in df.columns if '_prediction' in col]].copy()
     df.columns = [GT_LABEL] + [col.replace("_prediction", "") for col in df.columns if '_prediction' in col]
-    f = lambda x: pd.isna(x) and np.nan or (1 - int(x))
+    f = lambda x: pd.isna(x) and np.nan or int(x)
     for col in df.columns:
         df[col] = df[col].apply(f)
         if df[col].isnull().all():
@@ -466,12 +474,11 @@ def plot_heatmap(df, location, output_dir,
     if skip_preparation is False:
         df = prepare_dataset_for_heatmap(df)
 
-    # sns.heatmap(df, cmap=['ivory', 'lightsteelblue', 'darksalmon'],
-    #             linecolor='black',
-    #             linewidths=0.0,
-    #             cbar=False)
+    colors = {"ivory": -1, "lightsteelblue": 0, "darksalmon": 1}
+    l_colors = sorted(colors, key=colors.get)
+    cmap = c.ListedColormap(l_colors)
 
-    cm = sns.clustermap(df, row_cluster=cluster_rows, cmap=['ivory', 'lightsteelblue', 'darksalmon'],
+    cm = sns.clustermap(df, row_cluster=cluster_rows, cmap=cmap,
                         linecolor='black',
                         linewidths=0.0,
                         cbar=False,

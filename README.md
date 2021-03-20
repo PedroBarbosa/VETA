@@ -135,9 +135,13 @@ Some acronyms that are used: KNN (K-Nearest Neighbours), QDA (Quadratic Discrimi
 
 <img src="src/config/example_imgs/ml_performance.png" height="300"/>
 
-Additionally, model interpretation techniques are employed to look at which tools were most important in the predictions, thus helping the user to select which features may be important and which ones are irrelevant to use. Feature Importances calculated from [Random Forests](https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html) (in the plot below), [Information Gain](https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.mutual_info_classif.html#sklearn.feature_selection.mutual_info_classif), [Cross Validation Recursive Feature Elimination](https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.RFECV.html#sklearn.feature_selection.RFECV) and [Decision Trees visualization with dtreeviz](https://github.com/parrt/dtreeviz) are applied.
+Additionally, model interpretation techniques are employed to look at which tools were most important in the predictions, thus helping the user to select which features may be important and which ones are irrelevant to use. Feature Importances calculated from [Random Forests](https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html) (in the plot below), [Information Gain](https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.mutual_info_classif.html#sklearn.feature_selection.mutual_info_classif), [Cross Validation Recursive Feature Elimination](https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.RFECV.html#sklearn.feature_selection.RFECV) and [Decision Trees visualization with dtreeviz](https://github.com/parrt/dtreeviz) are applied. Additionally pearson correlation scores are produced to see which tools, if any, correlate the most.
 
-<img src="src/config/example_imgs/ml_fi.png" height="300"/>
+<p float="left">
+   <img src="src/config/example_imgs/pearson_corr.png" height="300"/>
+   <img src="src/config/example_imgs/ml_fi.png" height="300"/>
+</p>
+
 
 Machine learning analysis can be enabled by setting the proper flag:
 
@@ -146,11 +150,16 @@ Machine learning analysis can be enabled by setting the proper flag:
 <a name="introns"></a>
 ### Analyzing intronic variants with more detail
 
-VETA allows to inspect intronic variants by partitioning the dataset into different bins. Variants are assigned to each bin in respect to their distance to the closest splice junction. This information is obtained from the VEP annotations in the `HGVSc` field. Then, analysis is done on each bin and additional plots are drawn to identify how performance drops (or increases) as we go deeper in the introns.
+VETA allows to inspect intronic variants by partitioning the dataset into different bins. Variants are assigned to each bin in respect to their distance to the closest splice junction. This information is obtained from the VEP annotations in the `HGVSc` field. Then, analysis is done on each bin and additional plots are drawn to identify how performance drops (or increases) as we go deeper in the introns. ROC curves and Precision-recall curves are also generated for all intronic variants and across each bin.
+
+<p float="left">
+  <img src="src/config/example_imgs/per_bin_score.png" height="300"/>
+  <img src="src/config/example_imgs/roc_analysis.png" height="300"/>
+</p>
 
 This analysis can be enabled with the following flag:
 
-```veta benchmark --intronic_bins```
+```veta benchmark --do_intronic_analysis```
 
 <a name="inspect"></a>
 ## Running on the inspect mode
@@ -185,6 +194,7 @@ List of tools available (more will be continuosly added)
 |                                 | phyloP            | > 1.6                | No                        | vcfanno       |
 |                                 | SiPhy             | > 12.7               | No                        | vcfanno       |
 |                                 | phastCons         | > 0.8                | No                        | vcfanno       |
+|                                 | CDTS              | < 10                 | No			 | vcfanno       |
 | Effects on protein function     | SIFT              | < 0.05               | No                        | VEP           |
 |                                 | PolyPhen-2 HDIV   | > 0.5                | No                        | VEP           |
 |                                 | PolyPhen-2 HVAR   | > 0.5                | No                        | VEP           |
@@ -201,6 +211,9 @@ List of tools available (more will be continuosly added)
 |                                 | VEST4             | > 0.67               | Yes                       | VEP           |
 |                                 | MetaSVM           | > 0.5                | Yes                       | VEP           |
 |                                 | MetaLR            | > 0.5                | Yes                       | VEP           |
+|                                 | MVP               | > 0.7                | Yes                       | vcfanno       |
+|                                 | PrimateAI         | > 0.8                | Yes                       | vcfanno       |
+|                                 | CardioBoost       | > 0.9                | Yes                       | vcfanno       |
 | Functional genomics annotations | FATHMM-MKL        | > 0.5                | Yes                       | vcfanno       |
 |                                 | GWAVA             | > 0.5                | Yes                       | vcfanno       |
 |                                 | Eigen             | > 1                  | Yes                       | vcfanno       |

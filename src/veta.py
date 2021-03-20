@@ -16,6 +16,7 @@ from src.preprocessing.osutils import print_clinvar_levels
 
 CONFIG_PATH = pkg_resources.resource_filename('src', 'config/tools_config.txt')
 
+
 def main():
     """
     Main function
@@ -57,11 +58,11 @@ def main():
                                help='Genome build of the VCF. Available options: {%(choices)s}. '
                                     'Default: "hg19".')
 
-    parent_parser.add_argument('-i', '--intronic_bins', help='Perform additional analysis of '
-                                                             'intronic variants extracted from '
-                                                             'HGVSc field in a bin-based faction. '
-                                                             'Bins are attributed based on the distance '
-                                                             'of the variant to the nearest splice junction',
+    parent_parser.add_argument('-i', '--do_intronic_analysis', help='Perform additional analysis of '
+                                                                    'intronic variants extracted from '
+                                                                    'HGVSc field in a bin-based faction. '
+                                                                    'Bins are attributed based on the distance '
+                                                                    'of the variant to the nearest splice junction',
                                action='store_true')
 
     parent_parser.add_argument('-a', '--allele_frequency', metavar='', default="gnomADg_AF",
@@ -163,12 +164,12 @@ def main():
     if args.command == "inspect":
         PredictionsEval(args.vcf,
                         args.out_dir,
-                        args.scopes_to_predict,
+                        args.scopes_to_evaluate,
                         args.types_of_variant,
                         args.metric,
                         args.location,
                         args.genome,
-                        args.intronic_bins,
+                        args.do_intronic_analysis,
                         args.best_tools,
                         args.n_best_tools,
                         args.plot_these_tools,
@@ -192,7 +193,7 @@ def main():
                        args.metric,
                        args.location,
                        args.genome,
-                       args.intronic_bins,
+                       args.do_intronic_analysis,
                        args.clinvar_stars,
                        args.do_threshold_analysis,
                        args.do_machine_learning,
