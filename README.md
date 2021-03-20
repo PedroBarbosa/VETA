@@ -81,7 +81,7 @@ By default, analysis of all variant types is performed, but that can be restrict
 
 ```veta benchmark --types_of_variant snps```
 
-To have a final tool ranking, veta uses `weighted_accuracy` (accuracy weighted by the fraction of predictable variants) to order the tools. It is very common to see tools with many missing data (e.g. protein predictors do not predict intronic variants), thus we incorporate this weighting scheme to take into account prediction capacity. Ranking metric be changed. For example, if the dataset is umbalanced (few pathogenic, many benign), a better metric to use is the F1 score:
+To have a final tool ranking, veta uses `weighted_accuracy` (accuracy weighted by the fraction of predictable variants) to order the tools. It is very common to see tools with many missing data (e.g. protein predictors do not predict intronic variants), thus we incorporate this weighting scheme to take into account prediction capacity. Ranking metric can be changed. For example, if the dataset is umbalanced (few pathogenic, many benign), a better metric to use is the F1 score:
 
 ```veta benchmark --metric weighted_F1```
 
@@ -99,7 +99,7 @@ As an alternative, one can restrict the tools to analyse (and add custom methods
 <a name="clinvar"></a>
 #### Clinvar
 
-VETA has several internal functions to deal with clinvar data, namely providing a way to filter input variants at different review status levels. It exploits the VCF fields `CLNSIG` and `CLNREVSTAT` to subset input data into a stringency level desired by the user. By default, all evaluations are done in a highly confident subset of variants with a review status of 3 stars with `pathogenic`, `likely_pathhogenic`, `benign`, `likely_benign` interpretations. We call this filtering level `3s_l`, meaning we are using variants with a minimum review status of 3 stars (`reviewed_by_expert_panel`), where we include `likely` assignments. If we want to use assertions without likely interpretations, we just set the ```--clinvar_stars``` argument to `3s`. Accordingly, to be more permissive and use variants with 1 star, we can set the value to ```--clinvar_stars 1s_l```. Be aware that the number of evaluated variants (dataset size) can change dramatically, depending on the filtering status employed. 
+VETA has several internal functions to deal with clinvar data, namely providing a way to filter input variants at different review status levels. It exploits the VCF fields `CLNSIG` and `CLNREVSTAT` to subset input data into a stringency level desired by the user. By default, all evaluations are done in a highly confident subset of variants with a review status of 3 stars with `pathogenic`, `likely_pathogenic`, `benign`, `likely_benign` interpretations. We call this filtering level `3s_l`, meaning we are using variants with a minimum review status of 3 stars (`reviewed_by_expert_panel`), where we include `likely` assignments. If we want to use assertions without likely interpretations, we just set the ```--clinvar_stars``` argument to `3s`. Accordingly, to be more permissive and use variants with 1 star, we can set the value to ```--clinvar_stars 1s_l```. Be aware that the number of evaluated variants (dataset size) can change dramatically, depending on the filtering status employed. 
 
 Each time clinvar scores are processed, a ready-to-use dataframe is written in the same directory of the input file ```clinvar_file.vcf.gz.tsv```. If you repeat the analysis (e.g. using other arguments ```veta benchmark --clinvar_stars 2s_l clinvar.vcf.gz```), this `tsv` file will be used instead. This avoids processing the whole vcf again, thus saving some time.
 
@@ -113,9 +113,9 @@ Be aware that predictions from tools that are just present in one of the files w
 <a name="threshold_analysis"></a>
 #### Reference threshold analysis
 
-The benchmark of prediciton tools is possible because a threshold for significance is pre-determined (in VETA reference thresholds for the supported tools are provided in the table displayed in the [default tools](#tools-supported-by-default) section, or provided by the user in the `--config` file). Uusally, these decision thresholds are usually provided by the authors of each tool. If not, there are papers that specifically address that and infer the best decision threshold given the data at hands. We argue that strict reference thresholds may not be ideal, therefore we provide a means to evaluate how appropriate reference thresholds are using Clinvar.
+The benchmark of prediciton tools is possible because a threshold for significance is pre-determined (in VETA reference thresholds for the supported tools are provided in the table displayed in the [default tools](#tools-supported-by-default) section, or provided by the user in the `--config` file). Usually, these decision thresholds are provided by the authors of each tool. If not, there are papers that specifically address that and infer the best decision threshold given the data at hands. We argue that strict reference thresholds may not be ideal, therefore we provide a means to evaluate how appropriate reference thresholds are using Clinvar.
 
-Here, we force a subset of highly confident Clinvar variants (3 stars with likely assignments, `3s_l`) to be used as reference dataset, regardless of what the user sets in the ```--clinvar_stars```. Then, new thresholds for each tool are inferred based on different ratios of True Positives / False Positives the user desires using the [F beta formula](https://en.wikipedia.org/wiki/F-score). For example, this analysis can reveal different optimal thresholds for coding and intronic variants, as revealed by [TraP](http://trap-score.org/about) and [S-CAP](https://www.nature.com/articles/s41588-019-0348-4).
+Here, we force a subset of highly confident Clinvar variants (2 stars with likely assignments, `2s_l`) to be used as reference dataset, regardless of what the user sets in the ```--clinvar_stars```. Then, new thresholds for each tool are inferred based on different ratios of True Positives / False Positives the user desires using the [F beta formula](https://en.wikipedia.org/wiki/F-score). The outcome of this analysis may reveal different optimal thresholds for coding and intronic variants, as [TraP](http://trap-score.org/about) and [S-CAP](https://www.nature.com/articles/s41588-019-0348-4) already do.
 
 Different values of Beta are used (1, 2, 3, 5, 10) to lend increasing importance on sensitivity. For each Beta, the threshold value that maximizes the FBeta function is selected as the best. In practice, increasing this value will improve the number of true positives found at the cost of adding *Beta* false positives. This is clinically relevant as the user may want to be more or less stringent in his analysis, and fixed thresholds would limit the scope of the score interpretation.
 
@@ -164,11 +164,11 @@ This analysis can be enabled with the following flag:
 <a name="inspect"></a>
 ## Running on the inspect mode
 
-This mode allows to inspect tool prediction on a single VCF file, where labels are unknown. It is useful to look at candidate variants that most tools predict to be functionally relevant. 
+This mode allows to inspect tools predictions on a single VCF file, where labels are unknown. It is useful to look at candidate variants that most tools predict to be functionally relevant. 
 
 If you are sure the dataset is labeled (e.g. all variants in the VCF are pathogenic), you can set the `--labels Pathogenic` argument and additional performance metrics will be calculated, just like in benchmark mode.
 
-In addition, If you have run before a benchmark analysis on a reference dataset, it is possible to automatically pick the best tools from that analysis and ensure that the ```veta inspect``` run only cares about the best tools selected. For example, if you know from a ```veta benchmark``` run that deep intronic variants are well predicted by just two methods, you can set ```veta inspect --best_tools tools_ranking_deep_intronic.csv --n_best_tools 2``` to ignore any other method. Tools scores histograms can be drawn for multiple tools by using another argument ```veta inspect --plot_these_tools CADD GERP```.
+In addition, If you have run before a benchmark analysis on a reference dataset, it is possible to automatically pick the best tools from that analysis and ensure that the ```veta inspect``` run only cares about the best tools selected. For example, if you know from a ```veta benchmark``` run that deep intronic variants are well predicted by just two methods, you can set ```veta inspect --best_tools tools_ranking_deep_intronic.csv (this file is produced by veta benchmark) --n_best_tools 2``` to ignore any other method. Tools scores histograms can be drawn for multiple tools by using another argument ```veta inspect --plot_these_tools CADD GERP```.
 
 <p float="left">
   <img src="src/config/example_imgs/inspect_ratios.png" height="300"/>
@@ -238,7 +238,7 @@ List of tools available (more will be continuosly added)
 
 This config file maps the tool name to the corresponding annotation field in the VCF. It allows to add custom methods, as long as the field exists in the VCF.
 
-Config file must be a tab-delimited file just like [this one](https://github.com/PedroBarbosa/VETA/blob/master/src/config/tools_config.txt).
+FConfig file must be a tab-delimited file just like [this one](https://github.com/PedroBarbosa/VETA/blob/master/src/config/tools_config.txt).
 Lines starting with '#' are skipped. For tools with native support within VETA (listed in the table above, where tool name must be matched), only the 2 columns are required. For custom methods, additional columns must be set. Column specifications are as following:
 
 * 1st column - Tool name.
