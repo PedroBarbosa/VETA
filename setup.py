@@ -6,8 +6,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='veta',
-    version='0.5.2',
-    licence='MIT',
+    version='0.5.3',
+    licence='GPL-3.0',
     author='Pedro Barbosa',
     author_email='pedro.barbosa@medicina.ulisboa',
     description="Package that benchmarks variant prediction tools",
