@@ -173,8 +173,7 @@ def subset_variants_by_type(types_to_analyse: List = None):
 
 
 def subset_toolset_by_scope(threshold_list: List,
-                            scopes: List = None,
-                            is_intronic: bool = False):
+                            scopes: List = None):
 
     """Returns subset of tools belonging to the
     scope defined, or if `is_intronic` is true,
@@ -188,16 +187,9 @@ def subset_toolset_by_scope(threshold_list: List,
 
     :param List scopes: Tool scopes to analyse.
         Default: `None`. Use all scopes
-    :param bool is_intronic: Whether analysis
-        is targeted for intronic variants.
-        Default: `False`. If `True`, 'Protein'
-        scope will not be used.
     """
 
     _to_analyse = ['Conservation', 'Protein', 'Functional', 'Splicing']
-
-    if is_intronic:
-        _to_analyse.remove('Protein')
 
     if scopes is not None:
         _to_analyse = list(set(_to_analyse).intersection(scopes))

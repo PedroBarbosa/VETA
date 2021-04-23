@@ -17,8 +17,8 @@ def get_location(x, hp):
         v = hp.parse_hgvs_variant(x['HGVSc'].split(" ")[0])
         if v.type == "m":
             return 'mithocondrial'
-        # elif v.type == "n":
-        #    return 'noncodingRNA'
+        elif v.type == "n":
+            return 'noncodingRNA'
         elif v.posedit.pos.start.base < 0:
             return '5primeUTR'
         elif v.posedit.pos.start.datum == hgvs.enums.Datum.CDS_END and v.posedit.pos.start.base > 0:

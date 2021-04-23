@@ -93,22 +93,40 @@ class BenchmarkTools(Base):
                                          "level. Try a more relaxed value for the '-c'" \
                                          " arg.".format(self.clinvar_stars)
 
-        self.top_tools = self.do_performance_comparison()
+        self.top_tools, f1_at_ref_threshold = self.do_performance_comparison()
 
         if self.do_intronic_analysis:
+            thresholds = [tool for tool in self.thresholds if tool[3] != 'Protein']
+
             introns.do_intron_analysis(self.df,
-                                       thresholds=self.thresholds,
+                                       thresholds=thresholds,
                                        metric=self.metric,
                                        out_dir=self.out_dir,
                                        af_column=self.allele_frequency_col)
 
         if self.do_threshold_analysis:
             if self.is_clinvar:
-                # For now, threshold analysis is done using a highly confident set (3stars with likely)
+                # For now, threshold analysis is done using a highly confident set (2stars with likely)
                 new_thresholds = perform_threshold_analysis(self.clinvar_levels_dict['2s_l'],
                                                             self.location_filters,
                                                             self.thresholds,
-                                                            self.out_dir)
+                                                            self.out_dir,
+                                                            f1_at_ref_threshold)
+
+                # Write new configs for future VETA run with new thresholds
+                outdir = os.path.join(self.out_dir, "thresholds_analysis")
+                for beta, thresh_per_loc in new_thresholds.items():
+
+                    if beta == 1:
+                        for _loc, tools_metrics in thresh_per_loc.items():
+
+                            config = open(os.path.join(outdir, "new_config_{}.txt".format(_loc)), 'w')
+                            for tool, value in tools_metrics.items():
+                                vcf_field = ','.join([v for sublist in self.tools_config[tool] for v in sublist])
+                                info = [v for v in self.thresholds if v[0] == tool][0]
+                                outline = [tool, vcf_field, info[1], str(value[0]), info[3]]
+                                config.write('\t'.join(outline) + '\n')
+
                 # TODO evaluate performance with new thresholds
 
             else:
@@ -128,7 +146,7 @@ class BenchmarkTools(Base):
         logging.info("Tools performance analysis started")
         logging.info("----------------------------------")
 
-        top_tools = {}
+        top_tools, f1_at_ref_threshold = {}, {}
         if self.is_clinvar:
             logging.info("Evaluations are done with Clinvar variants that belong "
                          "to the filtering strategy employed ({}). If you want to "
@@ -212,10 +230,11 @@ class BenchmarkTools(Base):
                                              "precision"]].sort_values([self.metric], ascending=False)
 
                 top_tools[_location] = ranked_stats.head(5) if ranked_stats.shape[0] > 5 else ranked_stats
+                f1_at_ref_threshold[_location] = dict(zip(ranked_stats.tool, ranked_stats.F1))
                 ranked_stats.to_csv(out_ranks, sep="\t", index=False)
 
         logging.info("Done!")
-        return top_tools
+        return top_tools, f1_at_ref_threshold
 
     def apply_thresholds(self, df: pd.DataFrame,
                          filter_location: str,

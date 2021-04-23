@@ -9,14 +9,16 @@ from src.plots.plots_threshold_analysis import plot_optimal_thresholds
 from src.predictions.metrics import generate_statistics
 from src.preprocessing.latex import generate_proposed_thresholds_latex
 from src.preprocessing.osutils import ensure_folder_exists
+from sklearn.metrics import f1_score
 
 
 def perform_threshold_analysis(dataset: pd.DataFrame,
                                location_filters: list,
                                threshold_list: list,
                                outdir: str,
+                               f1_at_ref_thresh: dict,
                                n_of_points: int = 100,
-                               beta_values: list = [1, 2, 3, 5, 10]):
+                               beta_values: list = [1, 2, 3, 5]):
     """
     Do threshold analysis using Clinvar as ground
     truth dataset for threshold evaluation.
@@ -30,9 +32,11 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
     :param list location_filters: List of location filters
     :param list threshold_list: List of thresholds
     :param str outdir: Output directory
+    :param dict f1_at_ref_thresh: Dict with F1 scores
+    using the reference thresholds
     :param list beta_values: List of values to use as beta
         in the F_beta score calculation (precision/recall
-        tradeoff). Default: `[1, 2, 3, 5, 10]
+        tradeoff). Default: `[1, 2, 3, 5]
     :param n_of_points: Default: `100`
 
     :return dict: New thresholds for all the tools at all locations
@@ -48,17 +52,26 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
     for beta in beta_values:
         thresholds_to_return[beta] = {}
         for location, *args in location_filters:
+            if location not in ['all', 'coding', 'splice_site', 'splice_region']:
+                continue
             thresholds_to_return[beta][location] = {}
 
     for _loc, filter_func in location_filters:
 
+        if _loc not in ['all', 'coding', 'splice_site', 'splice_region']:
+            continue
+
         df_f = filter_func(dataset).copy()
+        logging.info("Looking at {} variants (N={}, {} pos and {} neg)".format(_loc,
+                                                                               df_f.shape[0],
+                                                                               df_f[df_f.label].shape[0],
+                                                                               df_f[~df_f.label].shape[0]))
 
         # Do threshold analysis only if dataset has a minimum size
         if df_f.shape[0] < 60 or not all(i >= 30 for i in df_f['label'].value_counts().tolist()):
             logging.warning('WARN: Dataframe of \'{}\' variants does not have the minimum '
-                            'required size (60) and/or class balance (> 30 variants of '
-                            'minority class) for threshold analysis'.format(_loc))
+                            'required size (60, {} found) and/or class balance (> 30 variants of '
+                            'minority class) for threshold analysis'.format(_loc, df_f.shape[0]))
             continue
 
         final_thresholds = OrderedDict()
@@ -69,7 +82,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
                 continue
 
             # Do threshold analysis for tools with sufficient prediction power
-            df_per_tool = df_f.loc[pd.notnull(df_f[tool]), ][[tool, 'label']].copy()
+            df_per_tool = df_f.loc[pd.notnull(df_f[tool]),][[tool, 'label']].copy()
 
             # Transform TraP scores for proper threshold analysis
             if tool == "TraP":
@@ -118,7 +131,9 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
                 statistics = generate_statistics(df_per_tool, statistics, _loc, tool, f_beta=beta_values)
 
             new_t = {}
-            final_thresholds[tool] = [reference_threshold]
+
+            final_thresholds[tool] = [(reference_threshold, f1_at_ref_thresh[_loc][tool])]
+
             accuracies = statistics['accuracy']
             sensitivities = statistics['sensitivity']
             specificities = statistics['specificity']
@@ -127,7 +142,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
                 _res_at_each_t = statistics['Fbeta_' + str(_beta)]
                 f_betas[_beta] = _res_at_each_t
                 new_t[_beta] = threshold_range[_res_at_each_t.index(max(_res_at_each_t))]
-                final_thresholds[tool].append(round(float(new_t[_beta]), 2))
+                final_thresholds[tool].append((round(float(new_t[_beta]), 2), max(_res_at_each_t)))
 
             for v in [False, True]:
                 plot_optimal_thresholds(tool,
@@ -144,12 +159,16 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
 
         generate_proposed_thresholds_latex(final_thresholds, _loc, outdir)
         with open(os.path.join(outdir, "proposed_thresholds_{}.tsv".format(_loc)), 'w') as out:
-            out.write("Tool\tReference_threshold\t{}\n".format("\t".join("1/" + str(b) for b in beta_values)))
+            out.write("Tool\tReference_threshold\tF1_score_at_ref_thresh\t{}\n".format("\t".join("1/{}".format(b) +
+                                                                                                 "\t" + "Fbeta_{}".format(b)
+                                                                                                 for b in beta_values)))
             for tool, new_thresholds in final_thresholds.items():
-                out.write("{}\t{}\n".format(tool, '\t'.join([str(t) for t in new_thresholds])))
+                out.write(
+                    "{}\t{}\n".format(tool, '\t'.join(["{}\t{}".format(str(t[0]), str(t[1])) for t in new_thresholds])))
 
         for tool in final_thresholds:
             # slicing = delete original threshold
             for beta, t in zip(beta_values, final_thresholds[tool][1:]):
                 thresholds_to_return[beta][_loc][tool] = t
+
     return thresholds_to_return

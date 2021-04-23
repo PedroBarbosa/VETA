@@ -99,7 +99,7 @@ class Base(object):
 
         tools_config = self._parse_tools_config(tools_config)
         self.thresholds = update_thresholds(tools_config)
-        self.thresholds = subset_toolset_by_scope(self.thresholds, scopes_to_predict, self.do_intronic_analysis)
+        self.thresholds = subset_toolset_by_scope(self.thresholds, scopes_to_predict)
         self.available_tools = [t[0] for t in self.thresholds]
 
         # TODO change global thresholds list to remove excess of fields when custom models are provided

@@ -101,12 +101,12 @@ def main():
                                        '\'*benign*\' (or \'*neutral*\') and \'*pathogenic*\' (or \'*deleterious*\') '
                                        'tags must exist in their names.')
 
-    benchmark_parser.add_argument('-c', '--clinvar_stars', metavar='', default='3s_l',
+    benchmark_parser.add_argument('-c', '--clinvar_stars', metavar='', default='2s_l',
                                   help='Level of filtering when dataset refers to the clinvar database. '
                                        'By default, a high confidence clinvar subset (3 stars with likely '
                                        'annotations) is used for performance evaluation and reference '
                                        'threshold analysis (if --do_threshold_analysis is True). '
-                                       'Default: "3s_l". All the possible filtering levels are visible '
+                                       'Default: "2s_l". All the possible filtering levels are visible '
                                        'with the argument \'--listClinvarLevels\'.')
 
     benchmark_parser.add_argument('--do_threshold_analysis', action="store_true",
