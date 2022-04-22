@@ -1,3 +1,4 @@
+from doctest import ELLIPSIS_MARKER
 import logging
 import sys
 from typing import Union, List
@@ -5,11 +6,11 @@ from typing import Union, List
 import numpy as np
 import pandas as pd
 
-from src.preprocessing.utils_tools import ratio
+from preprocessing.utils_tools import ratio
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 from collections import defaultdict
-from src.preprocessing import utils_tools
+from preprocessing import utils_tools
 from sklearn.metrics import auc, average_precision_score, roc_auc_score, roc_curve, precision_recall_curve
 
 
@@ -118,15 +119,26 @@ def generate_statistics(df: pd.DataFrame,
     return statistics
 
 
-def do_roc_analysis(data: pd.DataFrame,
-                    name: str):
+def do_roc_analysis(_data: pd.DataFrame,
+                    name: str,
+                    higher_is_better: bool = True):
     """
     Perform ROC analysis a given tool
 
     :param pd.Dataframe data: Scores for a given tool
     with corresponding labels
     :param str name: Tool name
+    :param bool higher_is_better: If pathogenicity is predicted when prediction is higher than reference threshold
     """
+    
+    # ROC analysis is not performed for 
+    # S-CAP (it uses multiple reference thresholds) and 
+    # cVEP (predictions are discrete categories that VETA converts to fixed floats)
+
+    if name.lower() in ['scap', 's-cap', 'cvep']:
+        return
+
+    data = _data.copy()
     max_thr = data[name].max()  # + (df_tool[tool].max()) - df_tool[tool].min()) * 0.001
     min_thr = data[name].min()  # - (df_tool[tool].max()) - df_tool[tool].min()) * 0.001
 
@@ -138,8 +150,19 @@ def do_roc_analysis(data: pd.DataFrame,
         logging.info("{} has the the same min/max score".format(name))
         return
 
-    fpr, tpr, thresh_roc = roc_curve(data.label, data[name])
-    precision, recall, thresh_pr = precision_recall_curve(data.label, data[name])
+    if higher_is_better is False:
+        # Reverse scores, so that higher is better
+        data['y_pred'] = data[name] * (-1)
+
+    else:
+        data['y_pred'] = data[name]
+    
+    data = data[['label', 'y_pred']].sort_values('y_pred')
+    data['rank'] = np.arange(len(data))
+    data['rank_score'] = data['rank'] / len(data)
+
+    fpr, tpr, thresh_roc = roc_curve(data.label, data.rank_score)
+    precision, recall, thresh_pr = precision_recall_curve(data.label, data.rank_score)
 
     label = name + "(n=" + str(data.shape[0]) + ","
 
@@ -160,4 +183,4 @@ def do_roc_analysis(data: pd.DataFrame,
     roc_curve_data = [label, list(thresh_roc), list(tpr), list(fpr)]
     pr_curve_data = [label, list(thresh_pr), list(recall), list(precision)]
 
-    return roc_curve_data, pr_curve_data, roc_auc_score(data.label, data[name]), average_precision_score(data.label, data[name])
+    return roc_curve_data, pr_curve_data, auc(fpr, tpr), auc(recall, precision)

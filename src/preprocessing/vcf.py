@@ -10,12 +10,13 @@ import pandas as pd
 from cyvcf2 import VCF
 from tqdm import tqdm
 
-from src.preprocessing import osutils
+from preprocessing import osutils
 
 
 def process_vcf(vcf: str,
                 tools_config: dict,
                 thresholds: list,
+                select_conseq: str,
                 af_col: str,
                 is_clinvar: bool = False):
     """
@@ -23,14 +24,20 @@ def process_vcf(vcf: str,
     tools scores
 
     :param str vcf: VCF file
+    
     :param dict tools_config: Dict with the
         map between available tools and VCF
         annotations (already parsed, only
         existing fields should be passed here).
+        
     :param list thresholds: List of tools
         to process based on the tools config file
         as well as the selected scope for the
         analysis
+        
+    :param str select_conseq: Strategy to select
+    a single consequence block per variant 
+    
     :param str af_col: VCF field that measures
             population frequency of variants.
     :param bool is_clinvar: Whether `vcf` is
@@ -98,7 +105,7 @@ def process_vcf(vcf: str,
                          "the INFO field of the input VCF file. Exiting.\n")
 
     for field in vcf_data.header_iter():
-
+      
         # If field is in VEP annotations
         if field["HeaderType"] == "INFO" and field["ID"] == VEP_TAG:
             all_vep_annotations = field["Description"].split("Format:")[1][:-1].strip().split("|")
@@ -181,8 +188,9 @@ def process_vcf(vcf: str,
             'all_vep_annotations': all_vep_annotations,
             'present_in_INFO': present_in_INFO,
             'vep_indexes': vep_indexes,
-            'is_clinvar': is_clinvar}
-
+            'is_clinvar': is_clinvar,
+            'select_conseq': select_conseq}
+    
     # Variant processing
     if n_variants > 5000:
         header = subprocess.Popen(["bcftools", "view", "-h", vcf],
@@ -193,21 +201,16 @@ def process_vcf(vcf: str,
 
         list_files = osutils.split_file_in_chunks(body_variants.name, header, n_variants)
         with multiprocessing.Pool() as p:
-            dict_list = list(tqdm(p.imap(partial(_iter_variants, **args), list_files)))
+            df_list = list(tqdm(p.imap(partial(_iter_variants, **args), list_files)))
 
         logging.info("Merging data from parallel VCF processing.")
-        scores = defaultdict(list)
-        for d in dict_list:
-            # if bool(d.keys() & scores.keys()):
-            #    raise ValueError("Repeated variants in the input file.")
-            scores.update(d)
+        scores = pd.concat(df_list)
         [os.remove(f) for f in list_files]
         logging.info("Done.")
         p.close()
 
     else:
         scores = _iter_variants(vcf, **args)
-
     return scores, MISSING_VCF_TOOLS
 
 
@@ -221,42 +224,53 @@ def _iter_variants(vcf: str, **kwargs):
 
     :return dict: Dictionary with scores for each variant
     """
-    scores = defaultdict(list)
+    scores = []
     keys = []
 
     vcf_data = VCF(vcf)
 
     # Iterate over VCF
     for record in vcf_data:
-
+        
+        colnames = ['index', 'chr', 'pos', 'ref', 'alt', 'id', 'type', 'subtype']
+        _single_out = []
+        
         # Only keep variants with VEP annotations
         vep_annotation = record.INFO.get(kwargs['VEP_TAG'])
         if not vep_annotation:
             continue
-
-        key = record.CHROM + "_" + str(record.POS) + "_" + str(record.REF) + "_" + str(record.ALT[0])
+        
+        if record.ID != ".":
+            key = record.CHROM + "_" + str(record.POS) + "_" + str(record.ID)
+        else:
+            key = record.CHROM + "_" + str(record.POS) + "_" + str(record.REF) + "_" + str(record.ALT[0])
+        
         if key in keys:
-            logging.info("Variant {},{},{},{} is repeated in the VCF. "
+            logging.info("Variant {},{},{},{}, {} is repeated in the VCF. "
                          "Keeping only first occurrence".format(record.CHROM,
                                                                 record.POS,
                                                                 record.REF,
-                                                                record.ALT[0]))
+                                                                record.ALT[0],
+                                                                record.ID))
             continue
 
         else:
             keys.append(key)
 
+        _single_out.append(key)
+
         # MNPs
         if record.var_type == "indel" and len(record.REF) == len(record.ALT[0]):
-            scores[key].extend([record.CHROM,
+            _single_out.extend([record.CHROM,
                                 record.POS,
                                 record.REF,
                                 record.ALT[0],
                                 record.ID,
-                                record.var_type, "mnp"])
+                                record.var_type, 
+                                "mnp"])
 
         else:
-            scores[key].extend([record.CHROM,
+            _single_out.extend([record.CHROM,
                                 record.POS,
                                 record.REF,
                                 record.ALT[0],
@@ -264,31 +278,34 @@ def _iter_variants(vcf: str, **kwargs):
                                 record.var_type,
                                 record.var_subtype])
 
-        vep_info = _select_consequence(vep_annotation)
+        vep_info = _select_consequence(vep_annotation, **kwargs)
         # Add some VEP fields, if they exist
         for _field in ['Existing_variation', 'HGVSc', 'SYMBOL', 'Consequence']:
+            colnames.append(_field)
             try:
-                scores[key].append(vep_info[kwargs['all_vep_annotations'].index(_field)])
-
+                _single_out.append(vep_info[kwargs['all_vep_annotations'].index(_field)])
             except ValueError:
-                pass
+                _single_out.append(None)
 
         # Look for externally annotated scores
         # that are single fields in the INFO field
         if len(kwargs['present_in_INFO']) > 0:
 
             for _tool, _fields in kwargs['present_in_INFO'].items():
+                colnames.append(_tool)
                 tool_out = []
                 for _f in _fields:
                     tool_out.append(record.INFO.get(_f))
-                scores[key].append((_tool, tool_out))
+                _single_out.append(tool_out)
 
         # Append fields from VEP annotation
         for _tool, idx in kwargs['vep_indexes'].items():
+            colnames.append(_tool)
             # If tool has multiple fields
             # and at least 1 is within VEP annot
             # and other in the INFO annot.
             if _tool in kwargs['present_in_INFO'].keys():
+     
                 scores_so_far = scores[key]
                 _updated = []
                 for _v in scores_so_far:
@@ -301,13 +318,21 @@ def _iter_variants(vcf: str, **kwargs):
                 scores[key] = _updated
 
             else:
-                scores[key].append((_tool, [vep_info[i] for i in idx]))
+     
+                _single_out.append([vep_info[i] for i in idx])
 
         if kwargs['is_clinvar']:
-            scores[key].append(('CLNREVSTAT', record.INFO.get("CLNREVSTAT")))
-            scores[key].append(('CLNSIG', record.INFO.get("CLNSIG")))
+            colnames.extend(['CLNREVSTAT', 'CLNSIG', 'CLNDISDB'])
+            _single_out.extend([record.INFO.get("CLNREVSTAT"), 
+                                record.INFO.get("CLNSIG"),
+                                record.INFO.get("CLNDISDB")])
+        
+        df = pd.DataFrame( _single_out).T
+        df.columns = colnames
+        scores.append(df)
 
     vcf_data.close()
+    scores = pd.concat(scores).set_index('index')
     return scores
 
 
@@ -344,10 +369,10 @@ def _check_if_field_exists(field: list, available: list):
     return present, absent
 
 
-def _select_consequence(vep_annotations: str):
+def _select_consequence(vep_annotations: str, **kwargs):
     """
-    Selects top VEP consequence block. Right
-    now just selects the first consequence.
+    Selects top VEP consequence block based on a
+    choice provided by the user.
 
     :param str vep_annotations: Str with VEP
      annotations. If multiple blocks, "," splits
@@ -355,8 +380,30 @@ def _select_consequence(vep_annotations: str):
 
     :return str: Top block
     """
-    if "," in vep_annotations:
-        return vep_annotations.split(",")[0].split("|")
 
+    if "," in vep_annotations:
+        
+        if kwargs['select_conseq'] == "first":
+            return vep_annotations.split(",")[0].split("|")
+        
+        elif kwargs['select_conseq'] == "in_gene_body":
+       
+            try:
+                hgvsc_index = kwargs['all_vep_annotations'].index('HGVSc')
+                to_return = []
+                for block in vep_annotations.split(","):
+                    
+                    _block = block.split("|")
+                    if _block[hgvsc_index]:
+                        return _block
+                
+                # If not block in gene_body, return the first
+                if not to_return:
+                    return vep_annotations.split(",")[0].split("|")
+                
+            except ValueError:
+                raise ValueError('HGVSc not present in VEP annotations.'
+                                 'Can not select top consequence block based on the \'in_gene_body\' flag')
+            
     else:
         return vep_annotations.split("|")

@@ -37,8 +37,8 @@ def setup_output_directory(directory: Union[str, None]):
         will be created.
     """
     out_dir = directory if directory is not None else os.path.join(os.getcwd(), "out_VETA")
-    assert not os.path.isdir(out_dir), "Output directory {} exists. " \
-                                       "Remove it or set a new one.".format(out_dir)
+    # assert not os.path.isdir(out_dir), "Output directory {} exists. " \
+    #                                    "Remove it or set a new one.".format(out_dir)
     return out_dir
 
 
@@ -90,12 +90,12 @@ def print_clinvar_levels():
     the analysis when the reference dataset
     is the clinvar database.
     """
-    print("clinvar ---- Whole clinvar with Pathogenic and Benign assignments" + "\n" +
-          "clinvar_l ---- Same as clinvar but with likely assignments" + "\n" +
+    print("0s ---- Whole clinvar with Pathogenic and Benign assignments" + "\n" +
           "1s --- clinvar with 1 star or more" + "\n" +
           "2s --- 2 stars or more" + "\n" +
           "3s --- 3 stars or more" + "\n" +
           "4s --- 4 stars" + "\n" +
+          "0s_l ---- 0 star or more with likely assignments" + "\n" +
           "1s_l ---- 1 star or more with likely assignments" + "\n" +
           "2s_l ---- 2 stars or more with likely assignments" + "\n" +
           "3s_l ---- 3 stars or more with likely assignments" + "\n" +

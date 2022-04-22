@@ -3,7 +3,7 @@ import seaborn as sns
 from dtreeviz.trees import *
 from sklearn.feature_selection import _rfe
 
-from src.predictions.utils_classifiers import *
+from predictions.utils_classifiers import *
 
 
 def plot_feature_correlation(df: pd.DataFrame, location: str, outdir: str):
@@ -119,9 +119,10 @@ def plot_rfecv(selector: _rfe.RFECV,
     selected_tools = [feature_names[i] for i in selected_idx]
 
     fig = plt.figure()
+
     plt.plot(range(min_features,
-                   len(selector.grid_scores_) + min_features),
-             selector.grid_scores_)
+                   len(selector.cv_results_['mean_test_score']) + min_features),
+             selector.cv_results_['mean_test_score'])
 
     plt.axvline(selector.n_features_,
                 color='red',

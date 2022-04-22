@@ -3,16 +3,64 @@ import hgvs.enums
 import hgvs.exceptions
 import numpy as np
 import pandas as pd
+from pyparsing import withAttribute
 
 
-def get_location(x, hp):
+CONSEQUENCES = {"missense_variant": ['coding', 'missense'],
+                "synonymous_variant": ['coding', 'synonymous'],
+                "frameshift_variant": ['coding', 'frameshift'] , 
+                "inframe_deletion": ['coding', 'other_coding'],
+                "inframe_insertion": ['coding', 'other_coding'], 
+                "incomplete_terminal_codon_variant": ['coding', 'other_coding'],
+                "coding_sequence_variant": ['coding', 'other_coding'],
+                "protein_altering_variant": ['coding', 'other_coding'] ,
+                "start_lost": ['coding', 'other_coding'], 
+                "stop_lost": ['coding', 'other_coding'],
+                "stop_gained": ['coding', 'other_coding'],
+                "start_retained_variant": ['coding', 'other_coding'],
+                "stop_retained_variant": ['coding', 'other_coding'],
+                "transcript_ablation": ['coding', 'other_coding'],
+                
+                "splice_acceptor_variant": ['splice_region', 'splice_site'],
+                "splice_donor_variant": ['splice_region', 'splice_site'], 
+                "splice_donor_region_variant": ['splice_region', 'splice_site'],
+                "splice_polypyrimidine_tract_variant": ['splice_region', 'splice_region'],
+                "splice_donor_5th_base_variant": ['splice_region', 'splice_region'],
+                "splice_region_variant": ['splice_region', 'splice_region'],
+                "intron_variant": ['intronic', 'intronic'],
+                
+                "5_prime_UTR_variant": ['5primeUTR', '5primeUTR'],
+                "3_prime_UTR_variant": ['3primeUTR', '3primeUTR'],
+                
+                "regulatory_region_ablation": ['regulatory', 'regulatory'],
+                "regulatory_region_variant": ['regulatory', 'regulatory'],
+                "TF_binding_site_variant": ['regulatory', 'regulatory'],
+                "TFBS_ablation": ['regulatory', 'regulatory'],
+                "TFBS_amplification": ['regulatory', 'regulatory'],
+                
+                "non_coding_transcript_exon_variant": ['noncodingRNA', 'noncodingRNA'],
+                "non_coding_transcript_variant": ['noncodingRNA', 'noncodingRNA'],
+                
+                "upstream_gene_variant": ['other_location', 'other_types'],
+                "downstream_gene_variant": ['other_location', 'other_types'],
+                "intergenic_variant": ['other_location', 'other_types'],
+                "mature_miRNA_variant": ['other_location', 'other_types'],
+                "NMD_transcript_variant": ['other_location', 'other_types']
+}
+    
+def get_location(x, hp, aggregate: bool):
     """
     Get location of variant from HGVSc expression
 
     :param pd.Series x: Single row
     :param hp: HGVS parser
+    :param aggregate: Whether variants in coding/splice site regions
+    should be aggregated and analyzed together 
+    
     :return str: location
     """
+    import itertools
+
     try:
         v = hp.parse_hgvs_variant(x['HGVSc'].split(" ")[0])
         if v.type == "m":
@@ -24,61 +72,47 @@ def get_location(x, hp):
         elif v.posedit.pos.start.datum == hgvs.enums.Datum.CDS_END and v.posedit.pos.start.base > 0:
             return '3primeUTR'
         elif v.posedit.pos.start.base > 0 and v.posedit.pos.start.offset == 0:
-            return 'coding'
-        elif v.posedit.pos.start.base > 0 and abs(v.posedit.pos.start.offset) > 10:
+            return 'coding' if aggregate else get_location_from_consequence(x.Consequence, aggregate) 
+        elif v.posedit.pos.start.base > 0 and abs(v.posedit.pos.start.offset) > 15:
+            return get_location_from_consequence(x.Consequence, aggregate) 
+        elif v.posedit.pos.start.base > 0 and abs(v.posedit.pos.start.offset) > 100:
             return 'deep_intronic'
-        # else:
-        #     return 'splice_region'
-
-        elif v.posedit.pos.start.base > 0 and 3 <= abs(v.posedit.pos.start.offset) <= 10:
+        elif v.posedit.pos.start.base > 0 and 3 <= abs(v.posedit.pos.start.offset) <= 15:
             return 'splice_region'
+        elif v.posedit.pos.start.base > 0 and 1 <= abs(v.posedit.pos.start.offset) <= 2:
+            return 'splice_region' if aggregate else 'splice_site'
         else:
-            return 'splice_site'
+            raise ValueError('Weird HGVSc expression: {}'.format(v))
 
     except hgvs.exceptions.HGVSParseError:
-        return 'unknown'
+        return get_location_from_consequence(x.Consequence, aggregate)
+   
 
-
-def get_location_from_consequence(x):
-    conseq = x.split("&")[0]
-    coding = ["coding_sequence_variant", "missense_variant",
-              "frameshift_variant", "inframe_deletion",
-              "inframe_insertion", "protein_altering_variant",
-              "start_lost", "start_retained_variant",
-              "stop_gained", "stop_lost",
-              "stop_retained_variant", "synonymous_variant",
-              "transcript_ablation"]
-    splice_site = ["splice_acceptor_variant", "splice_donor_variant", "splice_region_variant"]
-    deep_intronic = ["intron_variant"]
-    five_prime_utr = ["5_prime_UTR_variant"]
-    three_prime_utr = ["3_prime_UTR_variant"]
-    regulatory_variant = ["regulatory_region_ablation", "regulatory_region_variant", "TF_binding_site_variant"]
-    noncodingRNA = ["non_coding_transcript_exon_variant", "non_coding_transcript_variant"]
-    unknown = ["upstream_gene_variant", "downstream_gene_variant", "intergenic_variant", "mature_miRNA_variant",
-               "NMD_transcript_variant"]
-
-    if conseq in coding:
-        return 'coding'
-    elif conseq in splice_site:
-        return 'splice_region'
-    elif conseq in deep_intronic:
-        return 'deep_intronic'
-    elif conseq in five_prime_utr:
-        return '5primeUTR'
-    elif conseq in three_prime_utr:
-        return '3primeUTR'
-    elif conseq in noncodingRNA:
-        return 'noncodingRNA'
-    elif conseq in regulatory_variant:
-        return 'regulatory_variant'
-    elif conseq in unknown:
-        return 'unknown'
+def get_location_from_consequence(x: str,
+                                  aggregate: bool):
+    """
+    Get location/class of input variant
+    
+    :param str x: Value of consequence field for a single variant
+    :param bool aggregate: Level of detail to report 
+    """
+    idx = 0 if aggregate else 1
+    conseqs = x.split("&")
+    
+    # splice_region variants are prioritized over synonymous
+    if all(x in conseqs for x in ["splice_region_variant",
+                                  "synonymous_variant"]):
+        conseq = "synonymous_variant"
     else:
-        print("Consequence not registered. {}".format(conseq))
-        return conseq
+        conseq = conseqs[0]
 
+    try:
+        return CONSEQUENCES[conseq][idx]
+    
+    except KeyError:
+        raise ValueError("Consequence not registered. {}".format(conseq))
 
-ranges = [(0, 2, '0-2'),
+ranges_split_at_ss = [(0, 2, '1-2'),
           (3, 10, '3-10'),
           (11, 30, '11-30'),
           (31, 100, '31-100'),
@@ -86,19 +120,29 @@ ranges = [(0, 2, '0-2'),
           (201, 500, '201-500'),
           (501, 5000000, '500+')]
 
+ranges = [(0, 10, '1-10'),
+          (11, 30, '11-30'),
+          (31, 100, '31-100'),
+          (101, 200, '101-200'),
+          (201, 500, '201-500'),
+          (501, 5000000, '500+')]
 
-# ranges = [(0, 10, '0-10'),
-#           (11, 30, '10-30'),
-#           (31, 100, '30-100'),
-#           (101, 5000000, '100+')]
 
-
-def assign_intronic_bins(hgvs, hp, location):
-    if location in {"splice_site", "splice_region", "deep_intronic", "5primeUTR", "3primeUTR", "noncodingRNA"}:
+def assign_intronic_bins(hgvs, hp, location, aggregate):
+    if location in {"splice_site", "splice_region", "deep_intronic", "intronic",
+                    "5primeUTR", "3primeUTR", "noncodingRNA"}:
         v = hp.parse_hgvs_variant(hgvs.split(" ")[0])
-        offset = abs(v.posedit.pos.start.offset)
-        for i in ranges:
+        
+        _offset = v.posedit.pos.start.offset
+        offset = abs(_offset)
+        if offset <= 50:
+            which_ss = "donor" if _offset > 0 else "acceptor"
+        else:
+            which_ss = "unclear"
+            
+        _ranges = ranges if aggregate else ranges_split_at_ss
+        for i in _ranges:
             if i[0] <= offset <= i[1]:
-                return pd.Series([i[2], np.int(offset)])
+                return pd.Series([i[2], np.int(offset), which_ss])
     else:
-        return pd.Series([np.nan, np.nan])
+        return pd.Series([np.nan, np.nan, np.nan])

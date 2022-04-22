@@ -1,20 +1,22 @@
+from cmath import log
 import fnmatch
 from collections import defaultdict
+from turtle import st
 from typing import List
 
 import pandas as pd
 
-from src.base import Base
-from src.plots.plots_benchmark_mode import *
-from src.plots.plots_machine_learning import plot_feature_correlation
-from src.predictions import introns
-from src.predictions import metrics
-from src.predictions.apply import apply_tool_predictions
-from src.predictions.metapredictions import Metapredictions
-from src.predictions.thresholds import perform_threshold_analysis
-from src.preprocessing.clinvar import *
-from src.preprocessing.latex import generate_clinvar_table
-from src.preprocessing.osutils import ensure_folder_exists
+from base import Base
+from plots.plots_benchmark_mode import *
+from plots.plots_machine_learning import plot_feature_correlation
+from predictions import introns
+from predictions import metrics
+from predictions.apply import apply_tool_predictions
+from predictions.metapredictions import Metapredictions
+from predictions.thresholds import perform_threshold_analysis
+from preprocessing.clinvar import *
+from preprocessing.tables import generate_clinvar_table, generate_consequence_table
+from preprocessing.osutils import ensure_folder_exists
 
 
 class BenchmarkTools(Base):
@@ -29,14 +31,16 @@ class BenchmarkTools(Base):
                  types_of_variant: List = None,
                  metric: str = "weighted_accuracy",
                  location: str = "HGVSc",
-                 genome: str = "hg19",
+                 aggregate_classes: bool = False,
+                 select_conseqs: str = "in_gene_body",
                  do_intronic_analysis: bool = False,
                  clinvar_stars: str = "3s_l",
+                 phenotype_ids: list = None,
                  do_threshold_analysis: bool = False,
                  do_machine_learning: bool = False,
                  allele_frequency_col: str = "gnomADg_AF",
                  skip_heatmap: bool = False,
-                 tools_config: str = "tools_config.txt"):
+                 tools_config: str = None):
 
         """
         ----
@@ -51,7 +55,8 @@ class BenchmarkTools(Base):
                          types_of_variant=types_of_variant,
                          metric=metric,
                          location=location,
-                         genome=genome,
+                         aggregate_classes=aggregate_classes,
+                         select_conseqs= select_conseqs,
                          do_intronic_analysis=do_intronic_analysis,
                          is_clinvar=is_clinvar,
                          allele_frequency_col=allele_frequency_col,
@@ -62,7 +67,7 @@ class BenchmarkTools(Base):
         self.do_threshold_analysis = do_threshold_analysis
         self.do_machine_learning = do_machine_learning
 
-        # Remove tools with where all values are missing
+        # Remove tools where all values are missing
         tools = [t[0] for t in self.thresholds]
         self.df.dropna(axis=1, how="all", inplace=True)
         self.null_tools = list(set(tools) - set(list(self.df)))
@@ -72,28 +77,35 @@ class BenchmarkTools(Base):
 
         if self.is_clinvar:
             self.out_dir = os.path.join(self.out_dir, self.clinvar_stars)
-            df_clinvar_sure = filter_clinvar_sure(self.df)
 
+            self.df = filter_by_condition(self.df, phenotype_ids)
+            
+            df_clinvar_sure = filter_clinvar_sure(self.df)
             self.clinvar_levels_dict = {
-                'clinvar': df_clinvar_sure,
+                '0s': df_clinvar_sure,
                 '1s': filter_clinvar_1_star(df_clinvar_sure),
                 '2s': filter_clinvar_2_stars(df_clinvar_sure),
                 '3s': filter_clinvar_3_stars(df_clinvar_sure),
                 '4s': filter_clinvar_4_stars(df_clinvar_sure),
-                'clinvar_l': self.df,
+                '0s_l': self.df,
                 '1s_l': filter_clinvar_1_star(self.df),
                 '2s_l': filter_clinvar_2_stars(self.df),
                 '3s_l': filter_clinvar_3_stars(self.df),
                 '4s_l': filter_clinvar_4_stars(self.df)}
 
-            generate_clinvar_table(self.clinvar_levels_dict, self.variant_types, self.out_dir)
+            generate_clinvar_table(self.clinvar_levels_dict, 
+                                   self.variant_types, 
+                                   self.out_dir,
+                                   self.clinvar_stars)
 
             self.df = self.clinvar_levels_dict[self.clinvar_stars]
             assert self.df.shape[0] > 0, "No remaining variants after filtering by {} " \
                                          "level. Try a more relaxed value for the '-c'" \
                                          " arg.".format(self.clinvar_stars)
+            logging.info('Number of variants after filtering by Clinvar stars ({}): {}'.format(self.clinvar_stars, self.df.shape[0]))
 
-        self.top_tools, f1_at_ref_threshold = self.do_performance_comparison()
+        generate_consequence_table(self.df, self.out_dir)
+        #self.top_tools, f1_at_ref_threshold = self.do_performance_comparison()
 
         if self.do_intronic_analysis:
             thresholds = [tool for tool in self.thresholds if tool[3] != 'Protein']
@@ -101,36 +113,18 @@ class BenchmarkTools(Base):
             introns.do_intron_analysis(self.df,
                                        thresholds=thresholds,
                                        metric=self.metric,
+                                       aggregate_classes=self.aggregate_classes,
                                        out_dir=self.out_dir,
                                        af_column=self.allele_frequency_col)
 
         if self.do_threshold_analysis:
-            if self.is_clinvar:
-                # For now, threshold analysis is done using a highly confident set (2stars with likely)
-                new_thresholds = perform_threshold_analysis(self.clinvar_levels_dict['2s_l'],
-                                                            self.location_filters,
-                                                            self.thresholds,
-                                                            self.out_dir,
-                                                            f1_at_ref_threshold)
-
-                # Write new configs for future VETA run with new thresholds
-                outdir = os.path.join(self.out_dir, "thresholds_analysis")
-                for beta, thresh_per_loc in new_thresholds.items():
-
-                    if beta == 1:
-                        for _loc, tools_metrics in thresh_per_loc.items():
-
-                            config = open(os.path.join(outdir, "new_config_{}.txt".format(_loc)), 'w')
-                            for tool, value in tools_metrics.items():
-                                vcf_field = ','.join([v for sublist in self.tools_config[tool] for v in sublist])
-                                info = [v for v in self.thresholds if v[0] == tool][0]
-                                outline = [tool, vcf_field, info[1], str(value[0]), info[3]]
-                                config.write('\t'.join(outline) + '\n')
-
-                # TODO evaluate performance with new thresholds
-
-            else:
-                logging.info("Dataset is not from Clinvar. Threshold analysis will be skipped.")
+            
+            new_thresholds = perform_threshold_analysis(self.df,
+                                                        self.location_filters,
+                                                        self.thresholds,
+                                                        self.tools_config,
+                                                        self.out_dir,
+                                                        f1_at_ref_threshold)
 
         if self.do_machine_learning:
             self.do_ml_analysis()
@@ -152,84 +146,159 @@ class BenchmarkTools(Base):
                          "to the filtering strategy employed ({}). If you want to "
                          "be more permissive or stringent, play with the '--clinvar_stars' "
                          "argument.".format(self.clinvar_stars))
+            
         for var_type, _var_type_func in self.variant_types:
             outdir = os.path.join(self.out_dir, "tools_benchmark", var_type)
             ensure_folder_exists(outdir)
 
             _df_v = _var_type_func(self.df).copy()
+            print()
+            logging.info("----------")
             logging.info("Looking at {} ({} variants)".format(var_type, _df_v.shape[0]))
+            logging.info("----------")
+            print()
+            
             if _df_v.shape[0] == 0:
                 logging.warning("No variants. Skipping!".format(var_type))
                 continue
+            
+            for _location in self.location_filters:
 
-            for _location, _filter_function in self.location_filters:
+                df = _df_v[_df_v.location == _location].copy()
+                if df.empty:
+                    continue
+                
                 statistics = defaultdict(list)
-                df = _filter_function(_df_v).copy()
+                        
+                n_pos = df.label.sum()
+                n_neg = (~ df.label).sum()
                 df['count_class'] = df.groupby('outcome')['outcome'].transform('size')
-
+                
+                logging.info("----------")
+                logging.info("{} variants (n={})".format(_location, df.shape[0]))
+                logging.info("Pathogenic: {}".format(n_pos))
+                logging.info("Benign: {}".format(n_neg))
+                logging.info("----------")
+                print()
+                
                 if df.shape[0] < 10:
                     logging.info("Less than 10 '{}' '{}' variants found ({})"
-                                 ". Skipping!".format(var_type, _location, df.shape[0]))
+                                ". Skippning!".format(var_type, _location, df.shape[0]))
                     continue
-
+                
                 df = self.apply_thresholds(df, _location)
 
                 if not self.skip_heatmap:
                     if df.shape[0] > 10:
                         logging.info("Generating performance heatmaps for '{}' '{}' variants. "
-                                     "If dataset is large, this step will take long time.".format(var_type, _location))
-                        plot_heatmap(df, _location, outdir)
+                                    "If dataset is large, this step will take long time.".format(var_type, _location))
+                        
+                        fname = os.path.join(outdir, "performance_at_fixed_thresh", "heatmap_" + _location + '.pdf')
+                        plot_heatmap(df, fname=fname)
+                        logging.info("Done")
                     else:
                         logging.info("Less than 10 variants located in '{}' of type '{}'. " \
-                                     "Skipping heatmap generation.".format(_location, var_type))
+                                    "Skipping heatmap generation.".format(_location, var_type))
 
-                for tool, *args in self.thresholds:
+                roc_metrics_per_tool, pr_metrics_per_tool = [], []
+
+                for tool, direction, _, _ in self.thresholds:
+
                     try:
-                        scored = np.sum(~df[tool + '_prediction'].isnull())
-                        if 0 < scored < df.shape[0] / 10:
-                            logging.info("{} scored some '{}' variants, but they account for less than "
-                                         "10% of the dataset size. Although stats file will include these results,"
-                                         "plots will not show those.".format(tool, _location))
-
-                        # distributions of each class
-                        # are only plotted for SNPs and
-                        # all types for splice_site and
-                        # coding locations
-                        if (_location in ['all', 'splice_site', 'splice_region', 'coding'] and
-                                var_type in ['snps', 'all_types']):
-                            plot_density_by_class(df[[tool, "label"]],
-                                                  thresholds=self.thresholds,
-                                                  fname=os.path.join(outdir, 'class_dist_' + tool + "_" + _location))
-
                         statistics = metrics.generate_statistics(df, statistics, _location, tool)
+                    
+                        scored = df[~df[tool + '_prediction'].isnull()]
+                        if scored.empty:
+                            logging.info("{} did not score any {} variant.".format(tool, _location))
+                            continue
+                        
+                        if 0 < scored.shape[0] < df.shape[0] / 10:
+                            logging.info("{} scored some '{}' variants (scored={}), but they account for less than "
+                                        "10% of the dataset size. Stats file will include those tools, but "
+                                        "performance plots at defined thresholds will discard them.".format(tool, _location, scored.shape[0]))
+                            continue
 
+                        # Distributions of each class are only plotted for SNPs and
+                        # all types for splice_site and coding locations
+                        if (_location in ['all', 'splice_site', 'splice_region', 'intronic', 'missense', 'coding'] and var_type in ['snps', 'all_types']):
+                            plot_density_by_class(df[[tool, "label"]],
+                                                thresholds=self.thresholds,
+                                                fname=os.path.join(outdir, 'class_distribution', tool + "_" + _location))
+
+                        ####################
+                        ### ROC analysis ###
+                        ####################
+                        # Required to have predictions on variants of both classes
+                        n_pos_pred = scored[scored.label].shape[0]
+                        n_neg_pred = scored[scored.label == False].shape[0]
+
+                        if scored.empty or 0 < scored.shape[0] < df.shape[0] / 2:
+                            logging.info("{} scored some '{}' variants (scored={}), but they account for less than "
+                                        "50% of the dataset size. ROC analysis will be skipped for this tool.".format(tool, _location, scored.shape[0]))
+                        
+                        elif min(n_pos_pred, n_neg_pred) < 10:
+                            logging.info("No minimum number of predictions on each class (10) found. Skipping ROC analysis for {} tool in {} variant set".format(tool, _location))
+                            
+                        else:
+                            
+                            try:
+                                roc_curve, pr_curve, roc_auc, ap_score = metrics.do_roc_analysis(scored[[tool, 'label']],
+                                                                                                tool,
+                                                                                                higher_is_better=direction == ">")
+            
+                                na_frac = 1 - (scored.shape[0] / df.shape[0])
+                                roc_metrics_per_tool.append([tool, na_frac, roc_curve[0], roc_curve[1],
+                                                            roc_curve[2], roc_curve[3], roc_auc])
+                                pr_metrics_per_tool.append([tool, na_frac, pr_curve[0], pr_curve[1],
+                                                            pr_curve[2], pr_curve[3], ap_score])
+                            except TypeError:
+                                pass
+                            
                     except KeyError:
                         pass
 
                 stats_all_df = pd.DataFrame(statistics)
+    
                 stats_df = stats_all_df[stats_all_df.fraction_nan < 0.90]
 
                 # draw plots
-                out_stats = os.path.join(outdir, "statistics_{}_{}.tsv").format(var_type, _location)
-                out_ranks = os.path.join(outdir, "tools_ranking_{}_{}.csv").format(var_type, _location)
-                af_plot = os.path.join(outdir, "AF_{}_{}".format(var_type, _location))
-                unscored_plot = os.path.join(outdir, "unscored_fraction_{}_{}".format(var_type, _location))
-                barplot_plot = os.path.join(outdir, "tools_analysis_{}_{}".format(var_type, _location))
-                metrics_plot = os.path.join(outdir, "tools_metrics_{}_{}".format(var_type, _location))
+                ensure_folder_exists(os.path.join(outdir, "results_tsv"))
+                out_stats = os.path.join(outdir, "results_tsv", "statistics_{}_{}.tsv").format(var_type, _location)
+                out_ranks = os.path.join(outdir, "results_tsv", "tools_ranking_{}_{}.csv").format(var_type, _location)
+                af_plot = os.path.join(outdir, "allele_frequency", "AF_{}.pdf".format(var_type, _location))
+                unscored_plot = os.path.join(outdir, "performance_at_fixed_thresh", "unscored_fraction_{}_{}.pdf".format(var_type, _location))
+                barplot_plot = os.path.join(outdir, "performance_at_fixed_thresh", "barplot_{}_{}.pdf".format(var_type, _location))
+                metrics_plot = os.path.join(outdir, "performance_at_fixed_thresh", "scatter_{}_{}.pdf".format(var_type, _location))
 
+                
                 plot_allele_frequency(df, af_plot, self.allele_frequency_col)
                 plot_unscored(stats_all_df, unscored_plot)
                 plot_tools_barplot(stats_df, barplot_plot, self.metric)
                 plot_metrics(stats_df, metrics_plot, self.metric)
+        
+                for i, _roc_data in enumerate([roc_metrics_per_tool, pr_metrics_per_tool]):
+                    if i == 0:
+                        is_roc = True 
+                        bname = "ROC_"
+                    else:
+                        is_roc = False
+                        bname = "ROC_pr_"
+                    
+                    if _roc_data:
+                        
+                        plot_curve(_roc_data, 
+                                os.path.join(outdir, "roc_analysis", "{}{}.pdf".format(bname, _location)),
+                                (n_pos, n_neg),
+                                is_roc=is_roc)
 
                 stats_all_df.drop(['filter'], axis=1).to_csv(out_stats, sep="\t", index=False)
 
                 ranked_stats = stats_all_df[["tool", "weighted_accuracy", "accuracy",
-                                             "weighted_F1", "F1", "coverage",
-                                             "specificity", "sensitivity",
-                                             "precision"]].sort_values([self.metric], ascending=False)
+                                            "weighted_F1", "F1", "coverage",
+                                            "specificity", "sensitivity",
+                                            "precision"]].sort_values([self.metric], ascending=False)
 
-                top_tools[_location] = ranked_stats.head(5) if ranked_stats.shape[0] > 5 else ranked_stats
+                top_tools[_location] = ranked_stats.head(7) if ranked_stats.shape[0] > 7 else ranked_stats
                 f1_at_ref_threshold[_location] = dict(zip(ranked_stats.tool, ranked_stats.F1))
                 ranked_stats.to_csv(out_ranks, sep="\t", index=False)
 
@@ -313,28 +382,31 @@ class BenchmarkTools(Base):
         out_dir = os.path.join(self.out_dir, "machine_learning")
         ensure_folder_exists(out_dir)
 
-        for _loc, filter_func in self.location_filters:
-            df_f = filter_func(self.df).copy()
+        for _loc in self.location_filters:
+            print()
+            logging.info("----------")
+            logging.info("Analyzing '{}' variants.".format(_loc))
+            logging.info("----------")
+            df_f = self.df[self.df.location == _loc].copy()
 
             if df_f.shape[0] < 100:
                 logging.info("Less than 100 variants in '{}' dataframe. "
                              "Machine learning analysis will be skipped.".format(_loc))
                 continue
-
-            logging.info("Analyzing '{}' variants.".format(_loc))
-
+            
+            n_pos_pred = df_f[df_f.label].shape[0]
+            n_neg_pred = df_f[df_f.label == False].shape[0]
+            if min(n_pos_pred, n_neg_pred) < 30:
+                logging.info("Less than 30 variants of the minority class (only {}) in '{}' "
+                             "variants. Classifiers will not be trained.".format(min(n_pos_pred, n_neg_pred), _loc))
+                continue
+            
             ml_data = Metapredictions(df_f, _loc, self.thresholds,
                                       out_dir,
                                       top_tools=self.top_tools,
                                       rank_metric=self.metric)
 
             plot_feature_correlation(ml_data.df, _loc, out_dir)
-
-            n_minority = min(ml_data.df.label.value_counts())
-            if n_minority < 50:
-                logging.info("Less than 50 variants of the minority class (only {}) in '{}' "
-                             "variants. Classifiers will not be trained.".format(n_minority, _loc))
-                continue
 
             if len(ml_data.features) < 3:
                 logging.info("Less than 3 features (aka tool scores) available"

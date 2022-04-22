@@ -1,9 +1,10 @@
 from typing import List
 from collections import defaultdict
+import itertools
 import sys
 import logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
-
+from preprocessing.location import CONSEQUENCES
 
 def update_thresholds(config_dict: defaultdict):
     """
@@ -23,8 +24,8 @@ def update_thresholds(config_dict: defaultdict):
         ('SiPhy', '>', 12.17, 'Conservation'),
         ('phastCons', '>', 0.99, 'Conservation'),
         ('CDTS', '<', 10, 'Conservation'),
-        ('fitCons', '>', 0.4, 'Functional'),
-        ('LINSIGHT', '>', 0.4, 'Functional'),
+        ('fitCons', '>', 0.4, 'Whole_genome'),
+        ('LINSIGHT', '>', 0.4, 'Whole_genome'),
 
         ('Sift', '<', 0.05, 'Protein'),
         ('Polyphen2HVAR', '>', 0.5, 'Protein'),
@@ -43,16 +44,32 @@ def update_thresholds(config_dict: defaultdict):
         ('MetaSVM', '>', 0.5, 'Protein'),
         ('M-CAP', '>', 0.025, 'Protein'),
         ('MVP', '>', 0.7, 'Protein'),
+        ('MTR', '>', 0.74, 'Protein'),
+        ('MPC', '>', 2, 'Protein'),
+        ('MISTIC', '>', 0.5, 'Protein'),
         ('CardioBoost', '>', 0.9, 'Protein'),
+        ('CardioVAI', '>', 2, 'Protein'),
         ('PrimateAI', '>', 0.8, 'Protein'),
+        ('VARITY', '>', 0.75, 'Protein'),
+        ('MISTIC', '>', 0.5, 'Protein'),
+        ('ClinPred', '>', 0.5, 'Protein'),
+        ('MutScore', '>', 0.5, 'Protein'), # Did not confirm with paper
+        ('MutFormer', '>', 0.75, 'Protein'), # Did not confirm with paper
+        ('cVEP', '>', 0.5, 'Protein'), # 0.5 as artificial threshold
+        ('EVE_class20', '>', 0.5, 'Protein'), # 0.5 as artificial threshold
+        ('EVE_class50', '>', 0.5, 'Protein'), # 0.5 as artificial threshold
+        ('EVE_class90', '>', 0.5, 'Protein'), # 0.5 as artificial threshold
+        ('EVE', '>', 0.5, 'Protein'),
 
-        ('CADD', '>', 15, 'Functional'),
-        ('DANN', '>', 0.9, 'Functional'),
-        ('GWAVA', '>', 0.5, 'Functional'),
-        ('FATHMM-MKL', '>', 0.5, 'Functional'),
-        ('Eigen', '>', 1, 'Functional'),  # M-CAP paper
-        ('ReMM', '>', 0.984, 'Functional'),
-        ('FunSeq2', '>', 1.5, 'Functional'),
+        ('CAPICE', '>', 0.02, 'Whole_genome'),
+        ('CADD', '>', 20, 'Whole_genome'),
+        ('CADDSplice', '>', 20, 'Whole_genome'),
+        ('DANN', '>', 0.9, 'Whole_genome'),
+        ('GWAVA', '>', 0.5, 'Whole_genome'),
+        ('FATHMM-MKL', '>', 0.5, 'Whole_genome'),
+        ('Eigen', '>', 1, 'Whole_genome'),  # M-CAP paper
+        ('ReMM', '>', 0.984, 'Whole_genome'),
+        ('FunSeq2', '>', 1.5, 'Whole_genome'),
 
         # HAL model scores alt5 PSI. kipoi veff scores the DIFF
         # between the ALT and REF allele, thus I set 5 as the
@@ -70,6 +87,7 @@ def update_thresholds(config_dict: defaultdict):
         # To generalize, if score is greater than its
         # specific threshold, I sum 1 to the score
         # (see process_scap_scores method)
+        ('ConSpliceML', '>', 0.5, 'Splicing'),
         ('S-CAP', '>', 1, 'Splicing'),
         # TraP, same as S-CAP
         ('TraP', '>', 1, 'Splicing'),
@@ -87,7 +105,9 @@ def update_thresholds(config_dict: defaultdict):
         # for splice site detection is higher than 3, be it for
         # the gain (positive entropy value) or for the loss
         # (negative entropy value).
-        ('MaxEntScan', '>', 3, 'Splicing')
+        ('MaxEntScan', '>', 3, 'Splicing'),
+        ('SQUIRLS', '>', 0.5, 'Splicing'),
+        ('IntSplice2', '>', 0.5, 'Splicing')
     ]
 
     DEFAULT_TOOLS = [t[0] for t in _default_list]
@@ -123,41 +143,18 @@ def update_thresholds(config_dict: defaultdict):
 
     return _updated_list
 
-filters_location = [
-    ('all', lambda x: x),
-    ('coding', lambda x: x[x['location'].str.match('coding')]),
-    ('splice_site', lambda x: x[x['location'].str.match('splice_site')]),
-    ('splice_region', lambda x: x[x['location'].str.match('splice_region')]),
-    ('5primeUTR', lambda x: x[x['location'].str.match('5primeUTR')]),
-    ('3primeUTR', lambda x: x[x['location'].str.match('3primeUTR')]),
-    ('deep_intronic', lambda x: x[x['location'].str.match('deep_intronic')]),
-    ('noncodingRNA', lambda x: x[x['location'].str.match('noncodingRNA')]),
-    ('mithocondrial', lambda x: x[x['location'].str.match('mithocondrial')]),
-    ('unknown', lambda x: x[x['location'].str.match('unknown')])
-]
-
-filters_var_type = [
-    ('all_types', lambda x: x),
-    ('snps', lambda x: x[x['type'].str.match('snp')]),
-    ('indels', lambda x: x.query('type == "indel" & subtype == "ins" | type == "indel" & subtype == "del"')),
-    ('insertions', lambda x: x.query('type == "indel" & subtype == "ins"')),
-    ('deletions', lambda x: x.query('type == "indel" & subtype == "del"')),
-    ('mnps', lambda x: x.query('type == "indel" & subtype == "mnp"'))
-]
-
-filter_intronic_bins = [
-    ('all_intronic', lambda x: x[~x['intron_bin'].isnull()]),
-    ('all_except_0-2', lambda x: x[~x['intron_bin'].str.match('0-2')]),
-    ('all_except_0-10', lambda x: x[~x['intron_bin'].str.match('0-10')]),
-    ('0-2', lambda x: x[x['intron_bin'].str.match('0-2')]),
-    ('3-10', lambda x: x[x['intron_bin'].str.match('3-10')]),
-    ('11-30', lambda x: x[x['intron_bin'].str.match('11-30')]),
-    ('31-100', lambda x: x[x['intron_bin'].str.match('31-100')]),
-    ('101-200', lambda x: x[x['intron_bin'].str.match('101-200')]),
-    ('201-500', lambda x: x[x['intron_bin'].str.match('201-500')]),
-    ('500+', lambda x: x[x['intron_bin'].str.match('500\+')])
-]
-
+def _extract_possible_filters(aggregate: bool):
+    """
+    Extracts possible location/class filters
+    to perform an analysis, given the aggregate
+    option provided
+    
+    :return list: List with lambda function to filter df by each loc
+    """
+    idx = 0 if aggregate else 1
+    all_locs = list(set([x[idx] for x in CONSEQUENCES.values()]))
+    all_locs.append('deep_intronic')
+    return all_locs
 
 def subset_variants_by_type(types_to_analyse: List = None):
     """
@@ -189,7 +186,7 @@ def subset_toolset_by_scope(threshold_list: List,
         Default: `None`. Use all scopes
     """
 
-    _to_analyse = ['Conservation', 'Protein', 'Functional', 'Splicing']
+    _to_analyse = ['Conservation', 'Protein', 'Whole_genome', 'Splicing']
 
     if scopes is not None:
         _to_analyse = list(set(_to_analyse).intersection(scopes))
@@ -198,3 +195,29 @@ def subset_toolset_by_scope(threshold_list: List,
         return [tool for tool in threshold_list if tool[3] in _to_analyse]
     except IndexError:
         raise IndexError('Scope is missing in the config file for some custom provided tool')
+
+
+filters_var_type = [
+    ('all_types', lambda x: x),
+    ('snps', lambda x: x[x['type'].str.match('snp')]),
+    ('indels', lambda x: x.query('type == "indel" & subtype == "ins" | type == "indel" & subtype == "del"')),
+    ('insertions', lambda x: x.query('type == "indel" & subtype == "ins"')),
+    ('deletions', lambda x: x.query('type == "indel" & subtype == "del"')),
+    ('mnps', lambda x: x.query('type == "indel" & subtype == "mnp"'))
+]
+
+filter_intronic_bins = [
+    ('all_intronic', lambda x: x[~x['intron_bin'].isnull()]),
+    ('all_except_1-2', lambda x: x[~x['intron_bin'].str.match('1-2')]),
+    ('all_except_1-10', lambda x: x[(~x['intron_bin'].str.match('1-2')) &
+                                    (~x['intron_bin'].str.match('3-10')) & 
+                                    (~x['intron_bin'].str.match('1-10'))]),
+    ('1-2', lambda x: x[x['intron_bin'].str.match('1-2')]),
+    ('3-10', lambda x: x[x['intron_bin'].str.match('3-10')]),
+    ('1-10', lambda x: x[x['intron_bin'].str.match('1-10')]),
+    ('11-30', lambda x: x[x['intron_bin'].str.match('11-30')]),
+    ('31-100', lambda x: x[x['intron_bin'].str.match('31-100')]),
+    ('101-200', lambda x: x[x['intron_bin'].str.match('101-200')]),
+    ('201-500', lambda x: x[x['intron_bin'].str.match('201-500')]),
+    ('500+', lambda x: x[x['intron_bin'].str.match('500\+')])
+]

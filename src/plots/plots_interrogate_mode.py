@@ -100,22 +100,22 @@ def plot_heatmap_toptools(df: pd.DataFrame, filters, outdir):
         independently
     :param str outdir: Output directory
     """
-    from src.plots.plots_benchmark_mode import plot_heatmap
+    from plots.plots_benchmark_mode import plot_heatmap
 
     if 'label' in df.columns:
         df.rename(columns={"label": "Ground Truth (*)"}, inplace=True)
 
-    for filter_name, _func in filters:
+    for filter_name in filters:
 
-        df_f = _func(df)._get_numeric_data().copy()
-
+        df_f = df[df.location == filter_name].copy()
+        df_f = df_f.drop(columns=['variant_id', 'HGVSc', 'location'])
         if df_f.shape[0] < 5:
             continue
-
-        plot_heatmap(df_f, filter_name, outdir,
+        
+        fname = os.path.join(outdir, "top_tools_heatmap_{}.pdf".format(filter_name))
+        plot_heatmap(df_f, fname,
                      cluster_rows=True,
-                     skip_preparation=True,
-                     prefix="top_tools")
+                     skip_preparation=True)
 
 
 def plot_accuracy(stats_df: pd.DataFrame,
@@ -130,15 +130,26 @@ def plot_accuracy(stats_df: pd.DataFrame,
     :param str location: Variants location
     :param str out_dir: Output directory
     """
-
-    fig, ax = plt.subplots()
     stats_df = stats_df.sort_values([metric])
-    plt.barh(range(stats_df.shape[0]), stats_df[metric],
+    n_tools = len(stats_df)
+    if n_tools < 5:
+        figsize = (3, 3)
+    elif 5 <= n_tools <= 30:
+        figsize = (5, 5)
+    else:
+        figsize = (7, 7)
+        
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111)
+    ax.barh(range(stats_df.shape[0]), stats_df[metric],
              color='darkgrey',
              edgecolor='k',
              linewidth=1)
-    plt.xlabel(metric)
-
+    plt.axvline(0.9, color='b', linestyle='--')
+    xlabel = (metric[:1].upper() + metric[1:]).replace("_", " ")
+    _title = (location[:1].upper() + location[1:]).replace("_", " ")
+    plt.xlabel(xlabel)
+    plt.title("{} variants (N={})".format(_title, str(stats_df.iloc[0,:].total)))
     plt.xlim(left=0)
     plt.yticks(range(stats_df.shape[0]), stats_df['tool'])
     plt.ylim(-1, stats_df.shape[0])

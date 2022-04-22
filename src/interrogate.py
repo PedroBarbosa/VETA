@@ -1,16 +1,16 @@
 import logging
 from collections import defaultdict
 from typing import List
+from matplotlib.pyplot import loglog
 
 import numpy as np
 
-from src.base import Base
-from src.plots.plots_inspect_mode import *
-from src.predictions.apply import apply_tool_predictions
-from src.predictions.filters import filters_location
-from src.predictions.metrics import generate_statistics
-from src.preprocessing.osutils import check_file_exists
-from src.preprocessing.osutils import ensure_folder_exists
+from base import Base
+from plots.plots_interrogate_mode import *
+from predictions.apply import apply_tool_predictions
+from predictions.metrics import generate_statistics
+from preprocessing.osutils import check_file_exists
+from preprocessing.osutils import ensure_folder_exists
 
 
 class PredictionsEval(Base):
@@ -24,7 +24,8 @@ class PredictionsEval(Base):
                  types_of_variant: List = None,
                  metric: str = "weighted_accuracy",
                  location: str = "HGVSc",
-                 genome: str = "hg19",
+                 aggregate_classes: bool = False,
+                 select_conseqs: str = "in_gene_body",
                  do_intronic_analysis: bool = False,
                  best_tools: str = None,
                  n_best_tools: int = None,
@@ -32,7 +33,7 @@ class PredictionsEval(Base):
                  labels: str = None,
                  allele_frequency_col: str = "gnomADg_AF",
                  skip_heatmap: bool = False,
-                 tools_config: str = "tools_config.txt"):
+                 tools_config: str = None):
 
         """
         ----
@@ -65,7 +66,8 @@ class PredictionsEval(Base):
                          types_of_variant=types_of_variant,
                          metric=metric,
                          location=location,
-                         genome=genome,
+                         aggregate_classes = aggregate_classes,
+                         select_conseqs = select_conseqs,
                          do_intronic_analysis=do_intronic_analysis,
                          is_clinvar=False,
                          allele_frequency_col=allele_frequency_col,
@@ -81,9 +83,9 @@ class PredictionsEval(Base):
                                                                          "List of available tools:\n{}". \
                 format(self.available_tools)
 
-        if "f1" in self.metric and self.labels is not None:
+        if "F1" in self.metric and self.labels is not None:
             raise ValueError("F1-based metrics are not available in the "
-                             "inspect mode, since all variants refer to a "
+                             "interrogate mode, since all variants refer to a "
                              "single class type (--label set to {})".format(self.labels))
 
         self.best_tools = check_file_exists(best_tools)
@@ -109,6 +111,7 @@ class PredictionsEval(Base):
 
             outdir = os.path.join(self.out_dir, var_type)
             ensure_folder_exists(outdir)
+      
             _df_by_type = _func(df_with_pred).copy()
 
             logging.info("Looking at {} ({} variants)".format(var_type,
@@ -118,6 +121,7 @@ class PredictionsEval(Base):
                 logging.warning("WARN: There are no {} in the variant set. "
                                 "Skipping this analysis.".format(var_type))
                 continue
+            
 
             ###################
             ### Predictions ###
@@ -142,11 +146,13 @@ class PredictionsEval(Base):
                 logging.info("Inspecting variants for which a large "
                              "fraction of tools predicts pathogenicity.")
 
-                # TODO speed up this step
+                # TODO calculate ratios more efficiently 
                 ratios_df = _df_just_pred.set_index('variant_id').drop(["location", "HGVSc"], axis=1).copy()
+          
                 ratios_df = ratios_df.apply(lambda x: x.value_counts(True, dropna=False),
                                             axis=1).fillna(0).sort_values([True], ascending=False)
-
+                ratios_df = ratios_df.loc[:,~ratios_df.columns.duplicated()]
+   
                 ratios_df.rename(columns={False: 'is_benign',
                                           True: 'is_pathogenic',
                                           np.nan: "unpredictable"},
@@ -198,13 +204,13 @@ class PredictionsEval(Base):
                 else:
                     _df = _df_just_pred.replace(class_dict)
 
-                plot_heatmap_toptools(_df, filters=filters_location, outdir=outdir)
+                plot_heatmap_toptools(_df, filters=self.location_filters, outdir=outdir)
 
             ##################
             ### Score dist ###
             ##################
-            logging.info("Generating score distribution plots")
             if self.plot_these_tools is not None:
+                logging.info("Generating score distribution plots")
                 for tool in self.plot_these_tools:
                     # uses original df that contains
                     # scores, not just binary predictions
@@ -233,28 +239,29 @@ class PredictionsEval(Base):
         assert "F1" not in self.metric, "Can't use F1-based metrics in the inspect mode since it is " \
                                         "necessary to have at least two classes for its calculation." \
                                         "at least "
-        for filter_name, _func in self.location_filters:
-            outfile = os.path.join(outdir, "tools_ranking_{}.csv").format(filter_name)
+      
+        for _location in self.location_filters:
+            outfile = os.path.join(outdir, "tools_ranking_{}.csv").format(_location)
             statistics = defaultdict(list)
-            df = _func(df_pred).copy()
-            if df.shape[0] < 10:
-                logging.warning("WARN: Input VCF has not a minimum number of {} "
-                                "variants (10) to evaluate tools performance "
-                                "({})".format(filter_name, df.shape[0]))
+            
+            df = df_pred[df_pred.location == _location].copy()
+            if df.empty:
+                logging.info("WARN: Input VCF does not have any {} variants. "
+                             "Skipping label performance analysis.".format(_location))
                 continue
 
             for tool, *args in self.thresholds:
                 try:
                     if np.sum(~df[tool].isnull()) == 0:
                         continue
-                    generate_statistics(df, statistics, filter_name, tool, is_single_label=True)
+                    generate_statistics(df, statistics, _location, tool, is_single_label=True)
 
                 except KeyError:
                     continue
 
                 stats_df = pd.DataFrame(statistics).drop(columns=['filter'])
                 stats_df.sort_values([self.metric], ascending=False).to_csv(outfile, sep="\t", index=False)
-                plot_accuracy(stats_df, self.metric, filter_name, outdir)
+                plot_accuracy(stats_df, self.metric, _location, outdir)
 
     def _fix_col_names(self, ratios_df: pd.DataFrame):
         """

@@ -4,17 +4,18 @@ from typing import Union, List, Tuple
 
 import hgvs
 import pandas as pd
+from importlib import resources
+import config
 
-from src.predictions.filters import update_thresholds, subset_toolset_by_scope, \
-    subset_variants_by_type, filters_location
-from src.preprocessing.clinvar import get_clinvar_cached, remove_clinvar_useless
-from src.preprocessing.location import *
-from src.preprocessing.osutils import check_file_exists, setup_output_directory, ensure_folder_exists
-from src.preprocessing.utils_tools import *
-from src.preprocessing.vcf import process_vcf
+from predictions.filters import update_thresholds, subset_toolset_by_scope, \
+    subset_variants_by_type, _extract_possible_filters
+from preprocessing.clinvar import get_clinvar_cached, remove_clinvar_useless
+from preprocessing.location import *
+from preprocessing.osutils import check_file_exists, setup_output_directory, ensure_folder_exists
+from preprocessing.utils_tools import *
+from preprocessing.vcf import process_vcf
 
-TOOLS_CONFIG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+TOOLS_CONFIG = resources.open_text(config, 'tools_config.txt')
 
 class Base(object):
     """
@@ -29,7 +30,8 @@ class Base(object):
                  types_of_variant: List = None,
                  metric: str = "weighted_accuracy",
                  location: str = "HGVSc",
-                 genome: str = "hg19",
+                 aggregate_classes: bool = False,
+                 select_conseqs: str = "in_gene_body",
                  do_intronic_analysis: bool = False,
                  is_clinvar: bool = False,
                  allele_frequency_col: str = "gnomADg_AF",
@@ -42,7 +44,7 @@ class Base(object):
 
         :param List scopes_to_predict: Restrict analysis
             to a subset of tools based on their scope.
-            Available options: ['Conservation', 'Functional',
+            Available options: ['Conservation', 'Whole_genome',
             'Protein', 'Splicing']. Default: `None` tools
             from all scopes are used.
 
@@ -61,13 +63,17 @@ class Base(object):
             extract location of the variants. Available
             options: ['HGVSc, 'Consequence']. Default: "HGVSc".
 
-        :param str genome: Genome build where variants are mapped
-            Available options: ['hg19', 'hg38']. Default: `hg19`.
-
+        :param bool aggregate_classes: Aggregate coding and splice region
+            variant classes into more high-level concepts to be analyzed 
+            together
+        
+        :paran str select_conseqs: How to select the top consequence
+            block per variant
+        
         :param bool do_intronic_analysis: Whether additional analysis of
             intronic variants extracted from HGVSc field will
             be performed
-
+            
         :param bool is_clinvar: Whether `vcf` is from Clinvar.
             Default: `False`
 
@@ -87,9 +93,11 @@ class Base(object):
         """
         self.metric = metric
         self.location_from = location
-        self.genome = genome
         self.do_intronic_analysis = do_intronic_analysis
-        self.location_filters = filters_location
+        self.aggregate_classes = aggregate_classes
+        self.select_conseqs = select_conseqs
+        self.location_filters = _extract_possible_filters(self.aggregate_classes)
+
         self.is_clinvar = is_clinvar
 
         self.out_dir = setup_output_directory(out_dir)
@@ -123,8 +131,8 @@ class Base(object):
                 is_benign = False if "pathogenic" in f or "deleterious" in f else True
                 _dfs.append(self.get_df_ready(f, is_benign=is_benign))
 
-            self.df = pd.concat(_dfs)
-
+            self.df = pd.concat(_dfs).reset_index(drop=True)
+            
         # Replace missing AF with 0 for AF plots
         if self.allele_frequency_col in self.df.columns:
 
@@ -167,17 +175,15 @@ class Base(object):
             if _df is not None:
                 return _df
 
-        scores, fields_missing_in_vcf = process_vcf(vcf, tools_config=self.tools_config,
-                                                    thresholds=self.thresholds,
-                                                    is_clinvar=self.is_clinvar,
-                                                    af_col=self.allele_frequency_col)
+        df, fields_missing_in_vcf = process_vcf(vcf, 
+                                                tools_config=self.tools_config,
+                                                thresholds=self.thresholds,
+                                                select_conseq = self.select_conseqs,
+                                                is_clinvar=self.is_clinvar,
+                                                af_col=self.allele_frequency_col)
 
         # Remove tool from config if corresponding field is absent from at least one of the VCFs
         self.tools_config = {k: v for k, v in self.tools_config.items() if k not in fields_missing_in_vcf}
-        df = pd.DataFrame.from_dict(scores, orient='index')
-
-        # Fix col names
-        df = self._fix_column_names(df)
 
         if self.is_clinvar:
             df = df.dropna(subset=["CLNSIG", "CLNREVSTAT"])
@@ -186,19 +192,26 @@ class Base(object):
                          "irrelevant CLNSIG values: {}".format(df.shape[0]))
 
         # Extract variants
-        logging.info("Assigning variants location")
+        logging.info("Assigning variants location/type")
         if self.location_from == "HGVSc":
             hp = hgvs.parser.Parser()
 
-            df['location'] = df.apply(get_location, hp=hp,
+            df['location'] = df.apply(get_location,
+                                      hp=hp,
+                                      aggregate=self.aggregate_classes,
                                       axis=1,
                                       result_type='expand')
+            
             if self.do_intronic_analysis:
-                df[['intron_bin', 'intron_offset']] = df.apply(
-                    lambda x: assign_intronic_bins(x['HGVSc'], hp, x['location']), axis=1)
+                df[['intron_bin', 'intron_offset', 'which_ss']] = df.apply(
+                    lambda x: assign_intronic_bins(x['HGVSc'], 
+                                                   hp, 
+                                                   x['location'], 
+                                                   self.aggregate_classes), axis=1)
 
         elif self.location_from == "Consequence":
-            df['location'] = df['Consequence'].apply(get_location_from_consequence)
+            df['location'] = df['Consequence'].apply(get_location_from_consequence, 
+                                                     detailed=self.detailed_conseqs)
 
         # Clean predictions scores
         df = self._clean_scores(df.reset_index())
@@ -214,26 +227,6 @@ class Base(object):
         booleanDictionary = {True: 'Pathogenic', False: 'Benign'}
         df["outcome"] = df["label"].map(booleanDictionary)
 
-        return df
-
-    def _fix_column_names(self, df: pd.DataFrame):
-        """
-        Rename column names
-        :param pd.DataFrame df: Input df
-        :return pd.DataFrame: Renamed df
-        """
-        genome_cols = ['hg19.chr', 'hg19.pos'] if self.genome == "hg19" else ['chr', 'pos']
-        new_col_names = genome_cols + ['ref', 'alt', 'id', 'type', 'subtype',
-                                       'rsID', 'HGVSc', 'Gene', 'Consequence']
-
-        for column in df:
-            if isinstance(df[column].iloc[0], (tuple,)):
-
-                new_col_names.append(df[column].iloc[0][0])
-                df[column] = df[column].map(tuple2float)
-
-        rename_dict = {i: j for i, j in zip(list(df), new_col_names)}
-        df.rename(columns=rename_dict, inplace=True)
         return df
 
     def _clean_scores(self, df: pd.DataFrame):
@@ -258,11 +251,13 @@ class Base(object):
                                'top_max': [get_top_pred, True, True],
                                'top_min': [get_top_pred, False, False],
                                'top_min_abs': [get_top_pred, False, True],
-                               'spliceai_like': [process_spliceai, None, None],
+                               'categorical_to_numeric': [categorical_to_numerical, None, None],
                                'carol_like': [process_condel_carol, None, None],
                                'kipoi_like': [process_kipoi_tools, None, None],
+                               'spliceai': [process_spliceai, None, None],
                                'trap': [process_trap, None, None],
-                               'scap': [process_scap, None, None]
+                               'scap': [process_scap, None, None],
+                               'conspliceml': [process_conspliceml, None, None]
                                }
 
         logging.info("Engineering the scores.")
@@ -289,19 +284,34 @@ class Base(object):
             "MetaSVM": available_functions['to_numeric'],
             "REVEL": available_functions['to_numeric'],
             "VEST4": available_functions['to_numeric'],
-            "MVP": available_functions['to_numeric'],
             "CardioBoost": available_functions['to_numeric'],
+            "CardioVAI": available_functions['to_numeric'],
             "PrimateAI": available_functions['to_numeric'],
-
+            "VARITY": available_functions['to_numeric'],
+            "MutFormer": available_functions['to_numeric'],
+            "MutScore": available_functions['to_numeric'],
+            "MVP": available_functions['to_numeric'],
+            "MTR": available_functions['to_numeric'],
+            "MPC": available_functions['to_numeric'],
+            "MISTIC": available_functions['top_max'],
+            "ClinPred": available_functions['to_numeric'],
+            "cVEP": available_functions['categorical_to_numeric'],
+            "EVE_Class20": available_functions['categorical_to_numeric'],
+            "EVE_Class50": available_functions['categorical_to_numeric'],
+            "EVE_Class90": available_functions['categorical_to_numeric'],
+            "EVE_score": available_functions['to_numeric'],
+            
             "fitCons": available_functions['to_numeric'],
             "LINSIGHT": available_functions['to_numeric'],
             "GWAVA": available_functions['to_numeric'],
             "CADD": available_functions['to_numeric'],
+            "CADD_Splice": available_functions['to_numeric'],
             "Eigen": available_functions['to_numeric'],
             "FATHMM-MKL": available_functions['to_numeric'],
             "FunSeq2": available_functions['top_max'],
             "DANN": available_functions['to_numeric'],
             "ReMM": available_functions['to_numeric'],
+            "CAPICE": available_functions['top_max'],
 
             "HAL": available_functions['kipoi_like'],
             "S-CAP": available_functions['scap'],
@@ -312,11 +322,14 @@ class Base(object):
             "SPIDEX": available_functions['to_numeric'],
             "dbscSNV": available_functions['top_max'],
             "MaxEntScan": available_functions['to_numeric'],
-            "SpliceAI": available_functions['spliceai_like']
+            "SpliceAI": available_functions['spliceai'],
+            "SQUIRLS": available_functions['to_numeric'],
+            "ConSpliceML": available_functions['conspliceml'],
+            "IntSplice2": available_functions['to_numeric']
         }
 
-        _functions_that_require_loc = ["process_spliceai", "process_trap"]
-
+        _functions_that_require_loc = ["process_trap"]
+        _functions_that_require_symbol = ["process_spliceai", "process_conspliceml"]
         _absent_tools = {_tool: info for _tool, info in self.tools_config.items()
                          if _tool not in clean_functions.keys()}
 
@@ -346,6 +359,9 @@ class Base(object):
                 if _f.__name__ in _functions_that_require_loc:
                     df[_tool] = df[[_tool] + ['location']].apply(_f, axis=1)
 
+                if _f.__name__ in _functions_that_require_symbol:
+                    df[_tool] = df[[_tool] + ['SYMBOL']].apply(_f, axis=1)
+                    
                 # apply single function to
                 # the target columns
                 else:
@@ -357,10 +373,10 @@ class Base(object):
                     else:
                         df[_tool] = df[_tool].apply(_f, is_max=is_max,
                                                     absolute=is_absolute)
-
+                    
         return df
 
-    def _parse_tools_config(self, config: str):
+    def _parse_tools_config(self, config):
         """
         Parse tools config file to ensure
         correctness for downstream analysis.
@@ -381,21 +397,24 @@ class Base(object):
                                  "MutationAssessor", "FATHMM", "Provean",
                                  "Mutpred", "CAROL", "Condel", "M-CAP",
                                  "MetaSVM", "MetaLR", "REVEL", "VEST4",
-                                 "MVP", "PrimateAI", "CardioBoost",
+                                 "MVP", "PrimateAI", "cVEP", "VARITY",
+                                 "MTR", "MPC", "MutScore", "MutFormer",
+                                 "ClinPred", "MISTIC",
+                                 "EVE", "EVE_class20", "EVE_class50","EVE_class90",                             
+                                 "CardioBoost", "CardioVAI",
                                  "fitCons", "LINSIGHT", "ReMM", "GWAVA", "FATHMM-MKL",
-                                 "Eigen", "FunSeq2", "CADD", "DANN", "HAL", "SPIDEX",
-                                 "dbscSNV", "MaxEntScan", "SpliceAI", "S-CAP", "TraP",
-                                 "MMSplice", "kipoiSplice4", "kipoiSplice4_cons"]
+                                 "Eigen", "FunSeq2", "CADD", "CADDSplice", "DANN", "CAPICE",
+                                 "HAL", "SPIDEX", "dbscSNV", "MaxEntScan", "SpliceAI", "S-CAP", "ConSpliceML",
+                                 "TraP", "MMSplice", "SQUIRLS", "IntSplice2", "kipoiSplice4", "kipoiSplice4_cons"]
 
-        AVAILABLE_SCOPES = ["Protein", "Conservation", "Functional", "Splicing"]
+        AVAILABLE_SCOPES = ["Protein", "Conservation", "Whole_genome", "Splicing"]
         AVAILABLE_FUNCTIONS = ['to_numeric', 'top_max', 'top_min', 'top_min_abs',
-                               'spliceai_like', 'kipoi_like', 'carol_like', 'trap',
-                               'scap']
+                               'categorical_to_numeric', 'kipoi_like', 'carol_like', 
+                               'trap', 'scap', 'conspliceml', 'spliceai']
 
-        _infile = open(config, 'r')
         data = defaultdict(list)
 
-        for line in _infile:
+        for line in config:
             line = line.rstrip()
             if line.startswith("#") or not line:
                 continue

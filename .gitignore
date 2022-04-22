@@ -14,3 +14,5 @@ test_data/
 VETA.egg-info/
 build/
 dist/
+data/
+results/
