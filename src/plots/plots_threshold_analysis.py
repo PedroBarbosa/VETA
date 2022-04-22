@@ -32,14 +32,14 @@ def plot_optimal_thresholds(tool: str, location: str, threshold_range: np.array,
     """
 
     plt.figure(figsize=(8, 6))
-    plt.plot(threshold_range, accuracies, label="Accuracy", linewidth=1, color='#B22400')
-    plt.plot(threshold_range, sensitivities, label="Sensitivity", linewidth=1, color='#006BB2')
-    plt.plot(threshold_range, specificities, label="Specificity", linewidth=1, color='#429C40')
-    plt.axvline(x=reference_threshold, color='b', linestyle=':', linewidth=2, label="Recommended threshold")
+    plt.plot(threshold_range, accuracies, label="Accuracy", linewidth=2, color='#B22400')
+    plt.plot(threshold_range, sensitivities, label="Sensitivity", linewidth=2, color='darkmagenta')
+    plt.plot(threshold_range, specificities, label="Specificity", linewidth=2, color='#429C40')
+    plt.axvline(x=reference_threshold, color='k', linestyle=':', linewidth=3, label="Recommended threshold")
 
     patches = []
     if not simple:
-        col = sns.color_palette("Greys_r", len(beta_values))
+        col = sns.dark_palette("#69d", len(beta_values))
         col_i = 0
         for k in sorted(beta_values.keys()):
             plt.plot(threshold_range, beta_values[k], color=col[col_i], linestyle="--", linewidth=1)
@@ -47,7 +47,7 @@ def plot_optimal_thresholds(tool: str, location: str, threshold_range: np.array,
             patches.append(mpatches.Patch(color=col[col_i], label='+1 TP = +{} FP'.format(k), linestyle="--"))
             col_i += 1
 
-    plt.subplots_adjust(right=0.7)
+    plt.subplots_adjust(right=0.7) 
     leg1 = plt.legend(bbox_to_anchor=(1, 0.7), frameon=True)
 
     if not simple:
@@ -57,6 +57,8 @@ def plot_optimal_thresholds(tool: str, location: str, threshold_range: np.array,
     plt.xlabel("Threshold values")
     plt.ylabel("Metrics")
 
+    outdir = os.path.join(outdir, 'plots')
+    os.makedirs(outdir, exist_ok=True)
     f_name = os.path.join(outdir, "threshold_{}_{}{}.pdf".format(tool.replace(" ", "_"),
                                                                  location,
                                                                  simple and "_simple" or ""))

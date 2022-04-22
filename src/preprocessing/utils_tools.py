@@ -81,6 +81,53 @@ def to_numeric(preds: list, absolute: bool = True):
     return abs(score) if absolute else score
 
 
+def categorical_to_numerical(pred: list):
+    """
+    Parse single prediction that comes as 
+    a category and transform it in a numeric
+    value. It expects the categorical prediction
+    to represent classification labels as seen
+    in clinvar. Tools such as cVEP and EVE use
+    this taxonomy. 
+    
+    :param list pred: Single prediction. 
+    """
+
+    class_map = {'benign': 0,
+                 'likely_benign': 0.25,
+                 'uncertain_significance': None,
+                 'uncertain': None,
+                 'conflicting': None,
+                 'likely_pathogenic': 0.75,
+                 'pathogenic': 1
+                 }
+    
+    if len(pred) == 1:
+        pred = pred[0]
+
+        if pred is None:
+            return np.nan
+
+        pred = pred.lower()
+        all_p = pred.split(",")
+    
+        # If multiple predictions
+        if len(all_p) > 1:
+
+            is_benign = all(["benign" in x for x in all_p])
+            is_patho = all(["pathogenic" in x for x in all_p])
+            
+            if is_benign and is_patho:
+                pred = "conflicting"
+            
+            else:
+                pred = all_p[0]
+        
+        return class_map[pred]
+    else:
+        raise ValueError('Unexpected number of different preds found: {}'.format(pred))
+        
+    
 def parse_vep_or_vcfanno(pred: str, is_max: bool,
                          _val: float,
                          absolute: bool,
@@ -141,8 +188,10 @@ def get_top_pred(preds: list,
     on the maximum value found for a
     single tool. It may may be composed by
     multiple scores. Example of such tool
-    is 'dbscSNV', which has two scores, the
-    max of them will be returned
+    is 'dbscSNV', which has two scores, 
+    the max of them will be returned. 
+    CAPICE (that has SNV or Indel scores)
+    may also fit for this function.
 
     :param list preds: List of Predictions
     where each prediction contains a single
@@ -167,9 +216,6 @@ def get_top_pred(preds: list,
 
     :return float: Top prediction
     """
-
-    # Before, DANN, ReMM and SPIDEX
-    # used to average preds
     if all(not v for v in preds):
         return np.nan
 
@@ -198,6 +244,7 @@ def get_top_pred(preds: list,
                                             _val=_top,
                                             absolute=absolute,
                                             average=average)
+
     return round(_top, 4)
 
 
@@ -299,13 +346,8 @@ def process_spliceai(preds: pd.Series):
     and returns the top scored field.
 
     It also sets SpliceAI predictions to null
-    in cases where the variant location
-    is not within a gene for the selected
-    VEP consequence (which is always the first).
-    Ensures fidelity in cases where there may be
-    a SpliceAI prediction in a variant located
-    within a gene, but another consequence (non-genic)
-    was selected.
+    in cases where the gene of prediction do not 
+    match the gene for the selected  VEP consequence.
 
     :param pd.Series preds: Series with the
     SpliceAI predictions for the given
@@ -314,24 +356,44 @@ def process_spliceai(preds: pd.Series):
 
     :return float: Top prediction
     """
-
-    tool = [t for t in preds.index if t != "location"][0]
-
-    if all(v is None or v == "." for v in preds[tool]):
+    
+    if all(v is None or v == "." for v in preds.SpliceAI):
         return np.nan
-
+  
     # Iterate over SNVs and Indels:
-    for _p in preds[tool]:
+    for _p in preds.SpliceAI:
 
         if _p is not None and _p != ".":
-            if _p.split("|")[1] == "0" and (preds.location == "unknown" or
-                                            preds.location == "regulatory_variant" or
-                                            preds.location == "mithocondrial"):
-                return np.nan
+            
+            for ind_pred in _p.split(","):
+            
+                if ind_pred.split("|")[1] == preds.SYMBOL:
+                    return max(map(float, ind_pred.split("|")[2:6]))
+                
+    return np.nan
 
-            return max(map(float, _p.split("|")[2:6]))
+def process_conspliceml(preds: pd.Series):
+    """
+    Process ConSpliceML scores to return 
+    a single numeric value for the gene
+    where variant occurs
+    
+    :return float: Prediction value
+    """
+  
+    assert len(preds.ConSpliceML) == 1, "Multiple VCF fields were provided in the config for ConSpliceML"
+    
+    if all(v is None or v == "." for v in preds.ConSpliceML):
+        return np.nan
+    
+    _preds = preds.ConSpliceML[0].split(",")
+    for _p in _preds:
+        if _p.split("|")[0] == preds.SYMBOL:
+            return round(float(_p.split("|")[1]), 3)
 
+    return np.nan
 
+    
 def process_scap(preds: pd.Series):
     """
     Process S-CAP scores so that
@@ -352,6 +414,7 @@ def process_scap(preds: pd.Series):
 
     :return float: Prediction value
     """
+
     is_not_core_region = ["3intronic", "exonic", "5extended", "5intronic"]
     thresholds = {"3intronic": 0.006,
                   "exonic": 0.009,
@@ -381,8 +444,8 @@ def process_scap(preds: pd.Series):
         try:
             fields = _p.split(":")
             if fields[1] in is_not_core_region:
-                # senscore
-                if float(fields[3]) > thresholds[fields[1]]:
+                # rawscore
+                if float(fields[2]) >= thresholds[fields[1]]:
                     return float(fields[3]) + 1
                 else:
                     return float(fields[3])
@@ -393,24 +456,24 @@ def process_scap(preds: pd.Series):
                 # for both dom and rec thresholds.
                 # If any greater than threshold, prediction is
                 # pathogenic
-                if float(fields[5]) > thresholds['5core_dominant']:
-                    return float(fields[5]) + 1
+                if float(fields[4]) >= thresholds['5core_dominant']:
+                    return float(fields[4]) + 1
 
-                elif float(fields[7]) > thresholds['5core_recessive']:
-                    return float(fields[7]) + 1
+                elif float(fields[6]) >= thresholds['5core_recessive']:
+                    return float(fields[6]) + 1
 
                 else:
-                    return float(fields[5])
+                    return float(fields[4])
 
             elif fields[1] == "3core":
-                if float(fields[5]) > thresholds['3core_dominant']:
-                    return float(fields[5]) + 1
+                if float(fields[4]) >= thresholds['3core_dominant']:
+                    return float(fields[4]) + 1
 
-                elif float(fields[7]) > thresholds['3core_recessive']:
-                    return float(fields[7]) + 1
+                elif float(fields[6]) >= thresholds['3core_recessive']:
+                    return float(fields[6]) + 1
 
                 else:
-                    return float(fields[5])
+                    return float(fields[4])
 
         # if prediction is like '1:exonic:.:.:.:.:.:.'
         except ValueError:
@@ -437,6 +500,7 @@ def process_trap(preds: pd.Series):
 
     :return float: Prediction value
     """
+   
     if all(v is None for v in preds.TraP):
         return np.nan
 
@@ -454,11 +518,12 @@ def process_trap(preds: pd.Series):
         if "," in _p:
             score = max([float(v) for v in _p.split(',') if _p.strip() != '.'])
 
-    if preds.location == "coding":
-        return score + 1 if score > 0.416 else score
+    if preds.location in ["splice_site", "splice_region", "intronic",
+                          "deep_intronic", "5primeUTR", "3primeUTR"]:
+        return score + 1 if score > 0.289 else score
 
     else:
-        return score + 1 if score > 0.289 else score
+        return score + 1 if score > 0.416 else score
 
 
 def process_kipoi_tools(x: list, _max: bool = True):

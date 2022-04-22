@@ -21,14 +21,24 @@ Condel	Condel
 M-CAP	M-CAP_score
 MetaSVM	MetaSVM_score
 MetaLR	MetaLR_score
-REVEL	REVEL_score
 VEST4	VEST4_score
+REVEL	REVEL
 MVP	MVP
 PrimateAI	PrimateAI
+VARITY	VARITY_ER
+cVEP	cVEP
 CardioBoost	CardioBoost
+EVE	EVE
+MTR	MTR
+MPC	MPC
+MISTIC	MISTIC
+MutScore	MutScore
+MutFormer	MutFormer
+ClinPred	ClinPred
+CardioVAI	CardioVAI
 
 # Functional
-fitCons	fitcons
+#fitCons	fitcons
 LINSIGHT	linsight_g
 ReMM	ReMM
 GWAVA	GWAVA
@@ -36,9 +46,13 @@ GWAVA	GWAVA
 Eigen	Eigen
 FunSeq2	funseq2
 CADD	CADD_PHRED
+CADDSplice	CADDSplice_PHRED
 DANN	DANN
+CAPICE	CAPICE,CAPICE_ind
 
 # Splicing
+SQUIRLS	SQUIRLS_SCORE
+IntSplice2	IntSplice2
 HAL	HAL_DIFF
 SPIDEX	dpsi_zscore
 dbscSNV	ada_score,rf_score
@@ -46,5 +60,6 @@ MaxEntScan	MaxEntScan_diff
 SpliceAI	SpliceAI,SpliceAI_ind
 S-CAP	SCAP
 TraP	TraP
+ConSpliceML	ConSpliceML
 MMSplice	mmsplice_deltaPSI
 kipoiSplice4	kipoisplice_4

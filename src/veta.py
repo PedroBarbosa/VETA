@@ -1,21 +1,19 @@
 import argparse
+from curses import meta
 import logging
-import os.path
 import sys
-import pkgutil, pkg_resources
+from importlib import resources
+import config
+from interrogate import PredictionsEval
+from benchmark import BenchmarkTools
+from preprocessing.osutils import print_clinvar_levels
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 hgvs_logger = logging.getLogger('hgvs')
 hgvs_logger.setLevel(logging.CRITICAL)
 scikit_logger = logging.getLogger('sklearn')
 scikit_logger.setLevel(logging.CRITICAL)
 
-from src.benchmark import BenchmarkTools
-from src.inspect import PredictionsEval
-from src.preprocessing.osutils import print_clinvar_levels
-
-CONFIG_PATH = pkg_resources.resource_filename('src', 'config/tools_config.txt')
-
+CONFIG_PATH = resources.open_text(config, 'tools_config.txt')
 
 def main():
     """
@@ -34,59 +32,65 @@ def main():
 
     parent_parser.add_argument('-s', '--scopes_to_evaluate', metavar='',
                                help='Restrict analysis to a subset of tools based on their '
-                                    'scope. Available options: {%(choices)s}. Default: Tools from '
-                                    'all scores are used.',
-                               nargs='+', choices=('Conservation', 'Functional', 'Protein', 'Splicing'))
+                               'scope. Available options: {%(choices)s}. Default: Tools from '
+                               'all scores are used.',
+                               nargs='+', choices=('Conservation', 'Whole_genome', 'Protein', 'Splicing'))
 
     parent_parser.add_argument('-t', '--types_of_variant', metavar='',
                                help='Restrict analysis to the given variant types. '
-                                    'Available options: {%(choices)s}. Default: Performance '
-                                    'is measured for all variants and each subtype.',
+                               'Available options: {%(choices)s}. Default: Performance '
+                               'is measured for all variants and each subtype.',
                                nargs='+', choices=('all_types', 'snps', 'indels', 'insertions', 'deletions', 'mnps'))
 
     parent_parser.add_argument('-m', '--metric', metavar='',
                                help='Metric to rank the tools. Available options: '
-                                    '{%(choices)s}. Default: "weighted_accuracy."',
-                               choices=('weighted_accuracy', 'accuracy', 'F1', 'weighted_F1', 'coverage'),
+                               '{%(choices)s}. Default: "weighted_accuracy."',
+                               choices=('weighted_accuracy', 'accuracy',
+                                        'F1', 'weighted_F1', 'coverage'),
                                default='weighted_accuracy')
 
     parent_parser.add_argument('-l', '--location', metavar='', default="HGVSc", choices=("HGVSc", "Consequence"),
                                help='VCF field to extract location of the variant. Available options: '
-                                    '{%(choices)s}. Default: "HGVSc".')
+                               '{%(choices)s}. Default: "HGVSc".')
 
-    parent_parser.add_argument('-g', '--genome', metavar='', default="hg19", choices=("hg19", "hg38"),
-                               help='Genome build of the VCF. Available options: {%(choices)s}. '
-                                    'Default: "hg19".')
-
+    parent_parser.add_argument('-a', '--aggregate_classes', help='Aggregate specific variant classes into higher level concepts '
+                               '(e.g. missense, synonymous variants will be evaluated as coding variants).',
+                               action='store_true')
+    
+    parent_parser.add_argument('-v', '--top_vep_consequence', metavar='', default='in_gene_body', choices=("first", "in_gene_body"), 
+                               help='How to select the top VEP consequence for each variant. Available options: {%(choices)s}. '
+                               'Default: "in_gene_body": First consequence ocurring in the body of a gene is selected. '
+                               'If "first" is set, first consequence is selected')
+    
     parent_parser.add_argument('-i', '--do_intronic_analysis', help='Perform additional analysis of '
-                                                                    'intronic variants extracted from '
-                                                                    'HGVSc field in a bin-based faction. '
-                                                                    'Bins are attributed based on the distance '
-                                                                    'of the variant to the nearest splice junction',
+                               'intronic variants extracted from '
+                               'HGVSc field in a bin-based faction. '
+                               'Bins are attributed based on the distance '
+                               'of the variant to the nearest splice junction',
                                action='store_true')
 
-    parent_parser.add_argument('-a', '--allele_frequency', metavar='', default="gnomADg_AF",
+    parent_parser.add_argument('-af', '--allele_frequency', metavar='', default="gnomADg_AF",
                                help='VCF field (within VEP annotations, or INFO field) '
-                                    'that measures frequency of the variant in a '
-                                    'population. If it exists in the input data, additional '
-                                    'plots will be drawn. If absent, VETA will simply ignore it. '
-                                    'Default: "gnomADg_AF". Note: Missing data will be treated as '
-                                    'if the variant is absent in population (converted to 0). '
-                                    'Fo example, if ExAC frequencies are given, intronic variants '
-                                    'will be given 0, but that does not mean that the variant does '
-                                    'not exist in gnomAD, for example. In this case, '
-                                    'it would be appropriate to just analyze the frequency plots of '
-                                    'coding variants.')
+                               'that measures frequency of the variant in a '
+                               'population. If it exists in the input data, additional '
+                               'plots will be drawn. If absent, VETA will simply ignore it. '
+                               'Default: "gnomADg_AF". Note: Missing data will be treated as '
+                               'if the variant is absent in population (converted to 0). '
+                               'For example, if ExAC frequencies are given, intronic variants '
+                               'will be given 0, but that does not mean that the variant does '
+                               'not exist in gnomAD, for example. In this case, '
+                               'it would be appropriate to just analyze the frequency plots of '
+                               'coding variants.')
 
     parent_parser.add_argument('--skip_heatmap', action="store_true",
                                help="Skip heatmap generation for performance analysis. "
-                                    "If the dataset is large, this step takes quite a "
-                                    "while. very long time.")
+                               "If the dataset is large, this step takes quite a "
+                               "while. very long time.")
 
     parent_parser.add_argument('--config', default=CONFIG_PATH,
                                help='Path to the config file that maps tools to the corresponding '
-                                    'VCF annotation. Default: \'tools_config.txt\' file '
-                                    'in the src/config github directory')
+                               'VCF annotation. Default: \'tools_config.txt\' file '
+                               'in the src/config github directory')
     # Subparsers based on parent
     benchmark_parser = subparsers.add_parser("benchmark", help='Benchmark prediction tools based on labelled data.',
                                              parents=[parent_parser])
@@ -109,6 +113,15 @@ def main():
                                        'Default: "2s_l". All the possible filtering levels are visible '
                                        'with the argument \'--listClinvarLevels\'.')
 
+    benchmark_parser.add_argument('--omim_ids', nargs='+', help='When dataset refers to the clinvar database, '
+                                  'selects variants belonging to the provided OMIM ids.')
+    
+    benchmark_parser.add_argument('--medgen_ids', nargs='+', help='When dataset refers to the clinvar database, '
+                                  'selects variants belonging to the provided MedGen ids.')
+    
+    benchmark_parser.add_argument('--mondo_ids', nargs='+', help='When dataset refers to the clinvar database, '
+                                  'selects variants belonging to the provided MONDO ids.')
+        
     benchmark_parser.add_argument('--do_threshold_analysis', action="store_true",
                                   help="Enable reference thresholds analysis when Clinvar is used. "
                                        "It does not depend on the \'--clinvar_stars\' argument, which "
@@ -122,10 +135,11 @@ def main():
                                        "create an ensemble classifier that combines multiple"
                                        " scores. Default: False.")
 
-    predict_parser = subparsers.add_parser("inspect", help='Evaluate predictions from unlabelled variants.',
+    predict_parser = subparsers.add_parser("interrogate", help='Evaluate predictions from unlabelled variants.',
                                            parents=[parent_parser])
 
-    predict_parser.add_argument(dest='vcf', help="VCF file to evaluate tools predictions.")
+    predict_parser.add_argument(
+        dest='vcf', help="VCF file to evaluate tools predictions.")
 
     predict_parser.add_argument('-b', '--best_tools', metavar='',
                                 help="Restrict heatmap analysis to the best set of tools "
@@ -157,18 +171,20 @@ def main():
 
     args = parser.parse_args()
 
-    clinvar_stars = ['1s', '2s', '3s', '4s', '1s_l', '2s_l', '3s_l', 'clinvar', 'clinvar_l']
+    clinvar_stars = ['1s', '2s', '3s', '4s', '1s_l',
+                     '2s_l', '3s_l', '0s', '0s_l']
     ##############################
     ## Argparse args processing ##
     ##############################
-    if args.command == "inspect":
+    if args.command == "interrogate":
         PredictionsEval(args.vcf,
                         args.out_dir,
                         args.scopes_to_evaluate,
                         args.types_of_variant,
                         args.metric,
                         args.location,
-                        args.genome,
+                        args.aggregate_classes,
+                        args.top_vep_consequence,
                         args.do_intronic_analysis,
                         args.best_tools,
                         args.n_best_tools,
@@ -185,16 +201,18 @@ def main():
             print_clinvar_levels()
 
         assert args.clinvar_stars in clinvar_stars, "Set a valid value for the '--clinvar_stars' argument."
-
+        phenotype_ids = [args.omim_ids, args.medgen_ids, args.mondo_ids]
         BenchmarkTools(args.dataset,
                        args.out_dir,
                        args.scopes_to_evaluate,
                        args.types_of_variant,
                        args.metric,
                        args.location,
-                       args.genome,
+                       args.aggregate_classes,
+                       args.top_vep_consequence,
                        args.do_intronic_analysis,
                        args.clinvar_stars,
+                       phenotype_ids,
                        args.do_threshold_analysis,
                        args.do_machine_learning,
                        args.allele_frequency,

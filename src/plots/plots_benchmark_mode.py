@@ -1,4 +1,5 @@
 import os
+from tabnanny import verbose
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,8 +12,8 @@ cmap = sns.diverging_palette(220, 10, as_cmap=True)
 from matplotlib.lines import Line2D
 import matplotlib.colors as c
 import matplotlib.patches as mpatches
-from statannot import add_stat_annotation
-from src.plots.plots_utils import *
+from statannotations.Annotator import Annotator
+from plots.plots_utils import *
 
 
 def plot_density_by_class(data: pd.DataFrame,
@@ -29,7 +30,8 @@ def plot_density_by_class(data: pd.DataFrame,
     :param int min_predicted: Minimum number of variants
     predicted to draw plots. Default: `20`
     """
-
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+    
     fraction_nan = round(np.sum(np.sum(data.iloc[:, 0].isnull())) / data.shape[0] * 100, 2)
     df_ = data[~data.iloc[:, 0].isnull()]
 
@@ -41,7 +43,8 @@ def plot_density_by_class(data: pd.DataFrame,
                     shade=True,
                     linewidth=1.5,
                     hue='label',
-                    legend=False)
+                    legend=False,
+                    warn_singular=False)
 
         plt.axvline(x=[x[2] for x in thresholds if x[0] == list(df_)[0]][0], color='k', linestyle="--")
         legend_d = {'Pathogenic': 'firebrick',
@@ -80,25 +83,32 @@ def plot_allele_frequency(df: pd.DataFrame,
 
     if af_col not in df.columns:
         return
-
+    else:
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
+        
     df['grouper'] = df['outcome'].astype(str) + '\nN = ' + df['count_class'].astype(str)
     order = sorted(list(df['grouper'].unique()))
 
     ax = sns.boxplot(data=df, x="grouper", order=order, y=af_col)
     try:
-        add_stat_annotation(ax, data=df, x="grouper", y=af_col,
-                            order=order,
-                            box_pairs=[tuple(order)],
-                            test='Mann-Whitney',
-                            text_format='star',
-                            loc='inside',
-                            verbose=0,
-                            pvalue_format_string='{:.4f}')
+        if len(order) == 2:
+            annotator = Annotator(ax, 
+                                pairs=[(order[0], order[1])], 
+                                data=df,
+                                x='grouper', 
+                                y=af_col, 
+                                order=order)
+            annotator.configure(test='Mann-Whitney',
+                                text_format='star',
+                                loc='inside',
+                                verbose=0,
+                                pvalue_format_string='{:.4f}')
+            annotator.apply_and_annotate()
+
         plt.xlabel("")
         plt.ylabel("Allele frequency")
         plt.tight_layout()
-        out = fname + '.pdf'
-        plt.savefig(out)
+        plt.savefig(fname)
         plt.close()
     except ValueError:
         plt.close()
@@ -114,6 +124,8 @@ def plot_unscored(data: pd.DataFrame, fname: str):
         for each tool
     :param str fname: Output file
     """
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+    
     fig = plt.figure(figsize=(8, 7))
     ax = sns.barplot(x="fraction_nan",
                      y="tool",
@@ -125,7 +137,7 @@ def plot_unscored(data: pd.DataFrame, fname: str):
     ax.set(xlabel='Fraction of unscored variants', ylabel='')
     plt.xlim(0, 1)
     plt.tight_layout()
-    plt.savefig(fname + ".pdf")
+    plt.savefig(fname)
     plt.close()
 
 
@@ -139,13 +151,24 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
     :param str metric: Metric used
         to rank the tools
     """
+    if data.empty:
+        return 
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+    
     data = data.sort_values(metric)
 
     my_range_coverage = list(range(1, len(data.index) + 1))
     my_range_specificity = np.arange(1 - 0.2, len(data.index)).tolist()
     my_range_sensitivity = np.arange(1 + 0.2, len(data.index) + 0.5).tolist()
 
-    fig, ax = plt.subplots(figsize=(10, 8)) if data.shape[0] > 25 else plt.subplots(figsize=(8, 6))
+    n_tools = data.shape[0]
+    if n_tools < 20:
+        figsize = (6.25, 4)
+    elif 20 <= n_tools <= 30:
+        figsize = (8, 6)
+    else:
+        figsize = (10, 8)
+    fig, ax = plt.subplots(figsize=figsize)
 
     _target_col = "specificity" if "accuracy" in metric else "precision"
     plt.scatter(data[_target_col], my_range_specificity,
@@ -202,7 +225,7 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
                                                           data["total_p"].iloc[0],
                                                           data["total_n"].iloc[0]))
     fig.tight_layout()
-    plt.savefig(fname + ".pdf")
+    plt.savefig(fname, bbox_inches='tight')
     plt.close()
 
 
@@ -216,6 +239,8 @@ def plot_tools_total_correct(data: pd.DataFrame, fname: str):
         for each tool
     :param str fname: Output file
     """
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+    
     df = data.iloc[::-1]
     set_style()
     ind = np.arange(df.shape[0])
@@ -245,7 +270,7 @@ def plot_tools_total_correct(data: pd.DataFrame, fname: str):
 
     set_size(fig, len(df['tool']))
     fig.tight_layout()
-    plt.savefig(fname + ".pdf")
+    plt.savefig(fname)
     plt.close()
 
 
@@ -261,6 +286,7 @@ def plot_tools_barplot_only_correct(data: pd.DataFrame, fname: str):
         for each tool
     :param str fname: Output name
     """
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
     df = data.iloc[::-1]
     set_style()
 
@@ -307,7 +333,7 @@ def plot_tools_barplot_only_correct(data: pd.DataFrame, fname: str):
 
     set_size(fig, len(df['tool']))
     fig.tight_layout()
-    plt.savefig(fname + ".pdf")
+    plt.savefig(fname)
     plt.close()
 
 
@@ -320,7 +346,11 @@ def plot_tools_barplot(data: pd.DataFrame, fname: str, metric: str):
     :param str fname: Output basename
     :param str metric: Metric to evaluate
     """
-
+    if data.empty:
+        return
+    
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+    
     # revert order
     df = data.iloc[::-1]
 
@@ -417,8 +447,91 @@ def plot_tools_barplot(data: pd.DataFrame, fname: str, metric: str):
 
     set_size(fig, len(df['tool']))
     fig.tight_layout()
-    plt.savefig(fname + ".pdf")
+    plt.savefig(fname)
     plt.close()
+
+
+def plot_curve(data: list,
+               fname: str,
+               class_counts: tuple,
+               is_roc: bool = True,
+               min_score_fraction: float = 0.5):
+    """
+    Plot ROC or pr curves for all tools in data
+
+    :param list data: ROC analysis results for
+    all the tools
+    :param str fname: Output basename
+    :param tuple class_counts: Number of positive and
+    negative variants
+    :param bool is_roc: Whether analysis refers to
+    ROC curve. If `False`, precision-recall curves are
+    drawn. Default: `True`
+    :param float min_score_fraction: Minimum
+    fraction of predictive power of a given
+    tool for the curve to be drawn. Default: `0.5`
+    """
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+    sns.set_style("white")
+    
+    if is_roc:
+        colnames = ['tool', 'fraction_nan', 'label', 'thresholds', 'True Positive Rate (TPR)',
+                    'False Positive Rate (FPR)', 'roc_auc']
+        to_explode = ['thresholds', 'True Positive Rate (TPR)', 'False Positive Rate (FPR)']
+    else:
+        colnames = ['tool', 'fraction_nan', 'label', 'thresholds', 'Recall', 'Precision', 'ap_score']
+        to_explode = ['thresholds', 'Recall', 'Precision']
+
+    df_metrics = pd.DataFrame.from_records(data, columns=colnames)
+    df_metrics = df_metrics.explode(to_explode).reset_index()
+
+    if is_roc:
+        df_metrics['True Positive Rate (TPR)'] = pd.to_numeric(df_metrics['True Positive Rate (TPR)'])
+        df_metrics['False Positive Rate (FPR)'] = pd.to_numeric(df_metrics['False Positive Rate (FPR)'])
+        df_metrics["tool_with_roc_auc"] = df_metrics["label"] + " auROC=" + \
+                                          df_metrics["roc_auc"].round(2).map(str) + ")"
+        hue = "tool_with_roc_auc"
+        x = "False Positive Rate (FPR)"
+        y = "True Positive Rate (TPR)"
+        df_metrics = df_metrics.sort_values('roc_auc', ascending=False)
+    else:
+        df_metrics['Recall'] = pd.to_numeric(df_metrics['Recall'])
+        df_metrics['Precision'] = pd.to_numeric(df_metrics['Precision'])
+        df_metrics["tool_with_ap_score"] = df_metrics["label"] + " AP=" + \
+                                           df_metrics["ap_score"].round(2).map(str) + ")"
+        hue = "tool_with_ap_score"
+        x = "Recall"
+        y = "Precision"
+        df_metrics = df_metrics.sort_values('ap_score', ascending=False)
+
+    df_metrics = df_metrics[df_metrics['fraction_nan'] <= min_score_fraction]
+
+    # Since S-CAP has several different reference
+    # threshold, S-CAP is removed from these analyses
+    df_metrics = df_metrics[~df_metrics.tool.str.contains("S-CAP")]
+
+    # If many tools to plot, change color pallette
+    if df_metrics.tool.unique().size > 12:
+        sns.set(rc={'figure.figsize':(8, 6)})
+        sns.set_palette(sns.mpl_palette("magma", df_metrics.tool.unique().size))
+        fontsize="xx-small"
+    else:
+        sns.set(rc={'figure.figsize':(8, 6)})
+        sns.set_palette(sns.color_palette("Paired"))
+        fontsize="medium"
+        
+    ax = sns.lineplot(x=x, y=y,
+                      data=df_metrics,
+                      hue=hue)
+    ax.set_aspect(1)
+
+    plt.title("N pos = {}; N neg = {}".format(class_counts[0], class_counts[1]))
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., frameon=False, fontsize=fontsize)
+    plt.ylim(0, 1.05)
+    plt.tight_layout()
+    plt.savefig(fname, bbox_inches='tight')
+    plt.close()
+    sns.reset_defaults()
 
 
 ###############################
@@ -449,25 +562,21 @@ def prepare_dataset_for_heatmap(df):
     return df
 
 
-def plot_heatmap(df, location, output_dir,
+def plot_heatmap(df,
+                 fname: str,
                  cluster_rows: bool = False,
-                 skip_preparation: bool = False,
-                 prefix: str = None):
+                 skip_preparation: bool = False):
     """
     Plot a binary heatmap of tools performance
 
     :param pd.DataFrame df: Boolean dataframe with predictions after
         running `apply_thresholds` method
-    :param str location: Location of the filtered dataframe to write
-        the output file
     :param str output_dir: Output directory
     :param bool cluster_rows: Cluster by rows. Default: `False`
     :param bool skip_preparation: Whether input dataset is ready. Default: `False`
-    :param str prefix: Extra string to add as prefix
     """
-
-    _name = "heatmap_" if prefix is None else "{}_heatpmap_".format(prefix)
-    outfile = os.path.join(output_dir, "heatmap_" + location + '.pdf')
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+    
     if len(df.columns) < 2:
         return
 
@@ -514,5 +623,5 @@ def plot_heatmap(df, location, output_dir,
     ax.axvline(x=0, color='k', linewidth=5)
     ax.axvline(x=df.shape[1], color='k', linewidth=5)
 
-    plt.savefig(outfile, bbox_inches='tight', pad_inches=0)
+    plt.savefig(fname, bbox_inches='tight', pad_inches=0)
     plt.close()
