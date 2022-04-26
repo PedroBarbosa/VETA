@@ -37,7 +37,7 @@ MutFormer	MutFormer
 ClinPred	ClinPred
 CardioVAI	CardioVAI
 
-# Functional
+# Whole Genome
 #fitCons	fitcons
 LINSIGHT	linsight_g
 ReMM	ReMM
@@ -45,8 +45,9 @@ GWAVA	GWAVA
 #FATHMM-MKL	fathmmMKL
 Eigen	Eigen
 FunSeq2	funseq2
-CADD	CADD_PHRED
-CADDSplice	CADDSplice_PHRED
+CADD	CADDSplice_PHRED
+#CADD	CADD_PHRED
+#CADDSplice	CADDSplice_PHRED
 DANN	DANN
 CAPICE	CAPICE,CAPICE_ind
 

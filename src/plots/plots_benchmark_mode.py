@@ -154,7 +154,7 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
     if data.empty:
         return 
     os.makedirs(os.path.dirname(fname), exist_ok=True)
-    
+    data = data[data.fraction_nan < 0.95]
     data = data.sort_values(metric)
 
     my_range_coverage = list(range(1, len(data.index) + 1))
@@ -163,11 +163,20 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
 
     n_tools = data.shape[0]
     if n_tools < 20:
-        figsize = (6.25, 4)
+        figsize = (6.3 , 4.4)
+        _bbox = 1.35
+        _left = 0.2 
+        _right = 0.8
     elif 20 <= n_tools <= 30:
-        figsize = (8, 6)
+        figsize = (7.5 , 6.5)
+        _bbox = 1.3
+        _left = 0.3
+        _right = 0.8
     else:
-        figsize = (10, 8)
+        figsize = (8.2, 7)
+        _bbox = 1.35
+        _left = 0.3
+        _right = 0.8
     fig, ax = plt.subplots(figsize=figsize)
 
     _target_col = "specificity" if "accuracy" in metric else "precision"
@@ -210,13 +219,13 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
                           color='gray',
                           fill=False))
         i += 1
-
+    
     ax.grid(axis='x', linestyle='dashed')
+    plt.subplots_adjust(left=_left, right=_right)
     plt.legend(loc="upper right",
-               bbox_to_anchor=(1.4, 1),
+               bbox_to_anchor=(_bbox, 1),
                borderaxespad=0,
                prop=dict(size=8))
-    plt.subplots_adjust(left=0.35)
 
     plt.yticks(my_range_coverage, data['tool'] + " (" + data[metric].astype(str) + ")")
 
@@ -224,7 +233,7 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
         plt.title("#variants: {} ({} pos, {} neg)".format(data["total"].iloc[0],
                                                           data["total_p"].iloc[0],
                                                           data["total_n"].iloc[0]))
-    fig.tight_layout()
+    plt.tight_layout()
     plt.savefig(fname, bbox_inches='tight')
     plt.close()
 
@@ -288,6 +297,7 @@ def plot_tools_barplot_only_correct(data: pd.DataFrame, fname: str):
     """
     os.makedirs(os.path.dirname(fname), exist_ok=True)
     df = data.iloc[::-1]
+    df = df[df.fraction_nan < 0.95]
     set_style()
 
     w = 0.5
@@ -353,7 +363,7 @@ def plot_tools_barplot(data: pd.DataFrame, fname: str, metric: str):
     
     # revert order
     df = data.iloc[::-1]
-
+    df = df[df.fraction_nan < 0.95]
     set_style()
     w = 0.8
 
@@ -483,6 +493,7 @@ def plot_curve(data: list,
         to_explode = ['thresholds', 'Recall', 'Precision']
 
     df_metrics = pd.DataFrame.from_records(data, columns=colnames)
+    df_metrics = df_metrics[df_metrics.thresholds.notna()]
     df_metrics = df_metrics.explode(to_explode).reset_index()
 
     if is_roc:

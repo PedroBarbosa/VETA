@@ -359,7 +359,7 @@ class Base(object):
                 if _f.__name__ in _functions_that_require_loc:
                     df[_tool] = df[[_tool] + ['location']].apply(_f, axis=1)
 
-                if _f.__name__ in _functions_that_require_symbol:
+                elif _f.__name__ in _functions_that_require_symbol:
                     df[_tool] = df[[_tool] + ['SYMBOL']].apply(_f, axis=1)
                     
                 # apply single function to

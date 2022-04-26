@@ -130,9 +130,9 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
             # Compute metrics at each threshold
             for threshold in threshold_range:
                 if direction == ">":
-                    classification_f = lambda x: x == np.nan and np.nan or x > threshold
+                    classification_f = lambda x: x == np.nan and np.nan or x >= threshold
                 else:
-                    classification_f = lambda x: x == np.nan and np.nan or x < threshold
+                    classification_f = lambda x: x == np.nan and np.nan or x <= threshold
 
                 df_per_tool[tool + '_prediction'] = df_per_tool[tool].map(classification_f)
                 statistics = generate_statistics(df_per_tool, statistics, _loc, tool, f_beta=beta_values)

@@ -129,49 +129,68 @@ def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
     :param bool aggregate_classes: Whether VETA run is meant to 
     aggregate classes into higher level concepts.
     """
- 
+
+    bins_with_scores = df.bin.unique().tolist()
     bins_to_exclude = ['1-2', '3-10'] if aggregate_classes else ['1-10']
     bins_to_exclude.extend(["all_intronic", "all_except_1-2", "all_except_1-10"])
     variant_class = df.name
     metrics = {"F1": "F1_Score",
                "weighted_F1": "F1 score (weighted)",
                "fraction_nan": "Fraction unscored"}
-
+    
+    avg = df.groupby('tool').agg({'F1':'mean',
+                             'weighted_F1': 'mean',
+                             'fraction_nan': 'mean'})
+    
+    avg = avg.round(2)
+    avg.columns = ["avg_{}".format(x) for x in avg.columns]
+    df = pd.merge(df, avg, on="tool", how='left')
+   
     n_tools = df.tool.unique().size 
-    # if n_tools > 10:
-    #     sns.set_palette(sns.diverging_palette(250, 30, l=65, center="dark", as_cmap=True), n_colors=n_tools)
-    #     fontsize="small"
-    # else:
-    #     sns.set_palette(sns.color_palette("Paired"), n_colors=n_tools)
-    #     fontsize="medium"
+    if n_tools > 10:
+        a = sns.diverging_palette(250, 30, l=65, n=n_tools, center="dark")
+        fontsize="small"
+    else:
+        a = sns.color_palette("Paired", n_colors=n_tools)
+        fontsize="medium"
 
     for metric, description in metrics.items():
 
-        # Ploting auROCs and auROCpr requires removal of S-CAP
-        # if metric == "auROC":
-        #     df = df[~df["tool"].str.contains("S-CAP")]
+        _df = df.copy()
+        _df[metric] = pd.to_numeric(_df[metric])
+        _df['tool'] = df.tool + " (mean=" + df["avg_{}".format(metric)].astype(str) + ")"
         
-        df[metric] = pd.to_numeric(df[metric])
-        sns.catplot(x="bin",
-                    y=metric,
-                    kind='point',
-                    order=[i[0] for i in filter_intronic_bins if i[0] not in bins_to_exclude],
-                    data=df, linestyles="--", linewidth=0.2, scale=0.5, aspect=1.2,
-                    #fontsize=fontsize,
-                    legend=False,
-                    dodge=True,
-                    hue="tool")
+        if metric != "fraction_nan":
+            _df = _df.sort_values("avg_{}".format(metric), ascending=False)
+        else:
+            _df = _df.sort_values("avg_{}".format(metric))
 
-        plt.legend(loc="upper right",
-                   bbox_to_anchor=(1.2, 1),
-                   borderaxespad=0,
-                   prop=dict(size=8))
+        sns.catplot(x="bin",
+            y=metric,
+            kind='point',
+            order=[i[0] for i in filter_intronic_bins if i[0] not in bins_to_exclude and i[0] in bins_with_scores],
+            data=_df,
+            linestyles="-", 
+            scale=0.75, 
+            aspect=1.5,
+            palette=a,
+            markers='s',
+            fontsize=fontsize,
+            legend=False,
+            dodge=True,
+            hue="tool")
+
+        plt.subplots_adjust(right=0.7)
+        plt.legend(loc="upper center",
+        bbox_to_anchor=(1.15, 1),
+        borderaxespad=0.,
+        prop=dict(size=7))
         plt.yticks(np.arange(0, 1.05, 0.1))
-        plt.subplots_adjust(left=0.35)
 
         plt.xlabel("Intron bin (bp)")
         plt.ylabel(description)
         plt.tight_layout()
         out = fname + '_' + variant_class + "_" + metric + '.pdf'
-        plt.savefig(out)
+        plt.savefig(out, bbox_inches="tight")
         plt.close()
+    

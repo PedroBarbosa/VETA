@@ -42,7 +42,7 @@ class PredictionsEval(Base):
         :param str best_tools: Restrict analysis to the best set
             of tools obtained from a previous VETA run using a
             reference catalog (e.g. Clinvar). It must refer to the
-            file `tools_ranking*.csv` that is written when running
+            file `tools_ranking*.tsv` that is written when running
             the aforementioned analysis. Default: `None`, use all
             tools  available considering the `scope_to_predict`
             argument.
@@ -162,7 +162,7 @@ class PredictionsEval(Base):
 
                 _top_predicted_patho = ratios_df[ratios_df.is_pathogenic > 0.5]
                 if _top_predicted_patho.shape[0] > 0:
-                    _top_predicted_patho.to_csv(os.path.join(outdir, "top_variant_candidates.csv"), sep="\t")
+                    _top_predicted_patho.to_csv(os.path.join(outdir, "top_variant_candidates.tsv"), sep="\t")
 
                 plot_area(ratios_df, outdir)
                 ratios_df["unpredictable"] *= 100
@@ -184,7 +184,8 @@ class PredictionsEval(Base):
                 logging.info("Inspecting tools performance based on the label provided ({})".format(self.labels))
                 _df_just_pred['label'] = False if self.labels in ["Benign", "Neutral"] else True
                 self.generate_performance_with_label(_df_just_pred,
-                                                     outdir=outdir)
+                                                     outdir=outdir,
+                                                     var_type=var_type)
 
             ###############
             ### Heatmap ###
@@ -225,7 +226,8 @@ class PredictionsEval(Base):
 
     def generate_performance_with_label(self,
                                         df_pred: pd.DataFrame,
-                                        outdir: str):
+                                        outdir: str,
+                                        var_type:str):
         """
         Evaluate tools performance considering that the
         intput VCF refers to a list of variants with a
@@ -234,6 +236,7 @@ class PredictionsEval(Base):
         :param pd.DataFrame df_pred: Df with predictions
             for each variant
         :param str outdir: Output directory
+        :param var_type: Variant types analysed 
         :return:
         """
         assert "F1" not in self.metric, "Can't use F1-based metrics in the inspect mode since it is " \
@@ -241,7 +244,7 @@ class PredictionsEval(Base):
                                         "at least "
       
         for _location in self.location_filters:
-            outfile = os.path.join(outdir, "tools_ranking_{}.csv").format(_location)
+            outfile = os.path.join(outdir, "statistics_{}_{}.tsv").format(var_type, _location)
             statistics = defaultdict(list)
             
             df = df_pred[df_pred.location == _location].copy()
@@ -260,6 +263,7 @@ class PredictionsEval(Base):
                     continue
 
                 stats_df = pd.DataFrame(statistics).drop(columns=['filter'])
+
                 stats_df.sort_values([self.metric], ascending=False).to_csv(outfile, sep="\t", index=False)
                 plot_accuracy(stats_df, self.metric, _location, outdir)
 
