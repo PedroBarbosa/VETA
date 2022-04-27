@@ -20,7 +20,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
                                outdir: str,
                                f1_at_ref_thresh: dict,
                                n_of_points: int = 100,
-                               beta_values: list = [1, 2, 3, 5]):
+                               beta_values: list = [0.5, 1, 2, 5]):
     """
     Do threshold analysis using Clinvar as ground
     truth dataset for threshold evaluation.
@@ -39,7 +39,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
     using the reference thresholds
     :param list beta_values: List of values to use as beta
         in the F_beta score calculation (precision/recall
-        tradeoff). Default: `[1, 2, 3, 5]
+        tradeoff). Default: `[0.5, 1, 2, 5]
     :param n_of_points: Default: `100`
 
     :return dict: New thresholds for all the tools at all locations

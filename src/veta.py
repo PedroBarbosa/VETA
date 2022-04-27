@@ -46,7 +46,8 @@ def main():
                                help='Metric to rank the tools. Available options: '
                                '{%(choices)s}. Default: "weighted_accuracy."',
                                choices=('weighted_accuracy', 'accuracy',
-                                        'F1', 'weighted_F1', 'coverage'),
+                                        'F1', 'weighted_F1', 'coverage', 
+                                        'mcc', 'norm_mcc', 'weighted_norm_mcc'),
                                default='weighted_accuracy')
 
     parent_parser.add_argument('-l', '--location', metavar='', default="HGVSc", choices=("HGVSc", "Consequence"),

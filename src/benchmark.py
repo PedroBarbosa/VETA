@@ -299,7 +299,7 @@ class BenchmarkTools(Base):
                 ranked_stats = stats_all_df[["tool", "weighted_accuracy", "accuracy",
                                             "weighted_F1", "F1", "coverage",
                                             "specificity", "sensitivity",
-                                            "precision"]].sort_values([self.metric], ascending=False)
+                                            "precision", "mcc", "norm_mcc", "weighted_norm_mcc"]].sort_values([self.metric], ascending=False)
 
                 top_tools[_location] = ranked_stats.head(7) if ranked_stats.shape[0] > 10 else ranked_stats
                 f1_at_ref_threshold[_location] = dict(zip(ranked_stats.tool, ranked_stats.F1))
