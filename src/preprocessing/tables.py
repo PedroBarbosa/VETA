@@ -40,8 +40,7 @@ def generate_clinvar_table(datasets: dict, filters_var_type: List, out_dir: str,
 
     out_dir = os.path.join(out_dir, "variant_counts")
     os.makedirs(out_dir, exist_ok=True)
-    
-    datasets[clinvar_stars].id.to_csv(os.path.join(out_dir, 'clinvar_ids_used.txt'), 
+    datasets[clinvar_stars][['id', 'outcome']].to_csv(os.path.join(out_dir, 'clinvar_ids_used.tsv'), 
                                       header=False,
                                       index=False)
     

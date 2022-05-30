@@ -20,7 +20,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
                                outdir: str,
                                f1_at_ref_thresh: dict,
                                n_of_points: int = 100,
-                               beta_values: list = [0.5, 1, 2, 5]):
+                               beta_values: list = [0.5, 1, 1.5, 2]):
     """
     Do threshold analysis using Clinvar as ground
     truth dataset for threshold evaluation.
@@ -39,7 +39,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
     using the reference thresholds
     :param list beta_values: List of values to use as beta
         in the F_beta score calculation (precision/recall
-        tradeoff). Default: `[0.5, 1, 2, 5]
+        tradeoff). Default: `[0.5, 1, 1.5, 2]
     :param n_of_points: Default: `100`
 
     :return dict: New thresholds for all the tools at all locations
@@ -117,7 +117,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
 
             max_thr = df_per_tool[tool].max()
             min_thr = df_per_tool[tool].min()
- 
+
             if pd.isnull(max_thr) or pd.isnull(min_thr) or max_thr == min_thr:
                 logging.info("Something strange in max/min thresholds {} {} "
                                 "{}".format(tool, max_thr, min_thr))
@@ -149,7 +149,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
                 _res_at_each_t = statistics['Fbeta_' + str(_beta)]
                 f_betas[_beta] = _res_at_each_t
                 new_t[_beta] = threshold_range[_res_at_each_t.index(max(_res_at_each_t))]
-                final_thresholds[tool].append((round(float(new_t[_beta]), 2), max(_res_at_each_t)))
+                final_thresholds[tool].append((round(float(new_t[_beta]), 3), max(_res_at_each_t)))
 
             for v in [False, True]:
                 plot_optimal_thresholds(tool,

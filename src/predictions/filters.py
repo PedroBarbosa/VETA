@@ -20,7 +20,7 @@ def update_thresholds(config_dict: defaultdict):
     """
     _default_list = [
         ('GERP', '>', 4.4, 'Conservation'),
-        ('phyloP', '>', 9.741, 'Conservation'),
+        ('phyloP', '>', 7.367, 'Conservation'),
         ('SiPhy', '>', 12.17, 'Conservation'),
         ('phastCons', '>', 0.99, 'Conservation'),
         ('CDTS', '<', 10, 'Conservation'),
@@ -28,33 +28,33 @@ def update_thresholds(config_dict: defaultdict):
         ('LINSIGHT', '>', 0.4, 'Whole_genome'),
 
         ('Sift', '<', 0.001, 'Protein'),
-        ('Polyphen2HVAR', '>', 0.99, 'Protein'),
-        ('Polyphen2HDIV', '>', 0.99, 'Protein'),
+        ('Polyphen2HVAR', '>', 0.978, 'Protein'),
+        ('Polyphen2HDIV', '>', 0.978, 'Protein'),
         ('MutationAssessor', '>', 1.935, 'Protein'),
-        ('MutationTaster', '>', 0.5, 'Protein'),
-        ('FATHMM', '<', -5.04, 'Protein'),
+        ('MutationTaster2', '>', 0.5, 'Protein'),
+        ('FATHMM', '<', -4.14, 'Protein'),
         ('Provean', '<', -2.5, 'Protein'),
         ('LRT', '<', 0.01, 'Protein'),
         ('Mutpred', '>', 0.5, 'Protein'),
-        ('VEST4', '>', 0.861, 'Protein'),
+        ('VEST4', '>', 0.764, 'Protein'),
         ('CAROL', '>', 0.98, 'Protein'),
         ('Condel', '>', 0.468, 'Protein'),
-        ('REVEL', '>', 0.773, 'Protein'),
+        ('REVEL', '>', 0.644, 'Protein'),
         ('MetaLR', '>', 0.5, 'Protein'),
         ('MetaSVM', '>', 0.5, 'Protein'),
         ('M-CAP', '>', 0.025, 'Protein'),
         ('MVP', '>', 0.7, 'Protein'),
-        ('MTR', '<', 0.5, 'Protein'),
-        ('MPC', '>', 1.828, 'Protein'),
+        ('MTR', '<', 0.5, 'Protein'), # Did not find in the paper, assumed 0.5
+        ('MPC', '>', 1.36, 'Protein'),
         ('MISTIC', '>', 0.5, 'Protein'),
         ('CardioBoost', '>', 0.9, 'Protein'),
         ('CardioVAI', '>', 2, 'Protein'),
-        ('PrimateAI', '>', 0.867, 'Protein'),
-        ('VARITY', '>', 0.75, 'Protein'),
+        ('PrimateAI', '>', 0.790, 'Protein'),
+        ('VARITY', '>', 0.75, 'Protein'), # VARITY_R model
         ('MISTIC', '>', 0.5, 'Protein'),
         ('ClinPred', '>', 0.5, 'Protein'),
-        ('MutScore', '>', 0.5, 'Protein'), # Did not confirm with paper
-        ('MutFormer', '>', 0.75, 'Protein'), # Did not confirm with paper
+        ('MutScore', '>', 0.5, 'Protein'), # Did not find in the paper, assumed 0.5
+        ('MutFormer', '>', 0.5, 'Protein'), # Did not find in the paper, assumed 0.5
         ('cVEP', '>', 0.5, 'Protein'), # 0.5 as artificial threshold
         ('EVE_class20', '>', 0.5, 'Protein'), # 0.5 as artificial threshold
         ('EVE_class50', '>', 0.5, 'Protein'), # 0.5 as artificial threshold
@@ -62,8 +62,8 @@ def update_thresholds(config_dict: defaultdict):
         ('EVE', '>', 0.5, 'Protein'),
 
         ('CAPICE', '>', 0.02, 'Whole_genome'),
-        ('CADD', '>', 28.1, 'Whole_genome'),
-        ('CADDSplice', '>', 28.1, 'Whole_genome'),
+        ('CADD', '>', 25.3, 'Whole_genome'),
+        ('CADDSplice', '>', 25.3, 'Whole_genome'),
         ('DANN', '>', 0.9, 'Whole_genome'),
         ('GWAVA', '>', 0.5, 'Whole_genome'),
         ('FATHMM-MKL', '>', 0.5, 'Whole_genome'),
@@ -122,10 +122,7 @@ def update_thresholds(config_dict: defaultdict):
                          "{} tool already exists by default "
                          "in VETA. These thresholds will be "
                          "updated to the one provided by the user:"
-                         "\'{}\'. Take caution with such setup "
-                         "because the default thresholds in VETA "
-                         "should be fine as they were carefully "
-                         "extracted from literature".format(_tool, info))
+                         "\'{}\'.".format(_tool, info))
 
             updated_info = tuple([_tool] + info[1:])
             _updated_list.append(updated_info)

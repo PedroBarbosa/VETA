@@ -160,26 +160,39 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
     my_range_coverage = list(range(1, len(data.index) + 1))
     my_range_specificity = np.arange(1 - 0.2, len(data.index)).tolist()
     my_range_sensitivity = np.arange(1 + 0.2, len(data.index) + 0.5).tolist()
-
+    
     n_tools = data.shape[0]
-    if n_tools < 20:
+    if n_tools <= 10:
+        figsize = (6 , 3.4)
+        _bbox = 1.6
+        _left = 0.25
+        _right = 0.75
+        m_title_l = 0.03
+        
+    elif n_tools < 20:
         figsize = (6.3 , 4.4)
-        _bbox = 1.35
+        _bbox = 1.4
         _left = 0.2 
         _right = 0.8
+        m_title_l = 0.03
     elif 20 <= n_tools <= 30:
         figsize = (7.5 , 6.5)
         _bbox = 1.3
         _left = 0.3
         _right = 0.8
+        m_title_l = 0.04
     else:
         figsize = (8.2, 7)
         _bbox = 1.35
         _left = 0.3
         _right = 0.8
+        m_title_l = 0.05
     fig, ax = plt.subplots(figsize=figsize)
+    
+    if n_tools > 10:
+        plt.text(m_title_l, 0.9, "Tool({})".format(metric), fontsize=10, transform=plt.gcf().transFigure)
 
-    _target_col = "specificity" if "accuracy" in metric else "precision"
+    _target_col = "precision" if metric in ['F1', 'weighted_F1'] else "specificity"
     plt.scatter(data[_target_col], my_range_specificity,
                 color='skyblue',
                 alpha=1,
@@ -227,12 +240,16 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
                borderaxespad=0,
                prop=dict(size=8))
 
-    plt.yticks(my_range_coverage, data['tool'] + " (" + data[metric].astype(str) + ")")
+    if n_tools <= 10:
+        plt.yticks(my_range_coverage, data['tool'] + " (" + data[metric].astype(str) + ")", fontsize=10)
+    else:
+        plt.yticks(my_range_coverage, data['tool'] + " (" + data[metric].astype(str) + ")")
 
     if all(col in data.columns for col in ['total', 'total_p', 'total_n']):
         plt.title("#variants: {} ({} pos, {} neg)".format(data["total"].iloc[0],
                                                           data["total_p"].iloc[0],
                                                           data["total_n"].iloc[0]))
+    
     plt.tight_layout()
     plt.savefig(fname, bbox_inches='tight')
     plt.close()

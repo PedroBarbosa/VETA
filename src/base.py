@@ -282,7 +282,7 @@ class Base(object):
             "M-CAP": available_functions['to_numeric'],
             "MetaLR": available_functions['to_numeric'],
             "MetaSVM": available_functions['to_numeric'],
-            "REVEL": available_functions['to_numeric'],
+            "REVEL": available_functions['top_max'],
             "VEST4": available_functions['to_numeric'],
             "CardioBoost": available_functions['to_numeric'],
             "CardioVAI": available_functions['to_numeric'],
@@ -294,7 +294,7 @@ class Base(object):
             "MTR": available_functions['to_numeric'],
             "MPC": available_functions['to_numeric'],
             "MISTIC": available_functions['top_max'],
-            "ClinPred": available_functions['to_numeric'],
+            "ClinPred": available_functions['top_max'],
             "cVEP": available_functions['categorical_to_numeric'],
             "EVE_Class20": available_functions['categorical_to_numeric'],
             "EVE_Class50": available_functions['categorical_to_numeric'],
@@ -343,10 +343,9 @@ class Base(object):
 
         # For each tool belonging to the given scope
         for _tool, info in self.tools_config.items():
-
+            
             # if it is known tool
             if _tool in clean_functions.keys():
-
                 # get function to apply
                 _f = clean_functions[_tool][0]
                 # is_max
@@ -393,7 +392,7 @@ class Base(object):
         """
         AVAILABLE_TOOLS_NAMES = ["GERP", "phyloP", "phastCons", "SiPhy",
                                  "CDTS", "LRT", "Sift", "Polyphen2HVAR",
-                                 "Polyphen2HDIV", "MutationTaster",
+                                 "Polyphen2HDIV", "MutationTaster2",
                                  "MutationAssessor", "FATHMM", "Provean",
                                  "Mutpred", "CAROL", "Condel", "M-CAP",
                                  "MetaSVM", "MetaLR", "REVEL", "VEST4",
@@ -413,6 +412,9 @@ class Base(object):
                                'trap', 'scap', 'conspliceml', 'spliceai']
 
         data = defaultdict(list)
+        if isinstance(config, str):
+            _c = open(config, 'r')
+            config = _c
 
         for line in config:
             line = line.rstrip()
@@ -420,6 +422,7 @@ class Base(object):
                 continue
 
             _fields = line.split("\t")
+
             assert len(_fields) >= 2, "First 2 fields are required in the tools config file. " \
                                       "Problematic line: {}.\nMake sure fields are tab separated.".format(line)
 
