@@ -154,7 +154,10 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
     if data.empty:
         return 
     os.makedirs(os.path.dirname(fname), exist_ok=True)
-    data = data[data.fraction_nan < 0.95]
+    try:
+        data = data[data.fraction_nan < 0.95]
+    except AttributeError:
+        pass
     data = data.sort_values(metric)
 
     my_range_coverage = list(range(1, len(data.index) + 1))

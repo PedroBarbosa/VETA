@@ -199,6 +199,10 @@ class BenchmarkTools(Base):
                         logging.info("Less than 10 variants located in '{}' of type '{}'. " \
                                     "Skipping heatmap generation.".format(_location, var_type))
 
+
+                out_preds = os.path.join(outdir, "results_tsv", "preds_{}_{}.tsv").format(var_type, _location)
+                out_c = ['chr', 'pos', 'ref', 'alt', 'SYMBOL'] + [x for x in list(df) if '_prediction' in x] + ['label']
+                df[out_c].to_csv(out_preds, index=False, sep="\t")
                 roc_metrics_per_tool, pr_metrics_per_tool = [], []
 
                 for tool, direction, _, _ in self.thresholds:
@@ -393,8 +397,8 @@ class BenchmarkTools(Base):
             df_f = self.df[self.df.location == _loc].copy()
 
             if df_f.shape[0] < 100:
-                logging.info("Less than 100 variants in '{}' dataframe. "
-                             "Machine learning analysis will be skipped.".format(_loc))
+                logging.info("Less than 100 variants in '{}' dataframe (N={}). "
+                             "Machine learning analysis will be skipped.".format(_loc, df_f.shape[0]))
                 continue
             
             n_pos_pred = df_f[df_f.label].shape[0]

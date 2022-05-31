@@ -8,6 +8,7 @@
 **/__pycache__
 *.stackdump
 *.idea
+*.vscode
 *.pyc
 results/
 test_data/

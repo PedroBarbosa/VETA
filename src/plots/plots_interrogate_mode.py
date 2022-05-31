@@ -22,12 +22,13 @@ def plot_area(df: pd.DataFrame, outdir: str):
 
     fig, ax = plt.subplots(figsize=(12, 12))
 
-    map_colors = {"unpredictable": "grey",
+    map_colors = {"Unpredictable": "grey",
                   np.nan: "grey",
-                  "is_benign": "darkblue",
-                  "is_pathogenic": "darkred"}
+                  "Is benign": "darkblue",
+                  "Is pathogenic": "darkred"}
 
-    ax = df.plot.area(color=[map_colors.get(x) for x in df.columns], alpha=0.65)
+    ax = df.plot.area(color=[map_colors.get(x)
+                      for x in df.columns], alpha=0.65)
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
     ax.set_ylabel('Fraction of tools')
     ax.set_xlabel('Variants (N={})'.format(df.shape[0]))
@@ -37,7 +38,10 @@ def plot_area(df: pd.DataFrame, outdir: str):
     plt.close()
 
 
-def plot_heatmap(df: pd.DataFrame, outdir: str, display_annot: bool = False):
+def plot_heatmap(df: pd.DataFrame,
+                 outdir: str,
+                 display_annot: bool = False,
+                 benign_too: pd.DataFrame = None):
     """
 
     Draw heatmaps that color the ratio of tools
@@ -54,35 +58,75 @@ def plot_heatmap(df: pd.DataFrame, outdir: str, display_annot: bool = False):
         annotations in the heatmap (variant ID).
         Default: `False`. Useful when few
         variants are being plotted.
+    :param pd.DataFrame benign_too: Display 
+    also variants for which most tools predict 
+    to be benign. Default: None, display
+    unpredictable variants
     :return:
     """
+
+    plot_benign = False
     fig, ax = plt.subplots(1, 2, figsize=(5, 7))
     if display_annot:
-        if df.shape[0] > 0:
-            df = df.sort_values(['is_pathogenic']).head(50)
-            outfile = os.path.join(outdir, 'predictability_trade_off_top_candidates.pdf')
 
+        if isinstance(benign_too, pd.DataFrame):
+            if benign_too.shape[0] > 0 and df.shape[0] > 0:
+                df = df.sort_values(['Is pathogenic']).head(50)
+                benign_too = benign_too.sort_values(['Is benign']).head(50)
+                outfile = os.path.join(
+                    outdir, 'predictability_trade_off_top_patho_and_benign.pdf')
+                plot_benign = True
+            else:
+                plt.close()
+                return
+
+        elif df.shape[0] > 0:
+            df = df.sort_values(['Is pathogenic']).head(50)
+            outfile = os.path.join(
+                outdir, 'predictability_trade_off_top_candidates.pdf')
         else:
             plt.close()
             return
-
     else:
         outfile = os.path.join(outdir, 'predictability_trade_off.pdf')
 
-    sns.heatmap(df[["is_pathogenic"]], ax=ax[0], cbar_kws={'label': 'Fraction of tools'},
-                vmax=1,
-                vmin=0,
-                cmap="OrRd",
-                yticklabels=display_annot)
+    if plot_benign:
+        sns.heatmap(df[["Is pathogenic"]][::-1], ax=ax[0],
+                    cbar=False,
+                    vmax=1,
+                    vmin=0,
+                    cmap="OrRd",
+                    yticklabels=display_annot)
 
-    sns.heatmap(df[["unpredictable"]], ax=ax[1], cbar_kws={'label': 'Percentage (%)'},
-                vmax=100,
-                vmin=0,
-                cmap="OrRd",
-                yticklabels=False)
+        sns.heatmap(benign_too[["Is benign"]][::-1], ax=ax[1],
+                    cbar_kws={'label': 'Fraction of tools'},
+                    vmax=1,
+                    vmin=0,
+                    cmap="OrRd",
+                    annot_kws={'size': 1},
+                    yticklabels=display_annot)
 
-    ax[0].set_ylabel('All variants ({})'.format(df.shape[0]))
-    ax[1].set_ylabel('')
+        ax[0].set_yticklabels(ax[0].get_ymajorticklabels(), fontsize=10)
+        ax[1].set_yticklabels(ax[1].get_ymajorticklabels(), fontsize=10)
+
+        ax[0].set_ylabel('')
+        ax[1].set_ylabel('')
+
+    else:
+        sns.heatmap(df[["Is pathogenic"]][::-1], ax=ax[0], cbar_kws={'label': 'Fraction of tools'},
+                    vmax=1,
+                    vmin=0,
+                    cmap="OrRd",
+                    yticklabels=display_annot)
+
+        sns.heatmap(df[["Unpredictable"]], ax=ax[1], cbar_kws={'label': 'Percentage (%)'},
+                    vmax=100,
+                    vmin=0,
+                    cmap="OrRd",
+                    yticklabels=False)
+        ax[0].set_ylabel('All variants ({})'.format(df.shape[0]))
+        ax[1].set_ylabel('')
+
     plt.tight_layout()
 
     plt.savefig(outfile)
@@ -108,11 +152,12 @@ def plot_heatmap_toptools(df: pd.DataFrame, filters, outdir):
     for filter_name in filters:
 
         df_f = df[df.location == filter_name].copy()
-        df_f = df_f.drop(columns=['variant_id', 'HGVSc', 'location'])
+        df_f = df_f.drop(columns=['variant_id', 'HGVSc', 'location', "SYMBOL"])
         if df_f.shape[0] < 5:
             continue
-        
-        fname = os.path.join(outdir, "top_tools_heatmap_{}.pdf".format(filter_name))
+
+        fname = os.path.join(
+            outdir, "top_tools_heatmap_{}.pdf".format(filter_name))
         plot_heatmap(df_f, fname,
                      cluster_rows=True,
                      skip_preparation=True)
@@ -138,18 +183,19 @@ def plot_accuracy(stats_df: pd.DataFrame,
         figsize = (5, 5)
     else:
         figsize = (7, 7)
-        
+
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     ax.barh(range(stats_df.shape[0]), stats_df[metric],
-             color='darkgrey',
-             edgecolor='k',
-             linewidth=1)
+            color='darkgrey',
+            edgecolor='k',
+            linewidth=1)
     plt.axvline(0.9, color='b', linestyle='--')
     xlabel = (metric[:1].upper() + metric[1:]).replace("_", " ")
     _title = (location[:1].upper() + location[1:]).replace("_", " ")
     plt.xlabel(xlabel)
-    plt.title("{} variants (N={})".format(_title, str(stats_df.iloc[0,:].total)))
+    plt.title("{} variants (N={})".format(
+        _title, str(stats_df.iloc[0, :].total)))
     plt.xlim(left=0)
     plt.yticks(range(stats_df.shape[0]), stats_df['tool'])
     plt.ylim(-1, stats_df.shape[0])
@@ -177,13 +223,15 @@ def plot_tool_score_distribution(_df: pd.DataFrame,
     df[tool].dropna(inplace=True)
     p = sns.histplot(df[tool], bins=30, color='slateblue', edgecolor='black')
     p.tick_params(labelsize=13)
-    plt.xlabel('{} ({} % missing data)'.format(tool, round(nas / _df.shape[0] * 100, 2)), fontsize=13)
+    plt.xlabel('{} ({} % missing data)'.format(
+        tool, round(nas / _df.shape[0] * 100, 2)), fontsize=13)
     p.yaxis.get_label().set_fontsize(13)
     plt.axvline([x[2] for x in thresholds if x[0] == tool],
                 color='r',
                 linestyle="--")
 
-    legend_element = [Line2D([0], [0], color='r', lw=4, label='Reference threshold')]
+    legend_element = [Line2D([0], [0], color='r', lw=4,
+                             label='Reference threshold')]
     plt.legend(handles=legend_element, loc='best')
     plt.savefig(os.path.join(outdir, "score_dist_{}.pdf".format(tool)))
     plt.close()
