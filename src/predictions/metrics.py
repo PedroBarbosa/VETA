@@ -1,24 +1,17 @@
-from cmath import sqrt
-from doctest import ELLIPSIS_MARKER
 import logging
 import sys
 from typing import Union, List
-
 import numpy as np
 import pandas as pd
-
-from preprocessing.utils_tools import ratio
-
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 from collections import defaultdict
-from preprocessing import utils_tools
+from preprocessing.utils_tools import ratio
 from sklearn.metrics import auc, average_precision_score, roc_auc_score, roc_curve, precision_recall_curve, matthews_corrcoef
 
 
 def generate_statistics(df: pd.DataFrame,
                         statistics: defaultdict,
                         filter_location: str,
-                        tool: str,
+                        tool: str,  
                         is_single_label: bool = False,
                         f_beta: Union[List, int] = None):
     """
@@ -55,10 +48,10 @@ def generate_statistics(df: pd.DataFrame,
         nan = np.sum(df[tool + '_prediction'].isnull())
         correct = tp + tn
 
-        precision = utils_tools.ratio(tp, tp + fp)
-        recall = utils_tools.ratio(tp, tp + fn)
-        coverage = utils_tools.ratio(tp + tn + fp + fn, total)
-        accuracy = utils_tools.ratio(correct, (total - nan))
+        precision = ratio(tp, tp + fp)
+        recall = ratio(tp, tp + fn)
+        coverage = ratio(tp + tn + fp + fn, total)
+        accuracy = ratio(correct, (total - nan))
         
         #mcc = ((tp * tn) - (fp * fn)) / (sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)))
         mcc = round(matthews_corrcoef(s_df.label.astype(int), s_df[tool + '_prediction'].astype(int)), 2)
@@ -66,7 +59,7 @@ def generate_statistics(df: pd.DataFrame,
         weighted_norm_mcc = round(normalized_mcc * coverage, 2)
         
         statistics['precision'].append(precision)
-        statistics['specificity'].append(utils_tools.ratio(tn, tn + fp))
+        statistics['specificity'].append(ratio(tn, tn + fp))
         statistics['sensitivity'].append(recall)
         statistics['mcc'].append(mcc)
         statistics['norm_mcc'].append(normalized_mcc)

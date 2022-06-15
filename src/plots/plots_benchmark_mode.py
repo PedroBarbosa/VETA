@@ -124,16 +124,24 @@ def plot_unscored(data: pd.DataFrame, fname: str):
         for each tool
     :param str fname: Output file
     """
-    os.makedirs(os.path.dirname(fname), exist_ok=True)
-    
-    fig = plt.figure(figsize=(8, 7))
-    ax = sns.barplot(x="fraction_nan",
-                     y="tool",
-                     color="skyblue",
-                     linewidth=1.5,
-                     edgecolor="k",
-                     data=data.sort_values('fraction_nan', ascending=False))
+    _data = data[['tool', 'mp', 'mn', 'fraction_nan', 'total']].copy()
 
+    _data.loc[:, 'Pathogenic'] = round(data.mp / data.total, 2)
+    _data.loc[:, 'Benign'] = round(data.mn / data.total, 2)
+    _data = _data[['tool', 'Pathogenic', 'Benign', 'fraction_nan']].set_index('tool')
+
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+
+    plt.figure()
+    plt.rcParams.update({'font.size': 10}) 
+    ax = _data.sort_values('fraction_nan').drop('fraction_nan', axis=1).plot.barh(stacked=True, 
+                                                                                  width=1,
+                                                                                  color={'Pathogenic': 'darkred', 'Benign': 'skyblue'},
+                                                                                  edgecolor='k',
+                                                                                  alpha=0.7,
+                                                                                  fontsize=8,
+                                                                                  figsize=(4.25, 4.5))
+    ax.legend(fontsize=6)
     ax.set(xlabel='Fraction of unscored variants', ylabel='')
     plt.xlim(0, 1)
     plt.tight_layout()

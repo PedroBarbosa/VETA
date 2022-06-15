@@ -124,12 +124,13 @@ def main():
                                   'selects variants belonging to the provided MONDO ids.')
         
     benchmark_parser.add_argument('--do_threshold_analysis', action="store_true",
-                                  help="Enable reference thresholds analysis when Clinvar is used. "
-                                       "It does not depend on the \'--clinvar_stars\' argument, which "
-                                       "means that \'3s_l\' variants will be used as the ground truth "
-                                       "to ensure that only good quality variants are used. "
+                                  help="Enable reference thresholds analysis for the input dataset."
                                        "Default: False")
 
+    benchmark_parser.add_argument('--bootstrapping', action="store_true",
+                                  help="Enable bootstrapping analysis when '--do_threshold_analysis' is set."
+                                       "Default: False")
+    
     benchmark_parser.add_argument('--do_machine_learning', action="store_true",
                                   help="Enable machine learning analysis based on the "
                                        "tools scores to inspect the best predictors and "
@@ -217,6 +218,7 @@ def main():
                        args.clinvar_stars,
                        phenotype_ids,
                        args.do_threshold_analysis,
+                       args.bootstrapping,
                        args.do_machine_learning,
                        args.allele_frequency,
                        args.skip_heatmap,

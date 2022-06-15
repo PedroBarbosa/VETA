@@ -36,6 +36,7 @@ class BenchmarkTools(Base):
                  clinvar_stars: str = "3s_l",
                  phenotype_ids: list = None,
                  do_threshold_analysis: bool = False,
+                 do_bootstrapping: bool = False,
                  do_machine_learning: bool = False,
                  allele_frequency_col: str = "gnomADg_AF",
                  skip_heatmap: bool = False,
@@ -64,6 +65,7 @@ class BenchmarkTools(Base):
 
         self.clinvar_stars = clinvar_stars
         self.do_threshold_analysis = do_threshold_analysis
+        self.do_bootstrapping = do_bootstrapping
         self.do_machine_learning = do_machine_learning
 
         # Remove tools where all values are missing
@@ -105,7 +107,7 @@ class BenchmarkTools(Base):
 
         generate_consequence_table(self.df, self.out_dir)
         self.top_tools, f1_at_ref_threshold = self.do_performance_comparison()
-
+        
         if self.do_intronic_analysis:
             thresholds = [tool for tool in self.thresholds if tool[3] != 'Protein']
 
@@ -123,7 +125,8 @@ class BenchmarkTools(Base):
                                                         self.thresholds,
                                                         self.tools_config,
                                                         self.out_dir,
-                                                        f1_at_ref_threshold)
+                                                        f1_at_ref_threshold,
+                                                        do_bootstrapping=self.do_bootstrapping)
 
         if self.do_machine_learning:
             self.do_ml_analysis()
@@ -199,7 +202,7 @@ class BenchmarkTools(Base):
                         logging.info("Less than 10 variants located in '{}' of type '{}'. " \
                                     "Skipping heatmap generation.".format(_location, var_type))
 
-
+                ensure_folder_exists(os.path.join(outdir, "results_tsv"))
                 out_preds = os.path.join(outdir, "results_tsv", "preds_{}_{}.tsv").format(var_type, _location)
                 out_c = ['chr', 'pos', 'ref', 'alt', 'SYMBOL'] + [x for x in list(df) if '_prediction' in x] + ['label']
                 df[out_c].to_csv(out_preds, index=False, sep="\t")
@@ -270,7 +273,6 @@ class BenchmarkTools(Base):
                     stats_all_df = stats_all_df.merge(roc_m, on='tool', how='left').merge(pr_m, on='tool', how='left')
 
                 # draw plots
-                ensure_folder_exists(os.path.join(outdir, "results_tsv"))
                 out_stats = os.path.join(outdir, "results_tsv", "statistics_{}_{}.tsv").format(var_type, _location)
                 out_ranks = os.path.join(outdir, "results_tsv", "tools_ranking_{}_{}.tsv").format(var_type, _location)
                 af_plot = os.path.join(outdir, "allele_frequency", "AF_{}.pdf".format(var_type, _location))
