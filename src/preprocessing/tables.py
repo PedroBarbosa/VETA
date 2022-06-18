@@ -18,7 +18,13 @@ def generate_consequence_table(df: pd.DataFrame, out_dir:str):
     
     _counts = df[['location', 'outcome']].value_counts().reset_index().rename(columns={0: 'counts'})
     counts = _counts.pivot(index='location', columns='outcome', values='counts').fillna(0)
-    counts = counts[['Pathogenic', 'Benign']].astype(int).sort_values('Pathogenic', ascending=False)
+    if all(x in counts.columns for x in ['Pathogenic', 'Benign']):
+        counts = counts[['Pathogenic', 'Benign']].astype(int).sort_values('Pathogenic', ascending=False)
+    elif 'Benign' in counts.columns:
+        counts['Pathogenic'] = 0
+    else:
+        counts['Benign'] = 0
+
     counts.to_csv(os.path.join(out_dir, "counts_per_consequence_type.tsv"), sep="\t")
     
     

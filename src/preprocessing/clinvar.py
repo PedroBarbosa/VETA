@@ -58,9 +58,10 @@ def filter_by_condition(df: pd.DataFrame, ids:list):
         """
         Returns Clinvar IDs that match the given condition ID
         """
-        re = "[0-9]+" if db_field != "MedGen:" else "[0-9A-Za-z]+"
-
+        re = "[0-9]+" if db_field == "MONDO:" else "[0-9A-Za-z]+"
+       
         _ids = df["CLNDISDB"].str.extractall("({}{})".format(db_field, re)).iloc[:, 0].apply(lambda x: x.replace('{}'.format(db_field), '').rstrip())
+
         match_idx = _ids[_ids.isin(db_ids)].index.get_level_values(0)
         _df = df.loc[match_idx, :]
 
@@ -68,19 +69,19 @@ def filter_by_condition(df: pd.DataFrame, ids:list):
 
     ids_map = {0: 'OMIM:', 1: 'MedGen:', 2: 'MONDO:'}
     out_ids = []
+
     for i, db_ids in enumerate(ids):
         if db_ids is None:
             continue
         
         db_field = ids_map[i]
-
         out_ids.extend(_get_matched_ids(df, db_field, db_ids))
  
     df = df[df.id.isin(out_ids)]
     if df.shape[0] < 1:
         raise ValueError('No variants left after filtering by {} condition ID(s).'.format(ids))
     else:
-        logging.info('Number of variants after filtering by condition ID(s): {}'.format(df.shape[0]))
+        logging.info('Number of variants after filtering by condition ID(s) ({}): {}'.format([x for x in ids if x is not None], df.shape[0]))
         
     return df 
 

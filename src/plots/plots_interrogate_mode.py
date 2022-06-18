@@ -96,6 +96,8 @@ def plot_heatmap(df: pd.DataFrame,
                     vmax=1,
                     vmin=0,
                     cmap="OrRd",
+                    linewidths=.5,
+                    linecolor='k',
                     yticklabels=display_annot)
 
         sns.heatmap(benign_too[["Is benign"]][::-1], ax=ax[1],
@@ -103,6 +105,8 @@ def plot_heatmap(df: pd.DataFrame,
                     vmax=1,
                     vmin=0,
                     cmap="OrRd",
+                    linewidths=.5,
+                    linecolor='k',
                     annot_kws={'size': 1},
                     yticklabels=display_annot)
 
@@ -117,12 +121,16 @@ def plot_heatmap(df: pd.DataFrame,
                     vmax=1,
                     vmin=0,
                     cmap="OrRd",
+                    linewidths=.5,
+                    linecolor='k',
                     yticklabels=display_annot)
 
         sns.heatmap(df[["Unpredictable"]], ax=ax[1], cbar_kws={'label': 'Percentage (%)'},
                     vmax=100,
                     vmin=0,
                     cmap="OrRd",
+                    linewidths=.5,
+                    linecolor='k',
                     yticklabels=False)
         ax[0].set_ylabel('All variants ({})'.format(df.shape[0]))
         ax[1].set_ylabel('')
