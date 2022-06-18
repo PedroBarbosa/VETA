@@ -129,8 +129,9 @@ def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
     :param bool aggregate_classes: Whether VETA run is meant to 
     aggregate classes into higher level concepts.
     """
-
+    
     bins_with_scores = df.bin.unique().tolist()
+
     bins_to_exclude = ['1-2', '3-10'] if aggregate_classes else ['1-10']
     bins_to_exclude.extend(["all_intronic", "all_except_1-2", "all_except_1-10"])
     variant_class = df.name
@@ -153,6 +154,14 @@ def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
     else:
         a = sns.color_palette("Paired", n_colors=n_tools)
         fontsize="medium"
+
+    n_tools = df.tool.unique().size 
+    # if n_tools > 10:
+    #     sns.set_palette(sns.diverging_palette(250, 30, l=65, center="dark", as_cmap=True), n_colors=n_tools)
+    #     fontsize="small"
+    # else:
+    #     sns.set_palette(sns.color_palette("Paired"), n_colors=n_tools)
+    #     fontsize="medium"
 
     for metric, description in metrics.items():
 
@@ -185,12 +194,14 @@ def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
         bbox_to_anchor=(1.15, 1),
         borderaxespad=0.,
         prop=dict(size=7))
+
         plt.yticks(np.arange(0, 1.05, 0.1))
 
         plt.xlabel("Intron bin (bp)")
         plt.ylabel(description)
         plt.tight_layout()
         out = fname + '_' + variant_class + "_" + metric + '.pdf'
+
         plt.savefig(out, bbox_inches="tight")
         plt.close()
     

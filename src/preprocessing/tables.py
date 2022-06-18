@@ -18,6 +18,7 @@ def generate_consequence_table(df: pd.DataFrame, out_dir:str):
     
     _counts = df[['location', 'outcome']].value_counts().reset_index().rename(columns={0: 'counts'})
     counts = _counts.pivot(index='location', columns='outcome', values='counts').fillna(0)
+
     if all(x in counts.columns for x in ['Pathogenic', 'Benign']):
         counts = counts[['Pathogenic', 'Benign']].astype(int).sort_values('Pathogenic', ascending=False)
     elif 'Benign' in counts.columns:

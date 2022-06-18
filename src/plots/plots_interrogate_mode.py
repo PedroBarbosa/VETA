@@ -42,6 +42,7 @@ def plot_heatmap(df: pd.DataFrame,
                  outdir: str,
                  display_annot: bool = False,
                  benign_too: pd.DataFrame = None):
+
     """
 
     Draw heatmaps that color the ratio of tools
@@ -135,8 +136,8 @@ def plot_heatmap(df: pd.DataFrame,
         ax[0].set_ylabel('All variants ({})'.format(df.shape[0]))
         ax[1].set_ylabel('')
 
-    plt.tight_layout()
 
+    plt.tight_layout()
     plt.savefig(outfile)
     plt.close()
 
@@ -166,6 +167,7 @@ def plot_heatmap_toptools(df: pd.DataFrame, filters, outdir):
 
         fname = os.path.join(
             outdir, "top_tools_heatmap_{}.pdf".format(filter_name))
+
         plot_heatmap(df_f, fname,
                      cluster_rows=True,
                      skip_preparation=True)
@@ -198,12 +200,14 @@ def plot_accuracy(stats_df: pd.DataFrame,
             color='darkgrey',
             edgecolor='k',
             linewidth=1)
+
     plt.axvline(0.9, color='b', linestyle='--')
     xlabel = (metric[:1].upper() + metric[1:]).replace("_", " ")
     _title = (location[:1].upper() + location[1:]).replace("_", " ")
     plt.xlabel(xlabel)
     plt.title("{} variants (N={})".format(
         _title, str(stats_df.iloc[0, :].total)))
+
     plt.xlim(left=0)
     plt.yticks(range(stats_df.shape[0]), stats_df['tool'])
     plt.ylim(-1, stats_df.shape[0])
@@ -233,6 +237,7 @@ def plot_tool_score_distribution(_df: pd.DataFrame,
     p.tick_params(labelsize=13)
     plt.xlabel('{} ({} % missing data)'.format(
         tool, round(nas / _df.shape[0] * 100, 2)), fontsize=13)
+
     p.yaxis.get_label().set_fontsize(13)
     plt.axvline([x[2] for x in thresholds if x[0] == tool],
                 color='r',
@@ -240,6 +245,7 @@ def plot_tool_score_distribution(_df: pd.DataFrame,
 
     legend_element = [Line2D([0], [0], color='r', lw=4,
                              label='Reference threshold')]
+
     plt.legend(handles=legend_element, loc='best')
     plt.savefig(os.path.join(outdir, "score_dist_{}.pdf".format(tool)))
     plt.close()

@@ -48,6 +48,7 @@ def main():
                                choices=('weighted_accuracy', 'accuracy',
                                         'F1', 'weighted_F1', 'coverage', 
                                         'mcc', 'norm_mcc', 'weighted_norm_mcc'),
+
                                default='weighted_accuracy')
 
     parent_parser.add_argument('-l', '--location', metavar='', default="HGVSc", choices=("HGVSc", "Consequence"),
@@ -179,8 +180,9 @@ def main():
     ## Argparse args processing ##
     ##############################
     if args.command == "interrogate":
-        assert args.metric not in ['F1', 'weighted_F1', 'mcc', 'norm_mcc', 'weighted_norm_mcc'], "Metric provided is not valid for interrogate mode."
       
+        assert args.metric not in ['F1', 'weighted_F1', 'mcc', 'norm_mcc', 'weighted_norm_mcc'], "Metric provided is not valid for interrogate mode."
+     
         PredictionsEval(args.vcf,
                         args.out_dir,
                         args.scopes_to_evaluate,

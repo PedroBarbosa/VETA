@@ -55,6 +55,7 @@ def update_thresholds(config_dict: defaultdict):
         ('ClinPred', '>', 0.5, 'Protein'),
         ('MutScore', '>', 0.5, 'Protein'), # Did not find in the paper, assumed 0.5
         ('MutFormer', '>', 0.5, 'Protein'), # Did not find in the paper, assumed 0.5
+
         ('cVEP', '>', 0.5, 'Protein'), # 0.5 as artificial threshold
         ('EVE_class20', '>', 0.5, 'Protein'), # 0.5 as artificial threshold
         ('EVE_class50', '>', 0.5, 'Protein'), # 0.5 as artificial threshold
@@ -64,6 +65,7 @@ def update_thresholds(config_dict: defaultdict):
         ('CAPICE', '>', 0.02, 'Whole_genome'),
         ('CADD', '>', 25.3, 'Whole_genome'),
         ('CADDSplice', '>', 25.3, 'Whole_genome'),
+
         ('DANN', '>', 0.9, 'Whole_genome'),
         ('GWAVA', '>', 0.5, 'Whole_genome'),
         ('FATHMM-MKL', '>', 0.5, 'Whole_genome'),

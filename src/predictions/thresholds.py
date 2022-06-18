@@ -15,6 +15,7 @@ from preprocessing.osutils import ensure_folder_exists
 from preprocessing.utils_tools import ratio
 from sklearn.utils import resample
 
+
 def fbeta_at_thr(df, tool, beta_values, stats):
     """
     Calculate stats at a single threshold
@@ -219,6 +220,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
         if not all(i >= 50 for i in df_f.label.value_counts().tolist()):
             logging.warning(
                 'No minimum number of variants in the minority class required (N=50)')
+
             continue
 
         final_thresholds = OrderedDict()
@@ -226,6 +228,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
 
             # Threshold analysis is not performed for
             # S-CAP (it uses multiple reference thresholds) and
+
             # cVEP (predictions are discrete categories that VETA converts to fixed floats)
             if tool not in df_f.columns or tool.lower() in ['scap', 's-cap', 'cvep']:
                 continue
@@ -246,6 +249,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
                     reference_threshold = 0.289
 
             ratio_predicted = df_per_tool.shape[0] / df_f.shape[0]
+
             if df_per_tool.shape[0] < 100:
                 logging.info(
                     '{} did not predict the minimum number of variants required (N=100)'.format(tool))
@@ -271,14 +275,13 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
                       'final_thresh': final_thresholds,
                       'outdir': outdir}
             kwargs['final_thresh'][tool] = [(kwargs['ref_thresh'], kwargs['f1_at_ref_thresh'][_loc][tool])]
-            
-
             max_thr = df_per_tool[tool].max()
             min_thr = df_per_tool[tool].min()
-
+ 
             if pd.isnull(max_thr) or pd.isnull(min_thr) or max_thr == min_thr:
                 logging.info("Something strange in max/min thresholds {} {} "
                     "{}".format(tool, max_thr, min_thr))
+
 
             step = (max_thr - min_thr) / float(n_of_points)
             thr_range = np.arange(min_thr, max_thr, step)
@@ -312,11 +315,11 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
                 thr_df = pd.DataFrame([[tool, thr_f05, thr_f1, thr_f15]], columns=cols)
                 _calculate_ci(thr_df, **kwargs)
 
-            
         _outdir_new_thresh = os.path.join(outdir, "new_thresholds")
         _outdir_new_config = os.path.join(outdir, "new_configs")
         ensure_folder_exists(_outdir_new_config)
         ensure_folder_exists(_outdir_new_thresh)
+
 
         ###########################
         ### Write new thresholds ##
@@ -325,8 +328,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
         with open(os.path.join(_outdir_new_thresh, "proposed_thresholds_{}.tsv".format(_loc)), 'w') as out:
             out.write("Tool\tReference_threshold\tF1_score_at_ref_thresh\t{}\n".format("\t".join("Thresh_beta_{}".format(b) +
                                                                                                  "\t" +
-                                                                                                 "Fbeta_{}".format(
-                                                                                                     b)
+                                                                                                 "Fbeta_{}".format(b)
                                                                                                  for b in beta_values)))
 
             for tool, new_thresholds in final_thresholds.items():

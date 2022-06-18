@@ -106,8 +106,9 @@ class BenchmarkTools(Base):
             logging.info('Number of variants after filtering by Clinvar stars ({}): {}'.format(self.clinvar_stars, self.df.shape[0]))
 
         generate_consequence_table(self.df, self.out_dir)
+
         self.top_tools, f1_at_ref_threshold = self.do_performance_comparison()
-        
+
         if self.do_intronic_analysis:
             thresholds = [tool for tool in self.thresholds if tool[3] != 'Protein']
 
@@ -165,7 +166,7 @@ class BenchmarkTools(Base):
                 continue
             
             for _location in self.location_filters:
-                
+
                 df = _df_v[_df_v.location == _location].copy()
                 if df.empty:
                     continue
@@ -213,12 +214,11 @@ class BenchmarkTools(Base):
                     try:
 
                         statistics = metrics.generate_statistics(df, statistics, _location, tool)
- 
                         scored = df[~df[tool + '_prediction'].isnull()]
                         if scored.empty:
                             logging.info("{} did not score any {} variant.".format(tool, _location))
                             continue
-                        
+                       
                         if 0 < scored.shape[0] < df.shape[0] * 0.05:
                             logging.info("Warn: {} scored some '{}' variants (scored={}), but they account for less than "
                                         "5% of the dataset size. Plots will not show those results".format(tool, _location, scored.shape[0]))
@@ -248,16 +248,19 @@ class BenchmarkTools(Base):
                         else:
                     
                             na_frac = 1 - (scored.shape[0] / df.shape[0])
+
                             try:
                                 roc_curve, pr_curve, roc_auc, ap_score = metrics.do_roc_analysis(scored[[tool, 'label']],
                                                                                                 tool,
                                                                                                 higher_is_better=direction == ">")
             
+                                na_frac = 1 - (scored.shape[0] / df.shape[0])
                                 roc_metrics_per_tool.append([tool, na_frac, roc_curve[0], roc_curve[1],
                                                             roc_curve[2], roc_curve[3], roc_auc])
                                 pr_metrics_per_tool.append([tool, na_frac, pr_curve[0], pr_curve[1],
                                                             pr_curve[2], pr_curve[3], ap_score])
                             except TypeError:
+
                                 roc_metrics_per_tool.append([tool, na_frac, None, None, None, None, None])
                                 pr_metrics_per_tool.append([tool, na_frac, None, None, None, None, None])
                                 pass
@@ -275,6 +278,7 @@ class BenchmarkTools(Base):
                 # draw plots
                 out_stats = os.path.join(outdir, "results_tsv", "statistics_{}_{}.tsv").format(var_type, _location)
                 out_ranks = os.path.join(outdir, "results_tsv", "tools_ranking_{}_{}.tsv").format(var_type, _location)
+
                 af_plot = os.path.join(outdir, "allele_frequency", "AF_{}.pdf".format(var_type, _location))
                 unscored_plot = os.path.join(outdir, "performance_at_fixed_thresh", "unscored_fraction_{}_{}.pdf".format(var_type, _location))
                 barplot_plot = os.path.join(outdir, "performance_at_fixed_thresh", "barplot_{}_{}.pdf".format(var_type, _location))
@@ -284,7 +288,7 @@ class BenchmarkTools(Base):
                 plot_unscored(stats_all_df, unscored_plot)
                 plot_tools_barplot(stats_all_df, barplot_plot, self.metric)
                 plot_metrics(stats_all_df, metrics_plot, self.metric)
-        
+
                 for i, _roc_data in enumerate([roc_metrics_per_tool, pr_metrics_per_tool]):
                     if i == 0:
                         is_roc = True 

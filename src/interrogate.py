@@ -43,6 +43,7 @@ class PredictionsEval(Base):
             of tools obtained from a previous VETA run using a
             reference catalog (e.g. Clinvar). It must refer to the
             file `tools_ranking*.tsv` that is written when running
+
             the aforementioned analysis. Default: `None`, use all
             tools  available considering the `scope_to_predict`
             argument.
@@ -128,6 +129,7 @@ class PredictionsEval(Base):
             ###################
             # df = apply_tool_predictions(df, threshold_list)
             logging.info("Extracting predictions")
+
             out_c = ['chr', 'pos', 'ref', 'alt', 'Consequence', 'HGVSc', 'SYMBOL'] + [col for col in _df_by_type.columns if '_prediction' in col]
             out_df = _df_by_type[out_c]
             out_df = out_df.rename(columns={col: col.split('_prediction')[0] for col in out_df.columns}).to_csv(os.path.join(outdir, "individual_predictions.tsv"), index=False, sep="\t")
@@ -186,7 +188,6 @@ class PredictionsEval(Base):
             # except KeyError:
             #     logging.info("No tool has predictions for the given variant type ({}), "
             #                  "analysis is going to be skipped.".format(var_type))
-
             # if VCF refers to variants of a
             # given label, compute additional
             # metrics
@@ -199,6 +200,7 @@ class PredictionsEval(Base):
                 self.generate_performance_with_label(_df_just_pred,
                                                      outdir=outdir,
                                                      var_type=var_type)
+
 
             ###############
             ### Heatmap ###
@@ -241,6 +243,7 @@ class PredictionsEval(Base):
                                         df_pred: pd.DataFrame,
                                         outdir: str,
                                         var_type:str):
+
         """
         Evaluate tools performance considering that the
         intput VCF refers to a list of variants with a
@@ -250,6 +253,7 @@ class PredictionsEval(Base):
             for each variant
         :param str outdir: Output directory
         :param var_type: Variant types analysed 
+
         :return:
         """
         assert "F1" not in self.metric, "Can't use F1-based metrics in the inspect mode since it is " \
@@ -257,6 +261,7 @@ class PredictionsEval(Base):
                                         "at least "
       
         for _location in self.location_filters:
+
             outfile = os.path.join(outdir, "statistics_{}_{}.tsv").format(var_type, _location)
             statistics = defaultdict(list)
             
@@ -276,7 +281,6 @@ class PredictionsEval(Base):
                     continue
 
                 stats_df = pd.DataFrame(statistics).drop(columns=['filter'])
-
                 stats_df.sort_values([self.metric], ascending=False).to_csv(outfile, sep="\t", index=False)
                 plot_accuracy(stats_df, self.metric, _location, outdir)
 
@@ -291,5 +295,6 @@ class PredictionsEval(Base):
             for i in range(0, len(ratios_df.columns)):
                 if ratios_df.columns[i] not in ['Is benign', 'Is pathogenic']:
                     ratios_df = ratios_df.rename(columns={ratios_df.columns[i]: "Unpredictable"})
+
         return ratios_df
 

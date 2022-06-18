@@ -170,7 +170,7 @@ def do_intron_analysis(df: pd.DataFrame,
                                     "No minimum number of predictions on each class (10) found (N={})".format(tool, _bin, min(n_pos_pred, n_neg_pred)))
                         
                     else:
-                        
+
                         try:
                             roc_curve, pr_curve, roc_auc, ap_score = metrics.do_roc_analysis(df_tool[[tool, 'label']],
                                                                                             tool)
@@ -181,6 +181,7 @@ def do_intron_analysis(df: pd.DataFrame,
                         # S-cap
                         except TypeError:
                             pass
+
 
                 f1_score = stats_df.loc[stats_df['tool'] == tool, 'F1'].iloc[0]
                 weighted_f1_score = stats_df.loc[stats_df['tool'] == tool, 'weighted_F1'].iloc[0]

@@ -274,6 +274,7 @@ class Metapredictions(object):
         mcc = round(matthews_corrcoef(y_true, y_pred), 2)
         normalized_mcc = (mcc + 1) / 2
         weighted_norm_mcc = round(normalized_mcc * coverage, 2)
+
         
         return [accuracy, accuracy, f1, f1, coverage,
                 specificity, sensitivity, precision,

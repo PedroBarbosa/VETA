@@ -162,10 +162,12 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
     if data.empty:
         return 
     os.makedirs(os.path.dirname(fname), exist_ok=True)
+
     try:
         data = data[data.fraction_nan < 0.95]
     except AttributeError:
         pass
+
     data = data.sort_values(metric)
 
     my_range_coverage = list(range(1, len(data.index) + 1))
@@ -204,6 +206,7 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
         plt.text(m_title_l, 0.9, "Tool({})".format(metric), fontsize=10, transform=plt.gcf().transFigure)
 
     _target_col = "precision" if metric in ['F1', 'weighted_F1'] else "specificity"
+
     plt.scatter(data[_target_col], my_range_specificity,
                 color='skyblue',
                 alpha=1,
@@ -260,7 +263,7 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
         plt.title("#variants: {} ({} pos, {} neg)".format(data["total"].iloc[0],
                                                           data["total_p"].iloc[0],
                                                           data["total_n"].iloc[0]))
-    
+
     plt.tight_layout()
     plt.savefig(fname, bbox_inches='tight')
     plt.close()
@@ -487,6 +490,7 @@ def plot_tools_barplot(data: pd.DataFrame, fname: str, metric: str):
     fig.tight_layout()
     plt.savefig(fname)
     plt.close()
+    sns.reset_defaults()
 
 
 def plot_curve(data: list,

@@ -61,7 +61,6 @@ def filter_by_condition(df: pd.DataFrame, ids:list):
         re = "[0-9]+" if db_field == "MONDO:" else "[0-9A-Za-z]+"
        
         _ids = df["CLNDISDB"].str.extractall("({}{})".format(db_field, re)).iloc[:, 0].apply(lambda x: x.replace('{}'.format(db_field), '').rstrip())
-
         match_idx = _ids[_ids.isin(db_ids)].index.get_level_values(0)
         _df = df.loc[match_idx, :]
 
@@ -82,7 +81,7 @@ def filter_by_condition(df: pd.DataFrame, ids:list):
         raise ValueError('No variants left after filtering by {} condition ID(s).'.format(ids))
     else:
         logging.info('Number of variants after filtering by condition ID(s) ({}): {}'.format([x for x in ids if x is not None], df.shape[0]))
-        
+   
     return df 
 
 def filter_clinvar_sure(df: pd.DataFrame):
