@@ -7,11 +7,11 @@ SiPhy	SiPhy
 CDTS	CDTS_percentile
 
 # Protein predictors
-LRT	LRT_score
+#LRT	LRT_score
 Sift	SIFT_score
 Polyphen2HVAR	Polyphen2_HVAR_score
 Polyphen2HDIV	Polyphen2_HDIV_score
-MutationTaster	MutationTaster_score
+MutationTaster2	MutationTaster_score
 MutationAssessor	MutationAssessor_score
 FATHMM	FATHMM_score
 Provean	PROVEAN_score
@@ -25,7 +25,7 @@ VEST4	VEST4_score
 REVEL	REVEL
 MVP	MVP
 PrimateAI	PrimateAI
-VARITY	VARITY_ER
+VARITY	VARITY_R
 cVEP	cVEP
 CardioBoost	CardioBoost
 EVE	EVE
@@ -37,16 +37,17 @@ MutFormer	MutFormer
 ClinPred	ClinPred
 CardioVAI	CardioVAI
 
-# Functional
+# Whole Genome
 #fitCons	fitcons
 LINSIGHT	linsight_g
 ReMM	ReMM
 GWAVA	GWAVA
-#FATHMM-MKL	fathmmMKL
+FATHMM-MKL	fathmmMKL
 Eigen	Eigen
 FunSeq2	funseq2
-CADD	CADD_PHRED
-CADDSplice	CADDSplice_PHRED
+CADD	CADDSplice_PHRED
+#CADD	CADD_PHRED
+#CADDSplice	CADDSplice_PHRED
 DANN	DANN
 CAPICE	CAPICE,CAPICE_ind
 

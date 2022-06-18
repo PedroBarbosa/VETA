@@ -3,7 +3,7 @@ from imblearn.under_sampling import RandomUnderSampler
 from sklearn import dummy
 from sklearn.feature_selection import RFECV, mutual_info_classif
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
+from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, matthews_corrcoef
 from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 from sklearn.preprocessing import LabelBinarizer, OneHotEncoder
 from sklearn.utils.multiclass import unique_labels
@@ -234,7 +234,7 @@ class Metapredictions(object):
             single_tool_perfor = self._dict_to_df(out_metrics)
             merged = pd.concat([_clf_performance, single_tool_perfor], ignore_index=True)
 
-            out_metrics = os.path.join(self.out_dir, "metrics_{}_clf_only_on_test_data".format(self.location))
+            out_metrics = os.path.join(self.out_dir, "metrics_{}_clf_only_on_test_data.pdf".format(self.location))
             plot_metrics(merged, out_metrics, self.rank_metric)
         return trained_models
 
@@ -271,9 +271,14 @@ class Metapredictions(object):
         accuracy = round(accuracy_score(y_true, y_pred), 3)
         f1 = round(f1_score(y_true, y_pred), 3)
         coverage = 1
+        mcc = round(matthews_corrcoef(y_true, y_pred), 2)
+        normalized_mcc = (mcc + 1) / 2
+        weighted_norm_mcc = round(normalized_mcc * coverage, 2)
+
         
         return [accuracy, accuracy, f1, f1, coverage,
-                specificity, sensitivity, precision]
+                specificity, sensitivity, precision,
+                mcc, normalized_mcc, weighted_norm_mcc]
 
     def _dict_to_df(self, input_d: dict) -> pd.DataFrame:
         """
@@ -291,7 +296,10 @@ class Metapredictions(object):
                                                'coverage',
                                                'specificity',
                                                'sensitivity',
-                                               'precision']).rename_axis('tool').reset_index()
+                                               'precision',
+                                               'mcc',
+                                               'normalized_mcc',
+                                               'weighted_norm_mcc']).rename_axis('tool').reset_index()
 
     def generate_feature_ranking(self, trained_clfs: dict):
         """

@@ -1,12 +1,50 @@
 import os
-
+import pandas as pd
 import matplotlib.patches as mpatches
 import numpy as np
-
 from .plots_utils import *
-
 plt.switch_backend('agg')
 
+
+def plot_bootstrap_thresholds(data: pd.Series,
+                               tool: str, 
+                               beta: str,
+                               location: str,
+                               new_thresh: float,
+                               reference_thresh: float,
+                               ci_down_95: float,
+                               ci_up_95:float,
+                               outdir: str):
+    """
+    :param str data: Best thresholds at each bootstrap sample
+    :param str tool: Name of the tool
+    :param str beta: Beta value
+    :param str location: Location filter for the variants analysed
+    :param np.array threshold_range: Observed range of scores for the tool
+    :param float new_thresh: Best new thresh after bootstratping
+    :param float reference_threshold: Reference threshold for the tool
+    :param float ci_down_95: Lower bound 95% CI
+    :param float ci_up_95: Upper bound 95% CI
+    :param str outdir: Output directory
+    """
+    outdir = os.path.join(outdir, "plots/bootstrapping")
+    os.makedirs(outdir, exist_ok=True)
+    
+    plt.hist(data, bins=15, density=True)
+    plt.axvline(x=reference_thresh, color='brown', linestyle="--", linewidth=2, label="Reference threshold")
+    plt.axvline(x=new_thresh, color='darkgreen', linestyle="--", linewidth=2, label="New threshold")
+    plt.axvline(x=ci_down_95, color='k', linestyle=':', linewidth=2, label="95% Bootstrap percentile")
+    plt.axvline(x=ci_up_95, color='k', linestyle=':', linewidth=2)
+    plt.title('Distribution of best {} thresh for beta={}'.format(tool, beta))
+    plt.xlabel('Threshold range')
+    plt.ylabel('Probability')
+    plt.legend(bbox_to_anchor=(1.1, 1.05))
+
+    f_name = os.path.join(outdir, "threshold_{}_{}_f{}.pdf".format(tool.replace(" ", "_"),
+                                                                 location,
+                                                                 beta))
+    plt.savefig(f_name, bbox_inches='tight')
+    plt.close()
 
 def plot_optimal_thresholds(tool: str, location: str, threshold_range: np.array,
                             accuracies: list, sensitivities: list, specificities: list,

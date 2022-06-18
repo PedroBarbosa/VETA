@@ -241,7 +241,8 @@ def _iter_variants(vcf: str, **kwargs):
             continue
         
         if record.ID != ".":
-            key = record.CHROM + "_" + str(record.POS) + "_" + str(record.ID)
+            key = record.CHROM + "_" + str(record.POS) + "_" + str(record.ID) + "_" + str(record.ALT[0])
+
         else:
             key = record.CHROM + "_" + str(record.POS) + "_" + str(record.REF) + "_" + str(record.ALT[0])
         

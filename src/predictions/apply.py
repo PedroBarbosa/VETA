@@ -24,9 +24,9 @@ def apply_tool_predictions(df: pd.DataFrame, thresholds: List):
             continue
 
         if direction == ">":
-            classification = lambda x: pd.isna(x) and np.nan or x > threshold
+            classification = lambda x: pd.isna(x) and np.nan or x >= threshold
         else:
-            classification = lambda x: pd.isna(x) and np.nan or x < threshold
+            classification = lambda x: pd.isna(x) and np.nan or x <= threshold
 
         df[tool + '_prediction'] = df[tool].apply(classification)
     return df

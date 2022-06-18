@@ -124,16 +124,24 @@ def plot_unscored(data: pd.DataFrame, fname: str):
         for each tool
     :param str fname: Output file
     """
-    os.makedirs(os.path.dirname(fname), exist_ok=True)
-    
-    fig = plt.figure(figsize=(8, 7))
-    ax = sns.barplot(x="fraction_nan",
-                     y="tool",
-                     color="skyblue",
-                     linewidth=1.5,
-                     edgecolor="k",
-                     data=data.sort_values('fraction_nan', ascending=False))
+    _data = data[['tool', 'mp', 'mn', 'fraction_nan', 'total']].copy()
 
+    _data.loc[:, 'Pathogenic'] = round(data.mp / data.total, 2)
+    _data.loc[:, 'Benign'] = round(data.mn / data.total, 2)
+    _data = _data[['tool', 'Pathogenic', 'Benign', 'fraction_nan']].set_index('tool')
+
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+
+    plt.figure()
+    plt.rcParams.update({'font.size': 10}) 
+    ax = _data.sort_values('fraction_nan').drop('fraction_nan', axis=1).plot.barh(stacked=True, 
+                                                                                  width=1,
+                                                                                  color={'Pathogenic': 'darkred', 'Benign': 'skyblue'},
+                                                                                  edgecolor='k',
+                                                                                  alpha=0.7,
+                                                                                  fontsize=8,
+                                                                                  figsize=(4.25, 4.5))
+    ax.legend(fontsize=6)
     ax.set(xlabel='Fraction of unscored variants', ylabel='')
     plt.xlim(0, 1)
     plt.tight_layout()
@@ -154,23 +162,51 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
     if data.empty:
         return 
     os.makedirs(os.path.dirname(fname), exist_ok=True)
-    
+
+    try:
+        data = data[data.fraction_nan < 0.95]
+    except AttributeError:
+        pass
+
     data = data.sort_values(metric)
 
     my_range_coverage = list(range(1, len(data.index) + 1))
     my_range_specificity = np.arange(1 - 0.2, len(data.index)).tolist()
     my_range_sensitivity = np.arange(1 + 0.2, len(data.index) + 0.5).tolist()
-
+    
     n_tools = data.shape[0]
-    if n_tools < 20:
-        figsize = (6.25, 4)
+    if n_tools <= 10:
+        figsize = (6 , 3.4)
+        _bbox = 1.6
+        _left = 0.25
+        _right = 0.75
+        m_title_l = 0.03
+        
+    elif n_tools < 20:
+        figsize = (6.3 , 4.4)
+        _bbox = 1.4
+        _left = 0.2 
+        _right = 0.8
+        m_title_l = 0.03
     elif 20 <= n_tools <= 30:
-        figsize = (8, 6)
+        figsize = (7.5 , 6.5)
+        _bbox = 1.3
+        _left = 0.3
+        _right = 0.8
+        m_title_l = 0.04
     else:
-        figsize = (10, 8)
+        figsize = (8.2, 7)
+        _bbox = 1.35
+        _left = 0.3
+        _right = 0.8
+        m_title_l = 0.05
     fig, ax = plt.subplots(figsize=figsize)
+    
+    if n_tools > 10:
+        plt.text(m_title_l, 0.9, "Tool({})".format(metric), fontsize=10, transform=plt.gcf().transFigure)
 
-    _target_col = "specificity" if "accuracy" in metric else "precision"
+    _target_col = "precision" if metric in ['F1', 'weighted_F1'] else "specificity"
+
     plt.scatter(data[_target_col], my_range_specificity,
                 color='skyblue',
                 alpha=1,
@@ -210,21 +246,25 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
                           color='gray',
                           fill=False))
         i += 1
-
+    
     ax.grid(axis='x', linestyle='dashed')
+    plt.subplots_adjust(left=_left, right=_right)
     plt.legend(loc="upper right",
-               bbox_to_anchor=(1.4, 1),
+               bbox_to_anchor=(_bbox, 1),
                borderaxespad=0,
                prop=dict(size=8))
-    plt.subplots_adjust(left=0.35)
 
-    plt.yticks(my_range_coverage, data['tool'] + " (" + data[metric].astype(str) + ")")
+    if n_tools <= 10:
+        plt.yticks(my_range_coverage, data['tool'] + " (" + data[metric].astype(str) + ")", fontsize=10)
+    else:
+        plt.yticks(my_range_coverage, data['tool'] + " (" + data[metric].astype(str) + ")")
 
     if all(col in data.columns for col in ['total', 'total_p', 'total_n']):
         plt.title("#variants: {} ({} pos, {} neg)".format(data["total"].iloc[0],
                                                           data["total_p"].iloc[0],
                                                           data["total_n"].iloc[0]))
-    fig.tight_layout()
+
+    plt.tight_layout()
     plt.savefig(fname, bbox_inches='tight')
     plt.close()
 
@@ -288,6 +328,7 @@ def plot_tools_barplot_only_correct(data: pd.DataFrame, fname: str):
     """
     os.makedirs(os.path.dirname(fname), exist_ok=True)
     df = data.iloc[::-1]
+    df = df[df.fraction_nan < 0.95]
     set_style()
 
     w = 0.5
@@ -353,7 +394,7 @@ def plot_tools_barplot(data: pd.DataFrame, fname: str, metric: str):
     
     # revert order
     df = data.iloc[::-1]
-
+    df = df[df.fraction_nan < 0.95]
     set_style()
     w = 0.8
 
@@ -449,6 +490,7 @@ def plot_tools_barplot(data: pd.DataFrame, fname: str, metric: str):
     fig.tight_layout()
     plt.savefig(fname)
     plt.close()
+    sns.reset_defaults()
 
 
 def plot_curve(data: list,
@@ -483,6 +525,7 @@ def plot_curve(data: list,
         to_explode = ['thresholds', 'Recall', 'Precision']
 
     df_metrics = pd.DataFrame.from_records(data, columns=colnames)
+    df_metrics = df_metrics[df_metrics.thresholds.notna()]
     df_metrics = df_metrics.explode(to_explode).reset_index()
 
     if is_roc:

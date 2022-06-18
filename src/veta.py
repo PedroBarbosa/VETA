@@ -46,7 +46,9 @@ def main():
                                help='Metric to rank the tools. Available options: '
                                '{%(choices)s}. Default: "weighted_accuracy."',
                                choices=('weighted_accuracy', 'accuracy',
-                                        'F1', 'weighted_F1', 'coverage'),
+                                        'F1', 'weighted_F1', 'coverage', 
+                                        'mcc', 'norm_mcc', 'weighted_norm_mcc'),
+
                                default='weighted_accuracy')
 
     parent_parser.add_argument('-l', '--location', metavar='', default="HGVSc", choices=("HGVSc", "Consequence"),
@@ -105,12 +107,12 @@ def main():
                                        '\'*benign*\' (or \'*neutral*\') and \'*pathogenic*\' (or \'*deleterious*\') '
                                        'tags must exist in their names.')
 
-    benchmark_parser.add_argument('-c', '--clinvar_stars', metavar='', default='2s_l',
+    benchmark_parser.add_argument('-c', '--clinvar_stars', metavar='', default='1s_l',
                                   help='Level of filtering when dataset refers to the clinvar database. '
                                        'By default, a high confidence clinvar subset (3 stars with likely '
                                        'annotations) is used for performance evaluation and reference '
                                        'threshold analysis (if --do_threshold_analysis is True). '
-                                       'Default: "2s_l". All the possible filtering levels are visible '
+                                       'Default: "1s_l". All the possible filtering levels are visible '
                                        'with the argument \'--listClinvarLevels\'.')
 
     benchmark_parser.add_argument('--omim_ids', nargs='+', help='When dataset refers to the clinvar database, '
@@ -123,12 +125,13 @@ def main():
                                   'selects variants belonging to the provided MONDO ids.')
         
     benchmark_parser.add_argument('--do_threshold_analysis', action="store_true",
-                                  help="Enable reference thresholds analysis when Clinvar is used. "
-                                       "It does not depend on the \'--clinvar_stars\' argument, which "
-                                       "means that \'3s_l\' variants will be used as the ground truth "
-                                       "to ensure that only good quality variants are used. "
+                                  help="Enable reference thresholds analysis for the input dataset."
                                        "Default: False")
 
+    benchmark_parser.add_argument('--bootstrapping', action="store_true",
+                                  help="Enable bootstrapping analysis when '--do_threshold_analysis' is set."
+                                       "Default: False")
+    
     benchmark_parser.add_argument('--do_machine_learning', action="store_true",
                                   help="Enable machine learning analysis based on the "
                                        "tools scores to inspect the best predictors and "
@@ -177,6 +180,9 @@ def main():
     ## Argparse args processing ##
     ##############################
     if args.command == "interrogate":
+      
+        assert args.metric not in ['F1', 'weighted_F1', 'mcc', 'norm_mcc', 'weighted_norm_mcc'], "Metric provided is not valid for interrogate mode."
+     
         PredictionsEval(args.vcf,
                         args.out_dir,
                         args.scopes_to_evaluate,
@@ -214,6 +220,7 @@ def main():
                        args.clinvar_stars,
                        phenotype_ids,
                        args.do_threshold_analysis,
+                       args.bootstrapping,
                        args.do_machine_learning,
                        args.allele_frequency,
                        args.skip_heatmap,

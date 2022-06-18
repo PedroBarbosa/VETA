@@ -6,7 +6,10 @@ from sklearn.feature_selection import _rfe
 from predictions.utils_classifiers import *
 
 
-def plot_feature_correlation(df: pd.DataFrame, location: str, outdir: str):
+def plot_feature_correlation(df: pd.DataFrame, 
+                             location: str, 
+                             outdir: str,
+                             drop_AF: bool = True):
     """
     Generates Pearson's feature correlation
 
@@ -15,6 +18,9 @@ def plot_feature_correlation(df: pd.DataFrame, location: str, outdir: str):
     :param str outdir: Output directory
     """
     cmap = sns.diverging_palette(220, 10, as_cmap=True)
+
+    if "gnomADg_AF" in df.columns and drop_AF:
+        df.drop('gnomADg_AF', axis=1, inplace=True)
 
     if 'intron_offset' in df.columns:
         corr = df.drop(['label', 'intron_offset'], axis=1).corr()
@@ -25,12 +31,14 @@ def plot_feature_correlation(df: pd.DataFrame, location: str, outdir: str):
     mask = np.zeros_like(corr, dtype=np.bool)
     mask[np.triu_indices_from(mask)] = True
 
+    annot=False if len(corr.columns) > 15 else True
     f, ax = plt.subplots(figsize=(11, 9))
     ax = sns.heatmap(corr,
                      mask=mask,
                      cmap=cmap,
                      vmax=1,
                      vmin=-1,
+                     annot=annot, 
                      square=True,
                      linewidths=.5,
                      linecolor='k',
