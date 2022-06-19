@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 MAINTAINER Pedro Barbosa <pedro.barbosa@medicina.ulisboa.pt>
 
@@ -11,4 +11,4 @@ ENV PATH="$PATH:/tools/miniconda3/bin/"
 ADD conda_environment.yml /tmp/
 RUN conda env update -n base -f /tmp/conda_environment.yml
 RUN git clone https://github.com/PedroBarbosa/VETA.git
-RUN cd VETA && python setup.py install
+RUN cd VETA && pip install .

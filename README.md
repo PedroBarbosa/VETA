@@ -9,11 +9,11 @@
 VETA is a tool that analyses the performance of several variant prediction methods at different levels. It can:
 
   * 1) Evaluate prediction scores on a new VCF taking into account the reference thresholds described in literature. It will highlight top candidate variants that most of methods predict to be pathogenic.
-  * 2) Given labeled variants (e.g. benign and pathogenic), VETA benchmarks prediction tools and measures tools performance for different variant types and locations (e.g. SNVs in coding regions, SNVs in introns, insertions in 5'UTR, etc).
-  * 3) If labeled variants are from Clinvar, VETA can inspect the reliability of reference thresholds.
+  * 2) Given labeled variants (e.g. benign and pathogenic), VETA benchmarks prediction tools and measures tools performance for different variant types and locations (e.g. SNVs in coding regions, SNVs in introns, insertions in 5'UTR, etc). If the dataset is large enough, VETA can inspect the reliability of reference thresholds.
+  * 3) If labeled variants are from Clinvar, VETA allows additional analysis (e.g. disease-specific benchmark, filtering for review status desired).
   * 4) Apply machine learning to combine scores and improve predictions on a labeled dataset. It is useful to see which features (prediciton tools) are most important for the task, thus potentially informing which tools are relevant (and how many are sufficient) to predict variant effects in a clinical setting.
   
-What VETA is not:
+**What VETA is not:**
    * VCF annotator. For that you have [VEP](https://www.ensembl.org/info/docs/tools/vep/index.html), [vcfanno](https://github.com/brentp/vcfanno) or [bcftools annotate](http://samtools.github.io/bcftools/bcftools.html). 
    
 
@@ -45,13 +45,15 @@ VETA requires python3 and can simply be installed with pip package installer:
 pip install veta
 ~~~~
 
+If VCF file is large, VETA additionally requires `bcftools` to parallelize processing per chromosome.
+
 If you run into problems, I recommend the creation of a conda environment, and further packaging of the project with `setuptools`:
 ~~~~
 git clone https://github.com/PedroBarbosa/VETA.git
 cd VETA
 conda env create -f conda\_environment.yml
 conda activate veta
-python setup.py install
+pip install .
 ~~~~
 
 Alternatively, there is a docker image available:

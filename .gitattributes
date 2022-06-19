@@ -1,1 +1,0 @@
-datasets/clinvar/clinvar_vep_03_2019.vcf.bgz filter=lfs diff=lfs merge=lfs -text
