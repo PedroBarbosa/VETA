@@ -34,7 +34,7 @@ repository = "https://github.com/PedroBarbosa/VETA"
 documentation = "https://github.com/PedroBarbosa/VETA"
 
 [project.license]
-text = "https://opensource.org/licenses/MIT"
+text = "https://opensource.org/licenses/GPL-3.0"
 
 [tool.setuptools.package-data]
 tools_config = ["config/tools_config.txt"]
