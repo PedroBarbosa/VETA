@@ -72,7 +72,11 @@ def plot_heatmap(df: pd.DataFrame,
 
         if isinstance(benign_too, pd.DataFrame):
             if benign_too.shape[0] > 0 and df.shape[0] > 0:
-                df = df.sort_values(['Is pathogenic']).head(50)
+                all_path = df[df['Is pathogenic'] == 1].copy()
+                if all_path.shape[0] > 50:
+                    df = all_path
+                else:
+                    df = df.sort_values(['Is pathogenic']).head(50)
                 benign_too = benign_too.sort_values(['Is benign']).head(50)
                 outfile = os.path.join(
                     outdir, 'predictability_trade_off_top_patho_and_benign.pdf')
@@ -92,6 +96,7 @@ def plot_heatmap(df: pd.DataFrame,
         outfile = os.path.join(outdir, 'predictability_trade_off.pdf')
 
     if plot_benign:
+
         sns.heatmap(df[["Is pathogenic"]][::-1], ax=ax[0],
                     cbar=False,
                     vmax=1,
