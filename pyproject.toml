@@ -3,7 +3,7 @@ requires = ["setuptools >= 61.0.0", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "VETA"
+name = "veta"
 description = "Simple variant prediction evaluation"
 authors = [
     {name = "Pedro Barbosa", email = "psbpedrobarbosa@gmail.com"},

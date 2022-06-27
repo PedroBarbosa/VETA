@@ -1,4 +1,4 @@
-name: veta_test
+name: veta
 channels:
   - bioconda
   - conda-forge

@@ -243,7 +243,7 @@ class BenchmarkTools(Base):
                                         "33% of the dataset size. ROC analysis will be skipped for this tool.".format(tool, _location, scored.shape[0]))
                         
                         elif min(n_pos_pred, n_neg_pred) < 10:
-                            logging.info("Warm: No minimum number of predictions on each class (10) found. Skipping ROC analysis for {} tool in {} variant set".format(tool, _location))
+                            logging.info("Warn: No minimum number of predictions on each class (10) found. Skipping ROC analysis for {} tool in {} variant set".format(tool, _location))
                             
                         else:
                     
