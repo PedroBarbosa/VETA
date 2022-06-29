@@ -79,8 +79,8 @@ Benchmark mode refers to the comparison of tools when reference labels are known
 Multiple plots will be drawn and several tab-separated tables with performance statistics will be produced. Particularly, results will be generated both using reference thresholds (fixed thresholds) and variable thresholds (ROC curves):
 
 <p float="left">
-  <img src="src/config/example_imgs/benchmark_performance.png" height="350"/>
-  <img src="src/config/example_imgs/roc_curves.png" height="350"/>
+  <img src="src/config/example_imgs/benchmark_performance.png" height="300"/>
+  <img src="src/config/example_imgs/roc_curves.png" height="300"/>
 </p>
 
 By default, analysis of all variant types is performed, but that can be restricted by selecting which variant types you are interested in:
