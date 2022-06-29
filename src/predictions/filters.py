@@ -51,7 +51,6 @@ def update_thresholds(config_dict: defaultdict):
         ('CardioVAI', '>', 2, 'Protein'),
         ('PrimateAI', '>', 0.790, 'Protein'),
         ('VARITY', '>', 0.75, 'Protein'), # VARITY_R model
-        ('MISTIC', '>', 0.5, 'Protein'),
         ('ClinPred', '>', 0.5, 'Protein'),
         ('MutScore', '>', 0.5, 'Protein'), # Did not find in the paper, assumed 0.5
         ('MutFormer', '>', 0.5, 'Protein'), # Did not find in the paper, assumed 0.5
