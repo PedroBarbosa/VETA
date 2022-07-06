@@ -3,7 +3,6 @@ import hgvs.enums
 import hgvs.exceptions
 import numpy as np
 import pandas as pd
-from pyparsing import withAttribute
 
 
 CONSEQUENCES = {"missense_variant": ['coding', 'missense'],

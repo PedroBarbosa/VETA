@@ -194,7 +194,7 @@ class Metapredictions(object):
 
             assert self.rank_metric in _clf_performance.columns, "Ranking metric provided is not available."
 
-            out_metrics = os.path.join(self.out_dir, "metrics_{}_clf_along_best_tools".format(self.location))
+            out_metrics = os.path.join(self.out_dir, "metrics_{}_clf_along_best_tools.pdf".format(self.location))
             plot_metrics(merged, out_metrics, self.rank_metric)
 
             ##########################################

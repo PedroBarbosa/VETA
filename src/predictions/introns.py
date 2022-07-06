@@ -1,14 +1,8 @@
-from cmath import log
 import logging
-import sys
-from preprocessing import location
-
-from preprocessing.osutils import ensure_folder_exists
-
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
+import pandas as pd
 from collections import defaultdict
 from typing import List
-import pandas as pd
+from preprocessing.osutils import ensure_folder_exists
 from plots.plots_intronic_analysis import *
 from plots.plots_benchmark_mode import plot_allele_frequency, plot_unscored, plot_metrics, plot_curve
 from predictions import metrics

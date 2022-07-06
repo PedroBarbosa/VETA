@@ -1,13 +1,8 @@
 import logging
 import os
 import sys
-
 import pandas as pd
-
 from preprocessing.location import *
-
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
-
 
 def remove_clinvar_useless(df: pd.DataFrame):
     """

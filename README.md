@@ -26,7 +26,7 @@ VETA is a tool that analyses the performance of several variant prediction metho
     * [Machine learning analysis](#metapredictions)
     * [Introns](#introns)
     
-4. [Inspect mode](#inspect)
+4. [Interrogate mode](#interrogate)
 5. [Tool predictions](#scores_annotation)
     * [Tools supported by default](#default_tools)
     * [Manual config files](#manual_config)
@@ -177,7 +177,7 @@ This analysis can be enabled with the following flag:
 
 ```veta benchmark --do_intronic_analysis```
 
-<a name="inspect"></a>
+<a name="interrogate"></a>
 ## Running on the interrogate mode
 
 This mode allows to inspect tools predictions on a single VCF file, where labels are unknown. It is useful to look at candidate variants that most tools predict to be functionally relevant. 

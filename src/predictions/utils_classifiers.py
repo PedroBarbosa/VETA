@@ -1,6 +1,5 @@
 import logging
 from typing import Union
-
 import numpy as np
 from gplearn.genetic import SymbolicClassifier
 from sklearn import tree

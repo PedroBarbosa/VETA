@@ -1,5 +1,4 @@
 import argparse
-from curses import meta
 import logging
 import sys
 from importlib import resources

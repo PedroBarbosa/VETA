@@ -1,8 +1,6 @@
 import logging
 from collections import defaultdict
 from typing import List
-from matplotlib.pyplot import loglog
-
 import numpy as np
 
 from base import Base
@@ -165,7 +163,7 @@ class PredictionsEval(Base):
                                 inplace=True)
    
             ratios_df = self._fix_col_names(ratios_df)
-       
+
             _top_predicted_patho = ratios_df[ratios_df['Is pathogenic'] > 0.5]
             _top_predicted_benign = ratios_df[ratios_df['Is benign'] > 0.5]
             if _top_predicted_patho.shape[0] > 0:
@@ -296,5 +294,8 @@ class PredictionsEval(Base):
                 if ratios_df.columns[i] not in ['Is benign', 'Is pathogenic']:
                     ratios_df = ratios_df.rename(columns={ratios_df.columns[i]: "Unpredictable"})
 
+        if "Unpredictable" not in ratios_df.columns:
+            ratios_df['Unpredictable'] = 0.0
+            
         return ratios_df
 

@@ -1,4 +1,3 @@
-from cmath import log
 import fnmatch
 from collections import defaultdict
 from turtle import st
@@ -290,6 +289,7 @@ class BenchmarkTools(Base):
                 plot_metrics(stats_all_df, metrics_plot, self.metric)
 
                 for i, _roc_data in enumerate([roc_metrics_per_tool, pr_metrics_per_tool]):
+
                     if i == 0:
                         is_roc = True 
                         bname = "ROC_"

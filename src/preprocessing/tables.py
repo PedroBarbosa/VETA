@@ -2,7 +2,6 @@ import logging
 import os
 import sys
 import pandas as pd
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 from typing import List
 
 def generate_consequence_table(df: pd.DataFrame, out_dir:str):

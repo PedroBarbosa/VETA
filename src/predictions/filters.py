@@ -1,6 +1,5 @@
 from typing import List
 from collections import defaultdict
-import itertools
 import sys
 import logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')

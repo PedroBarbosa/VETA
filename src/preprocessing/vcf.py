@@ -9,7 +9,6 @@ import hgvs.parser
 import pandas as pd
 from cyvcf2 import VCF
 from tqdm import tqdm
-
 from preprocessing import osutils
 
 

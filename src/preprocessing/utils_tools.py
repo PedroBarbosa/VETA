@@ -1,9 +1,7 @@
 import logging
-import sys
 from typing import Union
 import numpy as np
 import pandas as pd
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 
 
 def ratio(a, b):
