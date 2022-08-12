@@ -6,7 +6,9 @@ import config
 from interrogate import PredictionsEval
 from benchmark import BenchmarkTools
 from preprocessing.osutils import print_clinvar_levels
+import importlib.metadata
 
+__version__ = importlib.metadata.version("veta")
 hgvs_logger = logging.getLogger('hgvs')
 hgvs_logger.setLevel(logging.CRITICAL)
 scikit_logger = logging.getLogger('sklearn')
@@ -26,6 +28,7 @@ def main():
 
     # Parent subparser. Note `add_help=False` and creation via `argparse.`
     parent_parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
     parent_parser.add_argument('-o', '--out_dir', metavar='', help='Path to store all the output results. '
                                                                    'Default: "out_VETA"')
 
@@ -76,17 +79,11 @@ def main():
                                'population. If it exists in the input data, additional '
                                'plots will be drawn. If absent, VETA will simply ignore it. '
                                'Default: "gnomADg_AF". Note: Missing data will be treated as '
-                               'if the variant is absent in population (converted to 0). '
-                               'For example, if ExAC frequencies are given, intronic variants '
-                               'will be given 0, but that does not mean that the variant does '
-                               'not exist in gnomAD, for example. In this case, '
-                               'it would be appropriate to just analyze the frequency plots of '
-                               'coding variants.')
+                               'if the variant is absent in population (converted to 0).')
 
     parent_parser.add_argument('--skip_heatmap', action="store_true",
                                help="Skip heatmap generation for performance analysis. "
-                               "If the dataset is large, this step takes quite a "
-                               "while. very long time.")
+                               "If the dataset is large, this step takes quite a while.")
 
     parent_parser.add_argument('--config', default=CONFIG_PATH,
                                help='Path to the config file that maps tools to the corresponding '

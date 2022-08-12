@@ -186,7 +186,6 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
         'coding', 'missense', 'splice_site', 'splice_region', 'intronic', 'deep_intronic']
 
     # Output dict initialization
-    bootstrap_output = []
     thresholds_to_return = {}
     for beta in beta_values:
         thresholds_to_return[beta] = {}

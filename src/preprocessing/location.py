@@ -127,11 +127,15 @@ ranges = [(0, 10, '1-10'),
           (501, 5000000, '500+')]
 
 
-def assign_intronic_bins(hgvs, hp, location, aggregate):
+def assign_intronic_bins(hgvs_exp, hp, location, aggregate):
     if location in {"splice_site", "splice_region", "deep_intronic", "intronic",
                     "5primeUTR", "3primeUTR", "noncodingRNA"}:
-        v = hp.parse_hgvs_variant(hgvs.split(" ")[0])
-        
+        try:
+            v = hp.parse_hgvs_variant(hgvs_exp.split(" ")[0])
+            
+        except hgvs.exceptions.HGVSParseError:
+            return pd.Series([np.nan, np.nan, np.nan]) 
+            
         _offset = v.posedit.pos.start.offset
         offset = abs(_offset)
         if offset <= 50:

@@ -9,7 +9,7 @@ authors = [
     {name = "Pedro Barbosa", email = "psbpedrobarbosa@gmail.com"},
 ]
 
-version = "0.6.2"
+version = "0.6.3"
 readme = "README.md"
 requires-python = "~=3.8"
 dependencies = [

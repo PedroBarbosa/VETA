@@ -106,8 +106,8 @@ class BenchmarkTools(Base):
 
         generate_consequence_table(self.df, self.out_dir)
 
-        self.top_tools, f1_at_ref_threshold = self.do_performance_comparison()
-
+        #self.top_tools, f1_at_ref_threshold = self.do_performance_comparison()
+        f1_at_ref_threshold = 0
         if self.do_intronic_analysis:
             thresholds = [tool for tool in self.thresholds if tool[3] != 'Protein']
 
@@ -145,9 +145,9 @@ class BenchmarkTools(Base):
         top_tools, f1_at_ref_threshold = {}, {}
         if self.is_clinvar:
             logging.info("Evaluations are done with Clinvar variants that belong "
-                         "to the filtering strategy employed ({}). If you want to "
-                         "be more permissive or stringent, play with the '--clinvar_stars' "
-                         "argument.".format(self.clinvar_stars))
+                         "to the filtering strategy employed ({}). Playing with '--clinvar_stars' "
+                         "argument allows using more permissive or restrictive variant sets.".format(self.clinvar_stars))
+            
             
         for var_type, _var_type_func in self.variant_types:
             outdir = os.path.join(self.out_dir, "tools_benchmark", var_type)

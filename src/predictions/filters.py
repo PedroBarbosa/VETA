@@ -61,8 +61,8 @@ def update_thresholds(config_dict: defaultdict):
         ('EVE', '>', 0.5, 'Protein'),
 
         ('CAPICE', '>', 0.02, 'Whole_genome'),
-        ('CADD', '>', 25.3, 'Whole_genome'),
-        ('CADDSplice', '>', 25.3, 'Whole_genome'),
+        ('CADD_v1.5', '>', 25.3, 'Whole_genome'),
+        ('CADD-Splice', '>', 25.3, 'Whole_genome'),
 
         ('DANN', '>', 0.9, 'Whole_genome'),
         ('GWAVA', '>', 0.5, 'Whole_genome'),
@@ -188,10 +188,14 @@ def subset_toolset_by_scope(threshold_list: List,
     if scopes is not None:
         _to_analyse = list(set(_to_analyse).intersection(scopes))
 
-    try:
-        return [tool for tool in threshold_list if tool[3] in _to_analyse]
-    except IndexError:
-        raise IndexError('Scope is missing in the config file for some custom provided tool')
+    out = []
+    for tool in threshold_list:
+        try:
+            if tool[3] in _to_analyse:
+                out.append(tool)
+        except IndexError:
+            raise IndexError('Scope is missing in the config file for {} tool'.format(tool))
+    return out
 
 
 filters_var_type = [

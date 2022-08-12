@@ -13,8 +13,9 @@ VETA is a tool that analyses the performance of several variant prediction metho
   * 3) Evaluate prediction scores on a new VCF taking into account the reference thresholds described in literature. It will highlight top candidate variants that most of methods predict to be pathogenic.
   * 4) Apply machine learning to combine scores and improve predictions on a labeled dataset. It is useful to see which features (prediciton tools) are most important for the task, thus potentially informing which tools are relevant (and how many are sufficient) to predict variant effects in a clinical setting.
   
-**What VETA is not:**
-   * VCF annotator. For that you have [VEP](https://www.ensembl.org/info/docs/tools/vep/index.html), [vcfanno](https://github.com/brentp/vcfanno) or [bcftools annotate](http://samtools.github.io/bcftools/bcftools.html). 
+**What VETA does not do:**
+   * It does not run any model/prediction tool within the package. 
+   * It does not annotate VCFs. For that you have [VEP](https://www.ensembl.org/info/docs/tools/vep/index.html), [vcfanno](https://github.com/brentp/vcfanno) or [bcftools annotate](http://samtools.github.io/bcftools/bcftools.html). 
 
 # Table of Contents
 1. [Installation](#installation)
@@ -245,8 +246,8 @@ List of tools available (more will be continuosly added)
 |                                 | ReMM              | > 0.984              | Yes                       | vcfanno       |
 |				                          | FunSeq2	          | > 1.5		             | Yes		                   | vcfanno       |
 |				                          | CAPICE	          | > 0.02               | Yes		                   | vcfanno       |
-| Fitness measurement             | CADD              | > 25.3               | Yes                       | vcfanno       |
-|                                 | CADDSplice        | > 25.3               | Yes                       | vcfanno       |
+| Fitness measurement             | CADD_v1.5         | > 25.3               | Yes                       | vcfanno       |
+|                                 | CADD-Splice       | > 25.3               | Yes                       | vcfanno       |
 |                                 | DANN              | > 0.9                | Yes                       | vcfanno       |
 |                                 | fitCons           | > 0.4                | No                        | vcfanno       |
 |                                 | LINSIGHT          | > 0.4                | Yes                       | vcfanno       |

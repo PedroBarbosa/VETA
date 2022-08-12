@@ -68,7 +68,7 @@ def do_intron_analysis(df: pd.DataFrame,
             _df_loc = df_i.copy(deep=True)
         elif _class in loc_in_protein_coding:
             if pc_is_done is False:
-                _class = "protein_coding_regions"
+                _class = "outside_UTRs"
                 _df_loc = df_i[df_i.location.isin(loc_in_protein_coding)].copy(deep=True)
                 pc_is_done = True
             else:
@@ -76,7 +76,7 @@ def do_intron_analysis(df: pd.DataFrame,
         else:
             _df_loc = df_i[df_i.location == _class].copy(deep=True)
         
-        if _class != "protein_coding_regions":
+        if _class != "outside_UTRs":
             continue
         
         print("\n\n\n")
@@ -100,7 +100,7 @@ def do_intron_analysis(df: pd.DataFrame,
             logging.info("Problem plotting info about intronic bins. Skipping.")
 
         for _bin, _filter_func in filter_intronic_bins:
-            if "all_except" in _bin or _bin == "all_intronic":
+            if "all_except" in _bin:
                 continue
             
             if _bin in bin_to_exclude:
@@ -131,17 +131,19 @@ def do_intron_analysis(df: pd.DataFrame,
                             "than minimum required (N=10) for ROC analysis.".format(min(n_pos, n_neg)))
                 skip_roc = True
                     
-            list_df_metrics_per_tool, roc_metrics_per_tool, pr_metrics_per_tool, general_metrics_per_tool = [], [], [], []
+            roc_metrics_per_tool, pr_metrics_per_tool = [], []
             statistics = defaultdict(list)
             stats_df = ""
-            
-            for tool, direction, threshold, *args in thresholds:
+            print(thresholds)
+            for tool, direction, _, *args in thresholds:
 
                 try:
                     _no_null_df = _df_i_bin.loc[pd.notnull(_df_i_bin[tool + "_prediction"]), ].copy()
                 except KeyError:
                     na[tool] = 1
-
+                print(tool)
+                print(_no_null_df.shape)
+                print("\n")
                 statistics = metrics.generate_statistics(_df_i_bin, statistics, _bin, tool)
                 stats_df = pd.DataFrame(statistics)
 
@@ -167,12 +169,14 @@ def do_intron_analysis(df: pd.DataFrame,
 
                         try:
                             roc_curve, pr_curve, roc_auc, ap_score = metrics.do_roc_analysis(df_tool[[tool, 'label']],
-                                                                                            tool)
+                                                                                            tool,
+                                                                                            higher_is_better=direction == ">")
                             roc_metrics_per_tool.append([tool, float(na[tool]), roc_curve[0], roc_curve[1],
                                                         roc_curve[2], roc_curve[3], roc_auc])
                             pr_metrics_per_tool.append([tool, float(na[tool]), pr_curve[0], pr_curve[1],
                                                         pr_curve[2], pr_curve[3], ap_score])
-                        # S-cap
+                        
+                        # S-CAP
                         except TypeError:
                             pass
 

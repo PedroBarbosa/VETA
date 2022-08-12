@@ -109,7 +109,7 @@ class Base(object):
         self.thresholds = update_thresholds(tools_config)
         self.thresholds = subset_toolset_by_scope(self.thresholds, scopes_to_predict)
         self.available_tools = [t[0] for t in self.thresholds]
-
+    
         # TODO change global thresholds list to remove excess of fields when custom models are provided
         self.tools_config = {k: v for k, v in tools_config.items() if k in self.available_tools}
         self.variant_types = subset_variants_by_type(types_of_variant)
@@ -182,8 +182,9 @@ class Base(object):
                                                 is_clinvar=self.is_clinvar,
                                                 af_col=self.allele_frequency_col)
 
-        # Remove tool from config if corresponding field is absent from at least one of the VCFs
+        # Remove tool from config and thresholds if corresponding field is absent from at least one of the VCFs
         self.tools_config = {k: v for k, v in self.tools_config.items() if k not in fields_missing_in_vcf}
+        self.thresholds = [x for x in self.thresholds if x[0] not in fields_missing_in_vcf]
 
         if self.is_clinvar:
             df = df.dropna(subset=["CLNSIG", "CLNREVSTAT"])
@@ -402,7 +403,7 @@ class Base(object):
                                  "EVE", "EVE_class20", "EVE_class50","EVE_class90",                             
                                  "CardioBoost", "CardioVAI",
                                  "fitCons", "LINSIGHT", "ReMM", "GWAVA", "FATHMM-MKL",
-                                 "Eigen", "FunSeq2", "CADD", "CADDSplice", "DANN", "CAPICE",
+                                 "Eigen", "FunSeq2", "CADD_v1.5", "CADD-Splice", "DANN", "CAPICE",
                                  "HAL", "SPIDEX", "dbscSNV", "MaxEntScan", "SpliceAI", "S-CAP", "ConSpliceML",
                                  "TraP", "MMSplice", "SQUIRLS", "IntSplice2", "kipoiSplice4", "kipoiSplice4_cons"]
 
