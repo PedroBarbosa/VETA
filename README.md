@@ -262,8 +262,11 @@ List of tools available (more will be continuosly added)
 |                                 | kipoiSplice4      | > 0.5                | Yes                       | kipoi         |
 |                                 | kipoiSplice4_cons | > 0.5                | Yes                       | kipoi         |
 |                                 | ConSpliceML       | > 0.5                | Yes                       | vcfanno       |
-|                                 | SQUIRLS           | > 0.5                | Yes                       | vcfanno       |
 |                                 | IntSplice2        | > 0.5                | Yes                       | vcfanno       |
+|                                 | SQUIRLS           | > 0.5                |                           | model_inference |
+|                                 | CI-SpliceAI       | > 0.190              | No                        | model_inference |
+|                                 | Pangolin          | \|splicing_diff\| > 0.2 | No                     | model_inference |
+|                                 | SPiP              | > 50                 | Yes                       | model_inference |
 <a name="manual_config"></a>
 #### Manual config file
 
@@ -291,13 +294,14 @@ Note: If multiple VCF fields refer to the same tool (e.g. dbscSNV), a comma must
 * `top_min` - Same as `top_max`, but selects the minimum value (tools such as Provean and FATHMM use this function)
 * `top_min_abs` - Selects the minimum value after converting predictions into absolute values. `0.2&-0.65&0.5&.&.` selects 0.2.
 * `categorical_to_numeric` - Converts categorical predictions (`Pathogenic`, `Likely_benign`) into floats to be evaluated using a reference threshold of `0.5`. For example, cVEP reports predictions this way. With such tools ROC curves or threshold analysis are not performed.
-* `spliceai` - Selects top score from a spliceAI prediction in their original format `G|KCNA5|0.90|0.2|0.00|0.01|-23|32|-1|4`. Selects 0.9.
+* `spliceai` - Selects top score from a SpliceAI prediction in their original format `G|KCNA5|0.90|0.2|0.00|0.01|-23|32|-1|4`. Selects 0.9. Also works for CI-SpliceAI tool.
 * `kipoi_like` - Selects top prediction from kipoi. For example, an MMSplice prediction can include negative dPSI changes. Thus, this function selects top absolute prediction. In a prediction like `-4.01,3.01,-0.1`, 4.01 is selected.
 * `carol_like` - Process Condel and CAROL scores so that a numeric prediction is returned. This method is designed to process protein predictions made by some plugins in VEP, where an outcome category is added to the score. Example: `deleterious(1.000)` returns 1.000.
 * `trap` - Process TraP scores (numeric fields) so that different reference thresholds based on the variant location are taken into account. 
 * `scap` - Process S-CAP scores to select top prediction. Example: `1:5core:.:.:0.6556:0.3391:0.9711:0.0` returns 0.9711.
-* `conspliceml`- Process ConspliceML predictions to numeric scores.
-
+* `conspliceml`- Process ConSpliceML predictions (`PCDH15|0.295`)into numeric scores.
+* `pangolin` - Process Pangolin predictions into numeric scores. Example: `ENSG00000150275.20_17|-167:0.15|1:-0.86|Warnings:` returns 0.86.
+* `spip` - Process SPiP predictions into numeric scores. Example: `T|NM_001143979:g.15802946:G>T|NTR|57.01 % [53.5 % - 61.92 %]| 0.58|+|15802946|substitution|G>T|Intron 9| 27330|NM_001143979|NDE1|donor| 12229|DeepIntron|0.00000|Outside SPiCE Interpretation|` returns 0.58.
     
 <a name="heatmaps"></a>
 ### Heatmaps

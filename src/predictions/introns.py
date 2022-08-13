@@ -36,9 +36,9 @@ def do_intron_analysis(df: pd.DataFrame,
     logging.info("-------------------------")
     logging.info("Intronic analysis started")
     logging.info("-------------------------")
-    assert "intron_bin" in df.columns, "Intronic bins not in the data. " \
+    assert "intron_bin" in df.columns, "Intronic bins are not present in the data." \
                                        "Probably a first run of Clinvar " \
-                                       "was performed without --intronic-bins " \
+                                       "was performed without --do_intronic_analysis " \
                                        "args. To fix, just remove the 'tsv' in " \
                                        "the input directory and try again."
 
@@ -59,8 +59,8 @@ def do_intron_analysis(df: pd.DataFrame,
     loc_in_protein_coding = ['splice_site', 'splice_region', 'intronic', 'deep_intronic']
     pc_is_done = False
     bin_to_exclude = ['1-2', '3-10'] if aggregate_classes else ['1-10']
-    locations = df_i.location.unique().tolist()
-    locations.append('all')
+    locations = sorted(df_i.location.unique().tolist())
+    locations.insert(0, 'all')
 
     for _class in locations:
     
@@ -68,7 +68,7 @@ def do_intron_analysis(df: pd.DataFrame,
             _df_loc = df_i.copy(deep=True)
         elif _class in loc_in_protein_coding:
             if pc_is_done is False:
-                _class = "outside_UTRs"
+                _class = "no_UTRs"
                 _df_loc = df_i[df_i.location.isin(loc_in_protein_coding)].copy(deep=True)
                 pc_is_done = True
             else:
@@ -76,12 +76,9 @@ def do_intron_analysis(df: pd.DataFrame,
         else:
             _df_loc = df_i[df_i.location == _class].copy(deep=True)
         
-        if _class != "outside_UTRs":
-            continue
-        
-        print("\n\n\n")
+        print("\n")
         logging.info("--------------")
-        logging.info("Looking at {} variants".format(_class))
+        logging.info("Looking at {} intronic variants".format(_class))
         logging.info("--------------")    
         print()
         if _df_loc.empty:
@@ -134,16 +131,14 @@ def do_intron_analysis(df: pd.DataFrame,
             roc_metrics_per_tool, pr_metrics_per_tool = [], []
             statistics = defaultdict(list)
             stats_df = ""
-            print(thresholds)
+
             for tool, direction, _, *args in thresholds:
 
                 try:
                     _no_null_df = _df_i_bin.loc[pd.notnull(_df_i_bin[tool + "_prediction"]), ].copy()
                 except KeyError:
                     na[tool] = 1
-                print(tool)
-                print(_no_null_df.shape)
-                print("\n")
+
                 statistics = metrics.generate_statistics(_df_i_bin, statistics, _bin, tool)
                 stats_df = pd.DataFrame(statistics)
 
@@ -179,7 +174,6 @@ def do_intron_analysis(df: pd.DataFrame,
                         # S-CAP
                         except TypeError:
                             pass
-
 
                 f1_score = stats_df.loc[stats_df['tool'] == tool, 'F1'].iloc[0]
                 weighted_f1_score = stats_df.loc[stats_df['tool'] == tool, 'weighted_F1'].iloc[0]

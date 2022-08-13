@@ -258,7 +258,9 @@ class Base(object):
                                'spliceai': [process_spliceai, None, None],
                                'trap': [process_trap, None, None],
                                'scap': [process_scap, None, None],
-                               'conspliceml': [process_conspliceml, None, None]
+                               'conspliceml': [process_conspliceml, None, None],
+                               'pangolin': [process_pangolin, None, None],
+                               'spip': [process_spip, None, None]
                                }
 
         logging.info("Engineering the scores.")
@@ -326,7 +328,10 @@ class Base(object):
             "SpliceAI": available_functions['spliceai'],
             "SQUIRLS": available_functions['to_numeric'],
             "ConSpliceML": available_functions['conspliceml'],
-            "IntSplice2": available_functions['to_numeric']
+            "IntSplice2": available_functions['to_numeric'],
+            "CI-SpliceAI": available_functions['spliceai'],
+            "Pangolin": available_functions['pangolin'],
+            "SPiP": available_functions['spip']
         }
 
         _functions_that_require_loc = ["process_trap"]
@@ -360,7 +365,12 @@ class Base(object):
                     df[_tool] = df[[_tool] + ['location']].apply(_f, axis=1)
 
                 elif _f.__name__ in _functions_that_require_symbol:
-                    df[_tool] = df[[_tool] + ['SYMBOL']].apply(_f, axis=1)
+                    
+                    # If CI-SpliceAI
+                    if _f.__name__ == "process_spliceai" and _tool != "SpliceAI":
+                        df[_tool] = df[[_tool] + ['SYMBOL']].apply(_f, check_gene_name=False, axis=1)
+                    else:
+                        df[_tool] = df[[_tool] + ['SYMBOL']].apply(_f, axis=1)
                     
                 # apply single function to
                 # the target columns
@@ -373,7 +383,6 @@ class Base(object):
                     else:
                         df[_tool] = df[_tool].apply(_f, is_max=is_max,
                                                     absolute=is_absolute)
-                    
         return df
 
     def _parse_tools_config(self, config):
@@ -405,12 +414,14 @@ class Base(object):
                                  "fitCons", "LINSIGHT", "ReMM", "GWAVA", "FATHMM-MKL",
                                  "Eigen", "FunSeq2", "CADD_v1.5", "CADD-Splice", "DANN", "CAPICE",
                                  "HAL", "SPIDEX", "dbscSNV", "MaxEntScan", "SpliceAI", "S-CAP", "ConSpliceML",
-                                 "TraP", "MMSplice", "SQUIRLS", "IntSplice2", "kipoiSplice4", "kipoiSplice4_cons"]
+                                 "TraP", "MMSplice", "SQUIRLS", "IntSplice2", "kipoiSplice4", "kipoiSplice4_cons",
+                                 "CI-SpliceAI", "Pangolin", "SPiP"]
 
         AVAILABLE_SCOPES = ["Protein", "Conservation", "Whole_genome", "Splicing"]
         AVAILABLE_FUNCTIONS = ['to_numeric', 'top_max', 'top_min', 'top_min_abs',
                                'categorical_to_numeric', 'kipoi_like', 'carol_like', 
-                               'trap', 'scap', 'conspliceml', 'spliceai']
+                               'trap', 'scap', 'conspliceml', 'spliceai', 'ci_spliceai',
+                               'pangolin']
 
         data = defaultdict(list)
         if isinstance(config, str):

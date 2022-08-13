@@ -337,9 +337,9 @@ def format_spliceai_fields(record, symbol: str):
     return '|'.join(map(str, [x for x in fields]))
 
 
-def process_spliceai(preds: pd.Series):
+def process_spliceai(preds: pd.Series, check_gene_name: bool = True):
     """
-    Processes a list of SpliceAI
+    Processes a list of SpliceAI/CI-SpliceAI
     predictions (SNV or Indel)
     and returns the top scored field.
 
@@ -352,22 +352,33 @@ def process_spliceai(preds: pd.Series):
     SNV or Indel (One of them will always
     be None) and the location of the variant
 
+    :param bool check_gene_name: Retrieve SpliceAI prediction
+    on the same gene assigned in the VEP SYMBOL field. Does not
+    work for CI-SpliceAI, that outputs gene IDs.
+    
     :return float: Top prediction
     """
-    
-    if all(v is None or v == "." for v in preds.SpliceAI):
+    tool = "SpliceAI" if check_gene_name else "CI-SpliceAI"
+    if all(v is None or v == "." for v in preds[tool]):
         return np.nan
   
     # Iterate over SNVs and Indels:
-    for _p in preds.SpliceAI:
+    _max = 0
+    for _p in preds[tool]:
 
         if _p is not None and _p != ".":
             
             for ind_pred in _p.split(","):
-            
-                if ind_pred.split("|")[1] == preds.SYMBOL:
-                    return max(map(float, ind_pred.split("|")[2:6]))
                 
+                if check_gene_name:
+                    if ind_pred.split("|")[1] == preds.SYMBOL:
+                        return max(map(float, ind_pred.split("|")[2:6]))
+                else:
+                    _new_max = max(map(float, ind_pred.split("|")[2:6]))
+                    if _new_max > _max:
+                        _max = _new_max
+                        
+            return _max
     return np.nan
 
 def process_conspliceml(preds: pd.Series):
@@ -378,12 +389,11 @@ def process_conspliceml(preds: pd.Series):
     
     :return float: Prediction value
     """
-  
-    assert len(preds.ConSpliceML) == 1, "Multiple VCF fields were provided in the config for ConSpliceML"
+    assert len(preds.ConSpliceML) == 1, "Multiple VCF fields were provided in the config for ConSpliceML."
     
     if all(v is None or v == "." for v in preds.ConSpliceML):
         return np.nan
-    
+
     _preds = preds.ConSpliceML[0].split(",")
     for _p in _preds:
         if _p.split("|")[0] == preds.SYMBOL:
@@ -391,6 +401,58 @@ def process_conspliceml(preds: pd.Series):
 
     return np.nan
 
+def process_pangolin(preds: list):
+    """
+    Process Pangolin scores so that the 
+    maximum change in splice site usage 
+    is returned (as a positive number)
+    
+    :param list preds: List with the
+    Pangolin predictions for the given variant
+    
+    :return float: Prediction value to be evaluated
+    """
+    assert len(preds) == 1, "Multiple VCF fields were provided in the config for Pangolin."
+    
+    if all(v is None or v == "." for v in preds):
+        return np.nan
+    
+    _preds = preds[0].split(",")
+    _max = 0
+    for _p in _preds:
+        s_increase = abs(float(_p.split("|")[1].split(":")[1]))
+        s_decrease = abs(float(_p.split("|")[2].split(":")[1]))
+        new_max = abs(max(s_increase, s_decrease))
+        if new_max > _max:
+            _max = new_max
+
+    return _max
+
+def process_spip(preds: list):
+    """
+    Process SPiP scores so that the 
+    the risk of the variant impacting
+    splicing is returned
+    
+    :param list preds: List with the
+    SPiP predictions for the given variant
+    
+    :return float: Prediction value to be evaluated
+    """
+    assert len(preds) == 1, "Multiple VCF fields were provided in the config for SPiP."
+        
+    if all(v is None or v == "." for v in preds):
+        return np.nan
+    
+    _preds = preds[0].split(",")
+    _max = 0
+    for _p in _preds:
+        # T|NM_001142771:g.55626401:G>A|Alter by SPiCE|98.41 % [91.47 % - 99.96 %]|1.000|-|55626401|substitution|G>A|Intron 28| ...
+        #ci = float(_p.split("|")[3].split()[0])
+        score = float(_p.split("|")[4])
+        if score > _max:
+            _max = score
+    return _max
     
 def process_scap(preds: pd.Series):
     """

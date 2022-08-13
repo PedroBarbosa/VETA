@@ -63,3 +63,6 @@ TraP	TraP
 ConSpliceML	ConSpliceML
 MMSplice	mmsplice_deltaPSI
 kipoiSplice4	kipoisplice_4
+CI-SpliceAI	CI-SpliceAI
+Pangolin    Pangolin
+SPiP	SPiP

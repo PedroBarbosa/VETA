@@ -107,7 +107,10 @@ def update_thresholds(config_dict: defaultdict):
         # (negative entropy value).
         ('MaxEntScan', '>', 3, 'Splicing'),
         ('SQUIRLS', '>', 0.5, 'Splicing'),
-        ('IntSplice2', '>', 0.5, 'Splicing')
+        ('IntSplice2', '>', 0.5, 'Splicing'),
+        ('CI-SpliceAI', '>', 0.190, 'Splicing'),
+        ('Pangolin', '>', 0.2, 'Splicing'),
+        ('SPiP', '>', 0.5, 'Splicing')
     ]
 
     DEFAULT_TOOLS = [t[0] for t in _default_list]
