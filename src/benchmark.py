@@ -164,8 +164,12 @@ class BenchmarkTools(Base):
                 continue
             
             for _location in self.location_filters:
-
-                df = _df_v[_df_v.location == _location].copy()
+                
+                if _location == "all":
+                    df = _df_v.copy()
+                else:
+                    df = _df_v[_df_v.location == _location].copy()
+                    
                 if df.empty:
                     continue
                 

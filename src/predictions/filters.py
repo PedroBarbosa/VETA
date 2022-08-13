@@ -154,6 +154,7 @@ def _extract_possible_filters(aggregate: bool):
     idx = 0 if aggregate else 1
     all_locs = list(set([x[idx] for x in CONSEQUENCES.values()]))
     all_locs.append('deep_intronic')
+    all_locs.insert(0, 'all')
     return all_locs
 
 def subset_variants_by_type(types_to_analyse: List = None):

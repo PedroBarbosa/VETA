@@ -266,7 +266,7 @@ List of tools available (more will be continuosly added)
 |                                 | SQUIRLS           | > 0.5                |                           | model_inference |
 |                                 | CI-SpliceAI       | > 0.190              | No                        | model_inference |
 |                                 | Pangolin          | \|splicing_diff\| > 0.2 | No                     | model_inference |
-|                                 | SPiP              | > 50                 | Yes                       | model_inference |
+|                                 | SPiP              | > 0.5                | Yes                       | model_inference |
 <a name="manual_config"></a>
 #### Manual config file
 
@@ -301,7 +301,7 @@ Note: If multiple VCF fields refer to the same tool (e.g. dbscSNV), a comma must
 * `scap` - Process S-CAP scores to select top prediction. Example: `1:5core:.:.:0.6556:0.3391:0.9711:0.0` returns 0.9711.
 * `conspliceml`- Process ConSpliceML predictions (`PCDH15|0.295`)into numeric scores.
 * `pangolin` - Process Pangolin predictions into numeric scores. Example: `ENSG00000150275.20_17|-167:0.15|1:-0.86|Warnings:` returns 0.86.
-* `spip` - Process SPiP predictions into numeric scores. Example: `T|NM_001143979:g.15802946:G>T|NTR|57.01 % [53.5 % - 61.92 %]| 0.58|+|15802946|substitution|G>T|Intron 9| 27330|NM_001143979|NDE1|donor| 12229|DeepIntron|0.00000|Outside SPiCE Interpretation|` returns 0.58.
+* `spip` - Process SPiP predictions into numeric scores. Example: `T|NM_001143979:g.15802946:G>T|NTR|57.01 % [53.5 % - 61.92 %]| 0.58|+|15802946|substitution|G>T|Intron 9| 27330|NM_001143979|NDE1|donor| 12229|DeepIntron|0.00000|Outside SPiCE Interpretation|.....` returns 0.58.
     
 <a name="heatmaps"></a>
 ### Heatmaps
