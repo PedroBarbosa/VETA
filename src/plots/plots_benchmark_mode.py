@@ -513,66 +513,69 @@ def plot_curve(data: list,
     """
     os.makedirs(os.path.dirname(fname), exist_ok=True)
     sns.set_style("white")
+
+    data = [x for x in data if len(x) > 0]
     
-    if is_roc:
-        colnames = ['tool', 'fraction_nan', 'label', 'thresholds', 'True Positive Rate (TPR)',
-                    'False Positive Rate (FPR)', 'roc_auc']
-        to_explode = ['thresholds', 'True Positive Rate (TPR)', 'False Positive Rate (FPR)']
-    else:
-        colnames = ['tool', 'fraction_nan', 'label', 'thresholds', 'Recall', 'Precision', 'ap_score']
-        to_explode = ['thresholds', 'Recall', 'Precision']
+    if data:
+        if is_roc:
+            colnames = ['tool', 'fraction_nan', 'label', 'thresholds', 'True Positive Rate (TPR)',
+                        'False Positive Rate (FPR)', 'roc_auc']
+            to_explode = ['thresholds', 'True Positive Rate (TPR)', 'False Positive Rate (FPR)']
+        else:
+            colnames = ['tool', 'fraction_nan', 'label', 'thresholds', 'Recall', 'Precision', 'ap_score']
+            to_explode = ['thresholds', 'Recall', 'Precision']
 
-    df_metrics = pd.DataFrame.from_records(data, columns=colnames)
-    df_metrics = df_metrics[df_metrics.thresholds.notna()]
-    df_metrics = df_metrics.explode(to_explode).reset_index()
+        df_metrics = pd.DataFrame.from_records(data, columns=colnames)
+        df_metrics = df_metrics[df_metrics.thresholds.notna()]
+        df_metrics = df_metrics.explode(to_explode).reset_index()
 
-    if is_roc:
-        df_metrics['True Positive Rate (TPR)'] = pd.to_numeric(df_metrics['True Positive Rate (TPR)'])
-        df_metrics['False Positive Rate (FPR)'] = pd.to_numeric(df_metrics['False Positive Rate (FPR)'])
-        df_metrics["tool_with_roc_auc"] = df_metrics["label"] + " auROC=" + \
-                                          df_metrics["roc_auc"].round(2).map(str) + ")"
-        hue = "tool_with_roc_auc"
-        x = "False Positive Rate (FPR)"
-        y = "True Positive Rate (TPR)"
-        df_metrics = df_metrics.sort_values('roc_auc', ascending=False)
-    else:
-        df_metrics['Recall'] = pd.to_numeric(df_metrics['Recall'])
-        df_metrics['Precision'] = pd.to_numeric(df_metrics['Precision'])
-        df_metrics["tool_with_ap_score"] = df_metrics["label"] + " AP=" + \
-                                           df_metrics["ap_score"].round(2).map(str) + ")"
-        hue = "tool_with_ap_score"
-        x = "Recall"
-        y = "Precision"
-        df_metrics = df_metrics.sort_values('ap_score', ascending=False)
+        if is_roc:
+            df_metrics['True Positive Rate (TPR)'] = pd.to_numeric(df_metrics['True Positive Rate (TPR)'])
+            df_metrics['False Positive Rate (FPR)'] = pd.to_numeric(df_metrics['False Positive Rate (FPR)'])
+            df_metrics["tool_with_roc_auc"] = df_metrics["label"] + " auROC=" + \
+                                            df_metrics["roc_auc"].round(2).map(str) + ")"
+            hue = "tool_with_roc_auc"
+            x = "False Positive Rate (FPR)"
+            y = "True Positive Rate (TPR)"
+            df_metrics = df_metrics.sort_values('roc_auc', ascending=False)
+        else:
+            df_metrics['Recall'] = pd.to_numeric(df_metrics['Recall'])
+            df_metrics['Precision'] = pd.to_numeric(df_metrics['Precision'])
+            df_metrics["tool_with_ap_score"] = df_metrics["label"] + " AP=" + \
+                                            df_metrics["ap_score"].round(2).map(str) + ")"
+            hue = "tool_with_ap_score"
+            x = "Recall"
+            y = "Precision"
+            df_metrics = df_metrics.sort_values('ap_score', ascending=False)
 
-    df_metrics = df_metrics[df_metrics['fraction_nan'] <= min_score_fraction]
+        df_metrics = df_metrics[df_metrics['fraction_nan'] <= min_score_fraction]
 
-    # Since S-CAP has several different reference
-    # threshold, S-CAP is removed from these analyses
-    df_metrics = df_metrics[~df_metrics.tool.str.contains("S-CAP")]
+        # Since S-CAP has several different reference
+        # threshold, S-CAP is removed from these analyses
+        df_metrics = df_metrics[~df_metrics.tool.str.contains("S-CAP")]
 
-    # If many tools to plot, change color pallette
-    if df_metrics.tool.unique().size > 12:
-        sns.set(rc={'figure.figsize':(8, 6)})
-        sns.set_palette(sns.mpl_palette("magma", df_metrics.tool.unique().size))
-        fontsize="xx-small"
-    else:
-        sns.set(rc={'figure.figsize':(8, 6)})
-        sns.set_palette(sns.color_palette("Paired"))
-        fontsize="medium"
-        
-    ax = sns.lineplot(x=x, y=y,
-                      data=df_metrics,
-                      hue=hue)
-    ax.set_aspect(1)
+        # If many tools to plot, change color pallette
+        if df_metrics.tool.unique().size > 12:
+            sns.set(rc={'figure.figsize':(8, 6)})
+            sns.set_palette(sns.mpl_palette("magma", df_metrics.tool.unique().size))
+            fontsize="xx-small"
+        else:
+            sns.set(rc={'figure.figsize':(8, 6)})
+            sns.set_palette(sns.color_palette("Paired"))
+            fontsize="medium"
+            
+        ax = sns.lineplot(x=x, y=y,
+                        data=df_metrics,
+                        hue=hue)
+        ax.set_aspect(1)
 
-    plt.title("N pos = {}; N neg = {}".format(class_counts[0], class_counts[1]))
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., frameon=False, fontsize=fontsize)
-    plt.ylim(0, 1.05)
-    plt.tight_layout()
-    plt.savefig(fname, bbox_inches='tight')
-    plt.close()
-    sns.reset_defaults()
+        plt.title("N pos = {}; N neg = {}".format(class_counts[0], class_counts[1]))
+        plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., frameon=False, fontsize=fontsize)
+        plt.ylim(0, 1.05)
+        plt.tight_layout()
+        plt.savefig(fname, bbox_inches='tight')
+        plt.close()
+        sns.reset_defaults()
 
 
 ###############################

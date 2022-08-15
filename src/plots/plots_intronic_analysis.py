@@ -49,6 +49,8 @@ def plot_general_bin_info(_df: pd.DataFrame,
                                         "Pathogenic": "chocolate"
                                         }
                             )
+            for container in ax.containers:
+                ax.bar_label(container)
             ax.get_legend().set_title('')
 
         plt.xlabel("Intron base-pair bins")
@@ -151,7 +153,7 @@ def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
         a = sns.diverging_palette(250, 30, l=65, n=n_tools, center="dark")
         fontsize="small"
     else:
-        a = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=False, n_colors=n_tools)
+        a = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=False, reverse=True, n_colors=n_tools)
         fontsize="medium"
 
     n_tools = df.tool.unique().size 

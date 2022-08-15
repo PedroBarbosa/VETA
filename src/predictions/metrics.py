@@ -53,9 +53,9 @@ def generate_statistics(df: pd.DataFrame,
         accuracy = ratio(correct, (total - nan))
         
         #mcc = ((tp * tn) - (fp * fn)) / (sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)))
-        mcc = round(matthews_corrcoef(s_df.label.astype(int), s_df[tool + '_prediction'].astype(int)), 2)
+        mcc = round(matthews_corrcoef(s_df.label.astype(int), s_df[tool + '_prediction'].astype(int)), 3)
         normalized_mcc = (mcc + 1) / 2
-        weighted_norm_mcc = round(normalized_mcc * coverage, 2)
+        weighted_norm_mcc = round(normalized_mcc * coverage, 3)
         
         statistics['precision'].append(precision)
         statistics['specificity'].append(ratio(tn, tn + fp))
@@ -77,10 +77,10 @@ def generate_statistics(df: pd.DataFrame,
 
         try:
             statistics['F1'].append(round(2 * (precision * recall) /
-                                          (precision + recall), 2))
+                                          (precision + recall), 3))
 
             statistics['weighted_F1'].append(round((2 * (precision * recall) /
-                                                    (precision + recall)) * coverage, 2))
+                                                    (precision + recall)) * coverage, 3))
 
         except ZeroDivisionError:
             statistics['F1'].append(0)
@@ -108,7 +108,7 @@ def generate_statistics(df: pd.DataFrame,
         accuracy = ratio(correct, (total - nan))
         coverage = ratio((total - nan), total)
 
-    weighted_accuracy = round(accuracy * coverage, 2) 
+    weighted_accuracy = round(accuracy * coverage, 3) 
     statistics['total'].append(total)
     statistics['correct'].append(correct)
     statistics['nan'].append(nan)
