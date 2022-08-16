@@ -18,6 +18,74 @@ from predictions import metrics
 from predictions.apply import apply_tool_predictions
 
 
+def donor_vs_acceptor(df: pd.DataFrame, 
+                      thresholds: list,
+                      metric: str,
+                      var_class: str,
+                      out_dir: str):
+    
+    logging.info('Comparing performance between donor and acceptor-related variants')
+    stats_d, stats_a = defaultdict(list), defaultdict(list)
+    out_file = os.path.join(out_dir, 'donor_vs_acceptor_{}.pdf'.format(var_class))
+    
+    do_donor, do_acceptor = True, True
+    donor = df[df.which_ss == "donor"]
+    acceptor = df[df.which_ss == "acceptor"]
+
+    if all(x.shape[0] < 20 for x in [donor, acceptor]):
+        logging.info('Not enough intronic variants (N < 30) assigned as donor or acceptor-associated (< 50bp from splice site). Skipping.')
+        return
+
+    elif donor.shape[0] < 20:
+        do_donor = False
+        logging.info('Not enough donor-associated variants (N = {}). Only acceptor-related variants will be analyzed.'.format(donor.shape[0]))
+    
+    elif acceptor.shape[0] < 20:
+        do_acceptor = False
+        logging.info('Not enough donor-associated variants (N = {}). Only acceptor-related variants will be analyzed.'.format(acceptor.shape[0]))
+        
+    for tool, _, _, _ in thresholds:
+        if do_donor:
+            stats_d = metrics.generate_statistics(donor, stats_d, "all", tool)
+        
+        if do_acceptor:
+            stats_a = metrics.generate_statistics(acceptor, stats_a, "all", tool)
+
+    stats_donor = pd.DataFrame(stats_d)
+    stats_acceptor = pd.DataFrame(stats_a)
+
+    if all(x is True for x in [do_donor, do_acceptor]):
+        n_donors = stats_donor['total'].max()
+        n_acceptors = stats_acceptor['total'].max()
+        title = "N donors = {}; N acceptors = {}".format(n_donors, n_acceptors)
+        
+        perf = pd.merge(stats_donor[['tool', metric]], stats_acceptor[['tool', metric]], on='tool', how='left')
+        perf.columns = ['Tool', 'Donor', 'Acceptor']
+        perf =perf.melt(id_vars='Tool', var_name='Splice site', value_name=metric.replace("_", " "))
+    
+    elif do_donor:
+        n_donors = stats_donor['total'].max()
+        title = "N donors = {}".format(n_donors)
+        
+        perf = stats_donor[['tool', metric]]
+        perf.columns = ['Tool', 'Donor']
+        perf =perf.melt(id_vars='Tool', var_name='Splice site', value_name=metric.replace("_", " "))
+    
+    elif do_acceptor:
+
+        n_acceptors = stats_acceptor['total'].max()
+        title = "N acceptors = {}".format(n_acceptors)
+  
+        perf = stats_acceptor[['tool', metric]]
+        perf.columns = ['Tool', 'Donor']
+        perf =perf.melt(id_vars='Tool', var_name='Splice site', value_name=metric.replace("_", " "))
+    
+    plot_donor_vs_acceptor(perf,
+                           metric.replace("_", " "), 
+                           out_file, 
+                           title)
+ 
+
 def _parallel_roc(thresholds: list, _df_i_bin: pd.DataFrame, **kwargs):
 
     roc_metrics, pr_metrics = [], []
@@ -51,7 +119,7 @@ def _parallel_roc(thresholds: list, _df_i_bin: pd.DataFrame, **kwargs):
             logging.info(
                 "ROC analysis will be skipped for {} at {} bin. "
                 "More than 50% of missing data ({})".format(
-                    tool, kwargs["_bin"], round(float(na[tool]), 2)
+                    tool, kwargs["_bin"], round(float(na[tool]), 3)
                 )
             )
       
@@ -172,6 +240,9 @@ def do_intron_analysis(
 
         if _class == "all":
             _df_loc = df_i.copy(deep=True)
+            print(_df_loc.shape)
+            donor_vs_acceptor(_df_loc, thresholds, metric, _class, out_fixed_thresh)
+       
         elif _class in loc_in_protein_coding:
             if pc_is_done is False:
                 _class = "no_UTRs"

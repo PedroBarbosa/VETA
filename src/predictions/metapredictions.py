@@ -271,9 +271,9 @@ class Metapredictions(object):
         accuracy = round(accuracy_score(y_true, y_pred), 3)
         f1 = round(f1_score(y_true, y_pred), 3)
         coverage = 1
-        mcc = round(matthews_corrcoef(y_true, y_pred), 2)
+        mcc = round(matthews_corrcoef(y_true, y_pred), 3)
         normalized_mcc = (mcc + 1) / 2
-        weighted_norm_mcc = round(normalized_mcc * coverage, 2)
+        weighted_norm_mcc = round(normalized_mcc * coverage, 3)
 
         
         return [accuracy, accuracy, f1, f1, coverage,

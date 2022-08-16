@@ -30,7 +30,7 @@ def plot_density_by_class(data: pd.DataFrame,
     """
     os.makedirs(os.path.dirname(fname), exist_ok=True)
     
-    fraction_nan = round(np.sum(np.sum(data.iloc[:, 0].isnull())) / data.shape[0] * 100, 2)
+    fraction_nan = round(np.sum(np.sum(data.iloc[:, 0].isnull())) / data.shape[0] * 100, 3)
     df_ = data[~data.iloc[:, 0].isnull()]
 
     if df_.shape[0] > min_predicted:
@@ -124,8 +124,8 @@ def plot_unscored(data: pd.DataFrame, fname: str):
     """
     _data = data[['tool', 'mp', 'mn', 'fraction_nan', 'total']].copy()
 
-    _data.loc[:, 'Pathogenic'] = round(data.mp / data.total, 2)
-    _data.loc[:, 'Benign'] = round(data.mn / data.total, 2)
+    _data.loc[:, 'Pathogenic'] = round(data.mp / data.total, 3)
+    _data.loc[:, 'Benign'] = round(data.mn / data.total, 3)
     _data = _data[['tool', 'Pathogenic', 'Benign', 'fraction_nan']].set_index('tool')
 
     os.makedirs(os.path.dirname(fname), exist_ok=True)
@@ -229,7 +229,7 @@ def plot_metrics(data: pd.DataFrame, fname: str, metric: str):
                 edgecolors='black',
                 linewidths=0.5,
                 label='Fraction_predictable')
-
+    
     rectangule_attr = [_target_col, 'sensitivity', 'coverage']
     i = 0
     for idx, rows in data.iterrows():
@@ -533,7 +533,7 @@ def plot_curve(data: list,
             df_metrics['True Positive Rate (TPR)'] = pd.to_numeric(df_metrics['True Positive Rate (TPR)'])
             df_metrics['False Positive Rate (FPR)'] = pd.to_numeric(df_metrics['False Positive Rate (FPR)'])
             df_metrics["tool_with_roc_auc"] = df_metrics["label"] + " auROC=" + \
-                                            df_metrics["roc_auc"].round(2).map(str) + ")"
+                                            df_metrics["roc_auc"].round(3).map(str) + ")"
             hue = "tool_with_roc_auc"
             x = "False Positive Rate (FPR)"
             y = "True Positive Rate (TPR)"
@@ -542,7 +542,7 @@ def plot_curve(data: list,
             df_metrics['Recall'] = pd.to_numeric(df_metrics['Recall'])
             df_metrics['Precision'] = pd.to_numeric(df_metrics['Precision'])
             df_metrics["tool_with_ap_score"] = df_metrics["label"] + " AP=" + \
-                                            df_metrics["ap_score"].round(2).map(str) + ")"
+                                            df_metrics["ap_score"].round(3).map(str) + ")"
             hue = "tool_with_ap_score"
             x = "Recall"
             y = "Precision"

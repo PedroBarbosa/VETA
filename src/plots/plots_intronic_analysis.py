@@ -122,6 +122,55 @@ def plot_general_bin_info(_df: pd.DataFrame,
         plt.close()
 
 
+def plot_donor_vs_acceptor(df: pd.DataFrame, 
+                           metric: str,
+                           fname: str,
+                           title: str):
+
+    """
+    Plot performance of individual tools on intronic variants
+    associated with splicing donor vs splicing acceptors
+
+    :param pd.DataFrame data: Df with stats for each tool
+    :pararm str metric: Metric to rank tools
+    :param str fname: Output file
+    :param str title: Title of the plot
+    """
+    fig, ax = plt.subplots()
+    plt.rcParams.update({'font.size': 10}) 
+   
+    if len(df['Splice site'].unique().tolist()) == 1:
+        df = df.sort_values(metric, ascending=False)
+        g = sns.catplot(data=df, 
+                        kind="bar",
+                        x=metric, 
+                        y="Tool",
+                        hue="Splice site",
+                        palette={'Donor': 'darkred', 'Acceptor': 'skyblue'}, 
+                        edgecolor='k',
+                        legend_out=True,
+                        alpha=.8, 
+                        aspect=.8,
+                        height=8)
+
+        g.despine(left=True)
+
+    # If both donors and acceptors    
+    else:
+        sns.stripplot(x=metric, y="Tool", hue='Splice site', linewidth=1, size=10, data=df)
+        sns.boxplot(x=metric, y="Tool", data=df, color='white')
+   
+    plt.legend(loc="upper right",
+               bbox_to_anchor=(1.1, 1),
+               borderaxespad=0,
+               prop=dict(size=8))
+    plt.title(title) 
+    plt.ylabel('')
+    plt.xlim(0, 1)
+    plt.tight_layout()
+    plt.savefig(fname, bbox_inches='tight')
+    plt.close()
+    
 def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
     """
     :param pd.DataFrame df: Df with a list of
@@ -144,7 +193,7 @@ def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
                              'weighted_F1': 'mean',
                              'fraction_nan': 'mean'})
     
-    avg = avg.round(2)
+    avg = avg.round(3)
     avg.columns = ["avg_{}".format(x) for x in avg.columns]
     df = pd.merge(df, avg, on="tool", how='left')
    

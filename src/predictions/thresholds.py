@@ -89,7 +89,7 @@ def _calculate_ci(bootst_thr: pd.DataFrame, **kwargs):
     for i, b in enumerate([0.5, 1, 1.5]):
   
         # Deriving best thresh by averaging bootstrap statistic values
-        # best_thr = round(np.mean(bootst_thr['thr_f{}'.format(b)]), 2)
+        # best_thr = round(np.mean(bootst_thr['thr_f{}'.format(b)]), 3)
         #stats = classify_at_threshold(kwargs['df_per_tool'], [best_thr], **kwargs)   
         #fbeta_at_best_thr = stats['Fbeta_{}'.format(b)][0]
         

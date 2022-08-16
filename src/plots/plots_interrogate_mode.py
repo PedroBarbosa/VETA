@@ -240,7 +240,7 @@ def plot_tool_score_distribution(_df: pd.DataFrame,
     p = sns.histplot(df[tool], bins=30, color='slateblue', edgecolor='black')
     p.tick_params(labelsize=13)
     plt.xlabel('{} ({} % missing data)'.format(
-        tool, round(nas / _df.shape[0] * 100, 2)), fontsize=13)
+        tool, round(nas / _df.shape[0] * 100, 3)), fontsize=13)
 
     p.yaxis.get_label().set_fontsize(13)
     plt.axvline([x[2] for x in thresholds if x[0] == tool],
