@@ -220,9 +220,9 @@ filter_intronic_bins = [
     ('1-2', lambda x: x[x['intron_bin'].str.match('1-2')]),
     ('3-10', lambda x: x[x['intron_bin'].str.match('3-10')]),
     ('1-10', lambda x: x[x['intron_bin'].str.match('1-10')]),
-    ('11-30', lambda x: x[x['intron_bin'].str.match('11-30')]),
-    ('31-100', lambda x: x[x['intron_bin'].str.match('31-100')]),
-    ('101-200', lambda x: x[x['intron_bin'].str.match('101-200')]),
+    ('11-40', lambda x: x[x['intron_bin'].str.match('11-40')]),
+    ('41-200', lambda x: x[x['intron_bin'].str.match('41-200')]),
     ('201-500', lambda x: x[x['intron_bin'].str.match('201-500')]),
-    ('500+', lambda x: x[x['intron_bin'].str.match('500\+')])
+    ('501-1000', lambda x: x[x['intron_bin'].str.match('501-1000')]),
+    ('1000+', lambda x: x[x['intron_bin'].str.match('1000\+')])
 ]

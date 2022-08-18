@@ -32,7 +32,8 @@ class BenchmarkTools(Base):
                  aggregate_classes: bool = False,
                  select_conseqs: str = "in_gene_body",
                  do_intronic_analysis: bool = False,
-                 clinvar_stars: str = "3s_l",
+                 split_splice_sites: bool = False,
+                 clinvar_stars: str = "1s_l",
                  phenotype_ids: list = None,
                  do_threshold_analysis: bool = False,
                  do_bootstrapping: bool = False,
@@ -57,6 +58,7 @@ class BenchmarkTools(Base):
                          aggregate_classes=aggregate_classes,
                          select_conseqs= select_conseqs,
                          do_intronic_analysis=do_intronic_analysis,
+                         split_splice_sites=split_splice_sites,
                          is_clinvar=is_clinvar,
                          allele_frequency_col=allele_frequency_col,
                          skip_heatmap=skip_heatmap,
@@ -104,18 +106,20 @@ class BenchmarkTools(Base):
                                          " arg.".format(self.clinvar_stars)
             logging.info('Number of variants after filtering by Clinvar stars ({}): {}'.format(self.clinvar_stars, self.df.shape[0]))
 
-        generate_consequence_table(self.df, self.out_dir)
+        generate_consequence_table(self.df, 
+                                   self.out_dir)
 
-        self.top_tools, f1_at_ref_threshold = self.do_performance_comparison()
+        #self.top_tools, f1_at_ref_threshold = self.do_performance_comparison()
         if self.do_intronic_analysis:
             thresholds = [tool for tool in self.thresholds if tool[3] != 'Protein']
          
-            introns.do_intron_analysis(self.df,
-                                       thresholds=thresholds,
-                                       metric=self.metric,
-                                       aggregate_classes=self.aggregate_classes,
-                                       out_dir=self.out_dir,
-                                       af_column=self.allele_frequency_col)
+            introns.IntronicAnalysis(self.df,
+                                     self.split_splice_sites,
+                                     thresholds,
+                                     self.metric,
+                                     self.aggregate_classes,
+                                     self.out_dir,
+                                     self.allele_frequency_col)
 
         if self.do_threshold_analysis:
             
@@ -124,7 +128,7 @@ class BenchmarkTools(Base):
                                                         self.thresholds,
                                                         self.tools_config,
                                                         self.out_dir,
-                                                        f1_at_ref_threshold,
+                                                        f1_at_ref_threshold=0,
                                                         do_bootstrapping=self.do_bootstrapping)
 
         if self.do_machine_learning:

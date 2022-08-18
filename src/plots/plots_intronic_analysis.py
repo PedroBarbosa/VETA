@@ -79,19 +79,19 @@ def plot_general_bin_info(_df: pd.DataFrame,
     plt.savefig(fname + '.pdf')
     plt.close()
     
-    df_zoom = df[(~df['intron_bin'].str.match('1-2')) &
-                 (~df['intron_bin'].str.match('3-10')) &
-                 (~df['intron_bin'].str.match('1-10'))]
+    # df_zoom = df[(~df['intron_bin'].str.match('1-2')) &
+    #              (~df['intron_bin'].str.match('3-10')) &
+    #              (~df['intron_bin'].str.match('1-10'))]
    
-    filt_to_exclude.extend(opposite)
-    _generate_plot(df_zoom, filt_to_exclude)
+    # filt_to_exclude.extend(opposite)
+    # _generate_plot(df_zoom, filt_to_exclude)
 
-    ylim = df_zoom['intron_bin'].value_counts().max() + (df_zoom['intron_bin'].value_counts().max() * 0.05)
-    out_zoomed = fname + '_zoomed.pdf'
-    plt.ylim(0, ylim)
-    plt.legend(bbox_to_anchor=(1.04,1), loc="upper right")
-    plt.savefig(out_zoomed)
-    plt.close()
+    # ylim = df_zoom['intron_bin'].value_counts().max() + (df_zoom['intron_bin'].value_counts().max() * 0.05)
+    # out_zoomed = fname + '_zoomed.pdf'
+    # plt.ylim(0, ylim)
+    # plt.legend(bbox_to_anchor=(1.04,1), loc="upper right")
+    # plt.savefig(out_zoomed)
+    # plt.close()
 
     if af_column in df.columns:
         df[af_column] = pd.to_numeric(df[af_column], downcast='float')
@@ -106,11 +106,10 @@ def plot_general_bin_info(_df: pd.DataFrame,
                                  data=df)
 
         else:
-            ax = sns.scatterplot(x="intron_offset",
+            ax = sns.kdeplot(x="intron_offset",
                                  y=af_column,
                                  data=df,
                                  hue="outcome",
-                                 s=10,
                                  palette={"Benign": "skyblue",
                                           "Pathogenic": "chocolate"})
             ax.get_legend().set_title('')
@@ -170,8 +169,11 @@ def plot_donor_vs_acceptor(df: pd.DataFrame,
     plt.tight_layout()
     plt.savefig(fname, bbox_inches='tight')
     plt.close()
-    
-def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
+
+
+def plot_metrics_by_bin_split_ss(df: pd.DataFrame, 
+                        fname='~/Desktop/out', 
+                        aggregate_classes: bool = False):
     """
     :param pd.DataFrame df: Df with a list of
         metrics per each intronic bin
@@ -179,7 +181,107 @@ def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
     :param bool aggregate_classes: Whether VETA run is meant to 
     aggregate classes into higher level concepts.
     """
+
+    bins_with_scores = df.bin.unique().tolist()
+
+    bins_to_exclude = ['1-2', '3-10'] if aggregate_classes else ['1-10']
+    bins_to_exclude.extend(["all_intronic", "all_except_1-2", "all_except_1-10"])
+
+    metrics = {"F1": "F1_Score",
+               "weighted_F1": "F1 score (weighted)",
+               "fraction_nan": "Fraction unscored"}
     
+    avg = df.groupby(['tool', 'variant_class']).agg({'F1':'mean',
+                             'weighted_F1': 'mean',
+                             'fraction_nan': 'mean'})
+    
+    avg = avg.round(3)
+    avg.columns = ["avg_{}".format(x) for x in avg.columns]
+    df = pd.merge(df, avg, on=["tool", "variant_class"], how='left')
+
+    n_tools = df.tool.unique().size 
+    if n_tools > 10:
+        pal = sns.diverging_palette(250, 30, l=65, n=n_tools, center="dark")
+        fontsize="small"
+    else:
+        pal = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=False, reverse=True, n_colors=n_tools)
+        fontsize="medium"
+    
+    categories=["501-1000", "201-500", "41-200", "11-40"]
+    categories.append("1-10") if aggregate_classes else categories.extend(["3-10", "1-2"])
+    d = df[df.variant_class.str.contains('donor')].copy()
+    a = df[df.variant_class.str.contains('acceptor')].copy()
+    a.bin = pd.Categorical(a.bin, 
+                      categories=categories,
+                      ordered=True)
+
+    df = pd.concat([d, a])
+    df = df.replace({'all_donor_related': 'Donor', 'all_acceptor_related': 'Acceptor'}).sort_values('variant_class')
+
+    for metric, description in metrics.items():
+   
+        _df = df.copy()
+        _df[metric] = pd.to_numeric(_df[metric])
+        _df['tool_with_metric'] = df.tool + " (mean=" + df["avg_{}".format(metric)].astype(str) + ")"
+        
+        if metric != "fraction_nan":
+            _df = _df.sort_values("avg_{}".format(metric), ascending=False)
+        else:
+            _df = _df.sort_values("avg_{}".format(metric))
+
+        g = sns.catplot(x="bin",
+            y=metric,
+            kind='point',
+            col='variant_class',
+            col_order=['Acceptor', 'Donor'],
+            order=[i[0] for i in filter_intronic_bins if i[0] not in bins_to_exclude and i[0] in bins_with_scores],
+            data=_df,
+            sharex=False,
+            sharey=False,
+            linestyles="-", 
+            scale=0.75, 
+            aspect=1.2,
+            palette=pal,
+            markers='s',
+            fontsize=fontsize,
+            legend_out = False,
+            dodge=False,
+            hue="tool")
+
+        g.axes[0,0].set_xlabel('Intron bin (bp)')
+        g.axes[0,1].set_xlabel('Intron bin (bp)')
+        g.axes[0,0].set_ylabel(description)
+        g.axes[0,1].set_ylabel(description)
+
+        [plt.setp(ax.texts, text="") for ax in g.axes.flat]
+        g.set_titles(row_template = '{row_name}', col_template = '{col_name}')
+        
+        # Invert acceptor axis
+        for i, ax in enumerate(g.axes[0]):
+           if i == 0:
+               ax.invert_xaxis()
+
+        # Increase space between the plots
+        plt.subplots_adjust(hspace=0.4, wspace=0.4)
+        
+        # Put legend in between the plots   
+        g.fig.get_axes()[0].legend(loc='upper right', bbox_to_anchor=(1.3, 1))    
+        g.set(yticks=np.arange(0, 1.05, 0.1))
+        out = fname + '_all_split_ss_' + metric + '.pdf'
+        plt.savefig(out, bbox_inches="tight")
+        plt.close()
+        
+    
+def plot_metrics_by_bin(df: pd.DataFrame, 
+                        fname: str, 
+                        aggregate_classes: bool):
+    """
+    :param pd.DataFrame df: Df with a list of
+        metrics per each intronic bin
+    :param str fname: Output basename
+    :param bool aggregate_classes: Whether VETA run is meant to 
+    aggregate classes into higher level concepts.
+    """
     bins_with_scores = df.bin.unique().tolist()
 
     bins_to_exclude = ['1-2', '3-10'] if aggregate_classes else ['1-10']
@@ -196,13 +298,13 @@ def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
     avg = avg.round(3)
     avg.columns = ["avg_{}".format(x) for x in avg.columns]
     df = pd.merge(df, avg, on="tool", how='left')
-   
+
     n_tools = df.tool.unique().size 
     if n_tools > 10:
-        a = sns.diverging_palette(250, 30, l=65, n=n_tools, center="dark")
+        pal = sns.diverging_palette(250, 30, l=65, n=n_tools, center="dark")
         fontsize="small"
     else:
-        a = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=False, reverse=True, n_colors=n_tools)
+        pal = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=False, reverse=True, n_colors=n_tools)
         fontsize="medium"
 
     n_tools = df.tool.unique().size 
@@ -218,7 +320,7 @@ def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
         else:
             _df = _df.sort_values("avg_{}".format(metric))
 
-        sns.catplot(x="bin",
+        g = sns.catplot(x="bin",
             y=metric,
             kind='point',
             order=[i[0] for i in filter_intronic_bins if i[0] not in bins_to_exclude and i[0] in bins_with_scores],
@@ -226,7 +328,7 @@ def plot_metrics_by_bin(df: pd.DataFrame, fname: str, aggregate_classes: bool):
             linestyles="-", 
             scale=0.75, 
             aspect=1.5,
-            palette=a,
+            palette=pal,
             markers='s',
             fontsize=fontsize,
             legend=False,

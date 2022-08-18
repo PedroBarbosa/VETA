@@ -113,18 +113,18 @@ def get_location_from_consequence(x: str,
 
 ranges_split_at_ss = [(0, 2, '1-2'),
           (3, 10, '3-10'),
-          (11, 30, '11-30'),
-          (31, 100, '31-100'),
-          (101, 200, '101-200'),
+          (11, 40, '11-40'),
+          (41, 200, '41-200'),
           (201, 500, '201-500'),
-          (501, 5000000, '500+')]
+          (501, 1000, '501-1000'),
+          (1001, 5000000, '1000+')]
 
 ranges = [(0, 10, '1-10'),
-          (11, 30, '11-30'),
-          (31, 100, '31-100'),
-          (101, 200, '101-200'),
+          (11, 40, '11-40'),
+          (41, 200, '41-200'),
           (201, 500, '201-500'),
-          (501, 5000000, '500+')]
+          (501, 1000, '501-1000'),
+          (1001, 5000000, '1000+')]
 
 
 def assign_intronic_bins(hgvs_exp, hp, location, aggregate):
@@ -138,7 +138,7 @@ def assign_intronic_bins(hgvs_exp, hp, location, aggregate):
             
         _offset = v.posedit.pos.start.offset
         offset = abs(_offset)
-        if offset <= 50:
+        if offset <= 1000:
             which_ss = "donor" if _offset > 0 else "acceptor"
         else:
             which_ss = "unclear"

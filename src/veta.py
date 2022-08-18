@@ -73,6 +73,10 @@ def main():
                                'of the variant to the nearest splice junction',
                                action='store_true')
 
+    parent_parser.add_argument('--split_splice_sites', help='When "--do_intronic_analysis" is set, ' 
+                               'perform separate analysis for donor and acceptor associated variants.',
+                               action='store_true')
+        
     parent_parser.add_argument('-af', '--allele_frequency', metavar='', default="gnomADg_AF",
                                help='VCF field (within VEP annotations, or INFO field) '
                                'that measures frequency of the variant in a '
@@ -213,6 +217,7 @@ def main():
                        args.aggregate_classes,
                        args.top_vep_consequence,
                        args.do_intronic_analysis,
+                       args.split_splice_sites,
                        args.clinvar_stars,
                        phenotype_ids,
                        args.do_threshold_analysis,

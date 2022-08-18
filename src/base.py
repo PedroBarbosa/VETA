@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+from posixpath import split
 from typing import Union, List, Tuple
 
 import hgvs
@@ -33,6 +34,7 @@ class Base(object):
                  aggregate_classes: bool = False,
                  select_conseqs: str = "in_gene_body",
                  do_intronic_analysis: bool = False,
+                 split_splice_sites: bool = False,
                  is_clinvar: bool = False,
                  allele_frequency_col: str = "gnomADg_AF",
                  skip_heatmap: bool = False,
@@ -74,6 +76,9 @@ class Base(object):
             intronic variants extracted from HGVSc field will
             be performed
             
+        :param bool split_splice_sites: Do separate analysis for donor and 
+        acceptor variants when 'do_intronic_analysis' is set
+            
         :param bool is_clinvar: Whether `vcf` is from Clinvar.
             Default: `False`
 
@@ -94,6 +99,7 @@ class Base(object):
         self.metric = metric
         self.location_from = location
         self.do_intronic_analysis = do_intronic_analysis
+        self.split_splice_sites = split_splice_sites
         self.aggregate_classes = aggregate_classes
         self.select_conseqs = select_conseqs
         self.location_filters = _extract_possible_filters(self.aggregate_classes)
