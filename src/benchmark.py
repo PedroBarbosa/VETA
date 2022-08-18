@@ -109,7 +109,7 @@ class BenchmarkTools(Base):
         generate_consequence_table(self.df, 
                                    self.out_dir)
 
-        #self.top_tools, f1_at_ref_threshold = self.do_performance_comparison()
+        self.top_tools, f1_at_ref_threshold = self.do_performance_comparison()
         if self.do_intronic_analysis:
             thresholds = [tool for tool in self.thresholds if tool[3] != 'Protein']
          
@@ -128,7 +128,7 @@ class BenchmarkTools(Base):
                                                         self.thresholds,
                                                         self.tools_config,
                                                         self.out_dir,
-                                                        f1_at_ref_threshold=0,
+                                                        f1_at_ref_threshold,
                                                         do_bootstrapping=self.do_bootstrapping)
 
         if self.do_machine_learning:

@@ -78,20 +78,6 @@ def plot_general_bin_info(_df: pd.DataFrame,
     _generate_plot(df, filt_to_exclude)
     plt.savefig(fname + '.pdf')
     plt.close()
-    
-    # df_zoom = df[(~df['intron_bin'].str.match('1-2')) &
-    #              (~df['intron_bin'].str.match('3-10')) &
-    #              (~df['intron_bin'].str.match('1-10'))]
-   
-    # filt_to_exclude.extend(opposite)
-    # _generate_plot(df_zoom, filt_to_exclude)
-
-    # ylim = df_zoom['intron_bin'].value_counts().max() + (df_zoom['intron_bin'].value_counts().max() * 0.05)
-    # out_zoomed = fname + '_zoomed.pdf'
-    # plt.ylim(0, ylim)
-    # plt.legend(bbox_to_anchor=(1.04,1), loc="upper right")
-    # plt.savefig(out_zoomed)
-    # plt.close()
 
     if af_column in df.columns:
         df[af_column] = pd.to_numeric(df[af_column], downcast='float')
@@ -106,9 +92,10 @@ def plot_general_bin_info(_df: pd.DataFrame,
                                  data=df)
 
         else:
-            ax = sns.kdeplot(x="intron_offset",
+            ax = sns.scatterplot(x="intron_offset",
                                  y=af_column,
                                  data=df,
+                                 s=10,
                                  hue="outcome",
                                  palette={"Benign": "skyblue",
                                           "Pathogenic": "chocolate"})
