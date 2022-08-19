@@ -157,9 +157,8 @@ def plot_donor_vs_acceptor(df: pd.DataFrame,
     plt.savefig(fname, bbox_inches='tight')
     plt.close()
 
-
 def plot_metrics_by_bin_split_ss(df: pd.DataFrame, 
-                        fname='~/Desktop/out', 
+                        fname: str, 
                         aggregate_classes: bool = False):
     """
     :param pd.DataFrame df: Df with a list of
@@ -170,20 +169,20 @@ def plot_metrics_by_bin_split_ss(df: pd.DataFrame,
     """
 
     bins_with_scores = df.bin.unique().tolist()
-
     bins_to_exclude = ['1-2', '3-10'] if aggregate_classes else ['1-10']
     bins_to_exclude.extend(["all_intronic", "all_except_1-2", "all_except_1-10"])
 
     metrics = {"F1": "F1_Score",
                "weighted_F1": "F1 score (weighted)",
                "fraction_nan": "Fraction unscored"}
-    
+
     avg = df.groupby(['tool', 'variant_class']).agg({'F1':'mean',
                              'weighted_F1': 'mean',
                              'fraction_nan': 'mean'})
     
-    avg = avg.round(3)
+    avg = avg.round(2)
     avg.columns = ["avg_{}".format(x) for x in avg.columns]
+
     df = pd.merge(df, avg, on=["tool", "variant_class"], how='left')
 
     n_tools = df.tool.unique().size 
@@ -196,20 +195,45 @@ def plot_metrics_by_bin_split_ss(df: pd.DataFrame,
     
     categories=["501-1000", "201-500", "41-200", "11-40"]
     categories.append("1-10") if aggregate_classes else categories.extend(["3-10", "1-2"])
-    d = df[df.variant_class.str.contains('donor')].copy()
-    a = df[df.variant_class.str.contains('acceptor')].copy()
-    a.bin = pd.Categorical(a.bin, 
+   
+    hue_name = 'tool'
+    legend_out = False
+    for metric, description in metrics.items():
+        _df = df.copy()
+        d = df[df.variant_class.str.contains('donor')].copy()
+        a = df[df.variant_class.str.contains('acceptor')].copy()
+        a.bin = pd.Categorical(a.bin, 
                       categories=categories,
                       ordered=True)
-
-    df = pd.concat([d, a])
-    df = df.replace({'all_donor_related': 'Donor', 'all_acceptor_related': 'Acceptor'}).sort_values('variant_class')
-
-    for metric, description in metrics.items():
-   
-        _df = df.copy()
+        a['tool_with_metric'] = a.tool + " (avg_acc=" + a["avg_{}".format(metric)].astype(str) + ")"
+        d['tool_with_metric'] = d.tool + " (avg_don=" + d["avg_{}".format(metric)].astype(str) + ")"
+        
+        _df = pd.concat([a, d])
+        _df = _df.replace({'all_donor_related': 'Donor', 'all_acceptor_related': 'Acceptor'}).sort_values('variant_class')
         _df[metric] = pd.to_numeric(_df[metric])
-        _df['tool_with_metric'] = df.tool + " (mean=" + df["avg_{}".format(metric)].astype(str) + ")"
+
+        # Add avg metric per donor/acceptor
+        mean_map = {}
+        for _, row in _df.iterrows():
+            tool = row.tool
+            bin = row.bin
+            val = row['avg_{}'.format(metric)]
+            print(tool)
+            if tool in mean_map.keys():
+                if bin in mean_map[tool].keys():
+                    mean_map[tool][bin] = mean_map[tool][bin]  + ";{})".format(val)
+                else:
+                    mean_map[tool].update({bin: " ({}".format(val)})
+            else:
+                mean_map[tool] = {bin: " ({}".format(val)}
+                         
+        mean_df = pd.DataFrame.from_dict(mean_map, orient='index').rename_axis('tool').reset_index()
+        mean_df = mean_df.melt(id_vars='tool', value_vars=list(mean_df), var_name='bin', value_name='tool_full')
+        _df = pd.merge(_df, mean_df, on=['tool', 'bin'], how='left')
+        _df['tool_with_metric'] = _df.tool + _df.tool_full
+        hue_name = 'tool_with_metric'
+        legend_out = True
+        # Comment code above (from # Add avg ..) to just display tool names in the middle of the two facets
         
         if metric != "fraction_nan":
             _df = _df.sort_values("avg_{}".format(metric), ascending=False)
@@ -231,9 +255,10 @@ def plot_metrics_by_bin_split_ss(df: pd.DataFrame,
             palette=pal,
             markers='s',
             fontsize=fontsize,
-            legend_out = False,
+            legend= legend_out,
+            legend_out = legend_out,
             dodge=False,
-            hue="tool")
+            hue=hue_name)
 
         g.axes[0,0].set_xlabel('Intron bin (bp)')
         g.axes[0,1].set_xlabel('Intron bin (bp)')
@@ -247,18 +272,21 @@ def plot_metrics_by_bin_split_ss(df: pd.DataFrame,
         for i, ax in enumerate(g.axes[0]):
            if i == 0:
                ax.invert_xaxis()
-
-        # Increase space between the plots
-        plt.subplots_adjust(hspace=0.4, wspace=0.4)
         
-        # Put legend in between the plots   
-        g.fig.get_axes()[0].legend(loc='upper right', bbox_to_anchor=(1.3, 1))    
+        if legend_out:
+            # Change label name
+            g._legend.set_title("Tool (Mean acceptor; Mean donor)")
+        else:
+            # Increase space between the plots
+            plt.subplots_adjust(hspace=0.4, wspace=0.4)   
+            # Place legend in between the plots   
+            g.fig.get_axes()[0].legend(loc='upper right', bbox_to_anchor=(1.3, 1)) 
+         
         g.set(yticks=np.arange(0, 1.05, 0.1))
         out = fname + '_all_split_ss_' + metric + '.pdf'
         plt.savefig(out, bbox_inches="tight")
         plt.close()
         
-    
 def plot_metrics_by_bin(df: pd.DataFrame, 
                         fname: str, 
                         aggregate_classes: bool):
