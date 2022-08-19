@@ -196,7 +196,7 @@ class IntronicAnalysis(object):
             # else:
             #     _df_loc = self.df[self.df.location == _class].copy(deep=True)
                
-            self.per_bin_computations(_df_loc, specific_ss=ss)
+            #self.per_bin_computations(_df_loc, specific_ss=ss)
 
     def donor_vs_acceptor(self, df: pd.DataFrame, out_dir: str):
 
