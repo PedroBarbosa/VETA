@@ -182,18 +182,19 @@ class IntronicAnalysis(object):
                     self.donor_vs_acceptor(
                         _df_loc, os.path.join(self.out_dir, "performance_at_fixed_thresh")
                     )
-
-            elif self._class in loc_in_protein_coding:
-                if pc_is_done is False:
-                    _class = "no_UTRs"
-                    _df_loc = self.df[self.df.location.isin(loc_in_protein_coding)].copy(
-                        deep=True
-                    )
-                    pc_is_done = True
-                else:
-                    continue
-            else:
-                _df_loc = self.df[self.df.location == _class].copy(deep=True)
+                    ss=None
+                    
+            # elif self._class in loc_in_protein_coding:
+            #     if pc_is_done is False:
+            #         _class = "no_UTRs"
+            #         _df_loc = self.df[self.df.location.isin(loc_in_protein_coding)].copy(
+            #             deep=True
+            #         )
+            #         pc_is_done = True
+            #     else:
+            #         continue
+            # else:
+            #     _df_loc = self.df[self.df.location == _class].copy(deep=True)
                
             self.per_bin_computations(_df_loc, specific_ss=ss)
 
