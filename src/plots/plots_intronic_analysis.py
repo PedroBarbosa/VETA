@@ -218,9 +218,11 @@ def plot_metrics_by_bin_split_ss(df: pd.DataFrame,
             tool = row.tool
             bin = row.bin
             val = row['avg_{}'.format(metric)]
-            print(tool)
+
             if tool in mean_map.keys():
                 if bin in mean_map[tool].keys():
+                    if ";" in  mean_map[tool][bin]:
+                        continue
                     mean_map[tool][bin] = mean_map[tool][bin]  + ";{})".format(val)
                 else:
                     mean_map[tool].update({bin: " ({}".format(val)})
@@ -232,7 +234,7 @@ def plot_metrics_by_bin_split_ss(df: pd.DataFrame,
         _df = pd.merge(_df, mean_df, on=['tool', 'bin'], how='left')
         _df['tool_with_metric'] = _df.tool + _df.tool_full
         hue_name = 'tool_with_metric'
-        legend_out = True
+        legend_out = True   
         # Comment code above (from # Add avg ..) to just display tool names in the middle of the two facets
         
         if metric != "fraction_nan":

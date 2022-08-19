@@ -183,6 +183,7 @@ class IntronicAnalysis(object):
                         _df_loc, os.path.join(self.out_dir, "performance_at_fixed_thresh")
                     )
                     ss=None
+                self.per_bin_computations(_df_loc, specific_ss=ss)
                     
             # elif self._class in loc_in_protein_coding:
             #     if pc_is_done is False:
@@ -193,10 +194,10 @@ class IntronicAnalysis(object):
             #         pc_is_done = True
             #     else:
             #         continue
+            #     self.per_bin_computations(_df_loc, specific_ss=ss)
             # else:
-            #     _df_loc = self.df[self.df.location == _class].copy(deep=True)
-               
-            #self.per_bin_computations(_df_loc, specific_ss=ss)
+            #      _df_loc = self.df[self.df.location == _class].copy(deep=True)  
+            #     self.per_bin_computations(_df_loc, specific_ss=ss)
 
     def donor_vs_acceptor(self, df: pd.DataFrame, out_dir: str):
 
