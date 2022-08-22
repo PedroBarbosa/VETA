@@ -64,5 +64,6 @@ ConSpliceML	ConSpliceML
 MMSplice	mmsplice_deltaPSI
 kipoiSplice4	kipoisplice_4
 CI-SpliceAI	CI-SpliceAI
-Pangolin    Pangolin
+Pangolin	Pangolin
 SPiP	SPiP
+labranchoR	labranchoR

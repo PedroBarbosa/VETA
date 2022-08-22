@@ -138,7 +138,7 @@ class Base(object):
                 _dfs.append(self.get_df_ready(f, is_benign=is_benign))
 
             self.df = pd.concat(_dfs).reset_index(drop=True)
-            
+
         # Replace missing AF with 0 for AF plots
         if self.allele_frequency_col in self.df.columns:
 
@@ -233,7 +233,7 @@ class Base(object):
 
         booleanDictionary = {True: 'Pathogenic', False: 'Benign'}
         df["outcome"] = df["label"].map(booleanDictionary)
-
+    
         return df
 
     def _clean_scores(self, df: pd.DataFrame):
@@ -266,7 +266,8 @@ class Base(object):
                                'scap': [process_scap, None, None],
                                'conspliceml': [process_conspliceml, None, None],
                                'pangolin': [process_pangolin, None, None],
-                               'spip': [process_spip, None, None]
+                               'spip': [process_spip, None, None],
+                               'labranchor': [process_labranchor, None, None]
                                }
 
         logging.info("Engineering the scores.")
@@ -337,7 +338,8 @@ class Base(object):
             "IntSplice2": available_functions['to_numeric'],
             "CI-SpliceAI": available_functions['spliceai'],
             "Pangolin": available_functions['pangolin'],
-            "SPiP": available_functions['spip']
+            "SPiP": available_functions['spip'],
+            "labranchoR": available_functions['labranchor']
         }
 
         _functions_that_require_loc = ["process_trap"]
@@ -355,7 +357,7 @@ class Base(object):
 
         # For each tool belonging to the given scope
         for _tool, info in self.tools_config.items():
-            
+
             # if it is known tool
             if _tool in clean_functions.keys():
                 # get function to apply
@@ -389,6 +391,7 @@ class Base(object):
                     else:
                         df[_tool] = df[_tool].apply(_f, is_max=is_max,
                                                     absolute=is_absolute)
+
         return df
 
     def _parse_tools_config(self, config):
@@ -421,7 +424,7 @@ class Base(object):
                                  "Eigen", "FunSeq2", "CADD_v1.5", "CADD-Splice", "DANN", "CAPICE",
                                  "HAL", "SPIDEX", "dbscSNV", "MaxEntScan", "SpliceAI", "S-CAP", "ConSpliceML",
                                  "TraP", "MMSplice", "SQUIRLS", "IntSplice2", "kipoiSplice4", "kipoiSplice4_cons",
-                                 "CI-SpliceAI", "Pangolin", "SPiP"]
+                                 "CI-SpliceAI", "Pangolin", "SPiP", "labranchoR"]
 
         AVAILABLE_SCOPES = ["Protein", "Conservation", "Whole_genome", "Splicing"]
         AVAILABLE_FUNCTIONS = ['to_numeric', 'top_max', 'top_min', 'top_min_abs',

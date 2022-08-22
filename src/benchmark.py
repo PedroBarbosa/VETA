@@ -1,6 +1,5 @@
 import fnmatch
 from collections import defaultdict
-from turtle import st
 from typing import List
 import pandas as pd
 
@@ -285,7 +284,7 @@ class BenchmarkTools(Base):
                 out_stats = os.path.join(outdir, "results_tsv", "statistics_{}_{}.tsv").format(var_type, _location)
                 out_ranks = os.path.join(outdir, "results_tsv", "tools_ranking_{}_{}.tsv").format(var_type, _location)
 
-                af_plot = os.path.join(outdir, "allele_frequency", "AF_{}.pdf".format(var_type, _location))
+                af_plot = os.path.join(outdir, "allele_frequency", "AF_{}_{}.pdf".format(var_type, _location))
                 unscored_plot = os.path.join(outdir, "performance_at_fixed_thresh", "unscored_fraction_{}_{}.pdf".format(var_type, _location))
                 barplot_plot = os.path.join(outdir, "performance_at_fixed_thresh", "barplot_{}_{}.pdf".format(var_type, _location))
                 metrics_plot = os.path.join(outdir, "performance_at_fixed_thresh", "scatter_{}_{}.pdf".format(var_type, _location))

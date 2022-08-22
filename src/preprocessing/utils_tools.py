@@ -640,3 +640,29 @@ def process_kipoi_tools(x: list, _max: bool = True):
         out.append(_get_prediction(e))
 
     return out[0] if len(out) == 1 else out
+
+def process_labranchor(preds: list):
+    """
+    Process labranchoR scores so that the 
+    the risk of the variant impacting
+    splicing is returned
+    
+    :param list preds: List with the
+    labranchoR predictions for the given variant
+    
+    :return float: Prediction value to be evaluated
+    """
+    assert len(preds) == 1, "Multiple VCF fields were provided in the config for labranchoR."
+    
+    if all(v is None or v == "." for v in preds):
+        return np.nan
+    
+    _preds = preds[0].split(",")
+    _max = 0
+    for _p in _preds:
+        positions = map(float, _p.split("|"))
+        score = abs(max(positions, key=abs))
+        if score > _max:
+            _max = score
+    return _max
+    

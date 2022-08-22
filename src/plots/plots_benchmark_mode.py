@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
+import logging
 plt.switch_backend('agg')
 sns.set(style="white")
 cmap = sns.diverging_palette(220, 10, as_cmap=True)
@@ -495,7 +495,7 @@ def plot_curve(data: list,
                fname: str,
                class_counts: tuple,
                is_roc: bool = True,
-               min_score_fraction: float = 0.5):
+               max_nan_allowed: float = 0.5):
     """
     Plot ROC or pr curves for all tools in data
 
@@ -507,9 +507,9 @@ def plot_curve(data: list,
     :param bool is_roc: Whether analysis refers to
     ROC curve. If `False`, precision-recall curves are
     drawn. Default: `True`
-    :param float min_score_fraction: Minimum
-    fraction of predictive power of a given
-    tool for the curve to be drawn. Default: `0.5`
+    :param float max_nan_allowed: Maximum
+    fraction of missing variants per tool allowed
+    for the curve to be drawn. Default: `0.5`
     """
     os.makedirs(os.path.dirname(fname), exist_ok=True)
     sns.set_style("white")
@@ -538,6 +538,10 @@ def plot_curve(data: list,
             x = "False Positive Rate (FPR)"
             y = "True Positive Rate (TPR)"
             df_metrics = df_metrics.sort_values('roc_auc', ascending=False)
+            
+            no_min_scored = df_metrics[df_metrics['fraction_nan'] > max_nan_allowed].tool.unique().tolist()
+            if no_min_scored:
+                logging.info('ROC curves will not be drawn for the following tool(s) (more than {} fraction of missing predictions): {}'.format(max_nan_allowed, ','.join(no_min_scored)))
         else:
             df_metrics['Recall'] = pd.to_numeric(df_metrics['Recall'])
             df_metrics['Precision'] = pd.to_numeric(df_metrics['Precision'])
@@ -548,7 +552,7 @@ def plot_curve(data: list,
             y = "Precision"
             df_metrics = df_metrics.sort_values('ap_score', ascending=False)
 
-        df_metrics = df_metrics[df_metrics['fraction_nan'] <= min_score_fraction]
+        df_metrics = df_metrics[df_metrics['fraction_nan'] <= max_nan_allowed]
 
         # Since S-CAP has several different reference
         # threshold, S-CAP is removed from these analyses

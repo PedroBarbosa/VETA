@@ -2,7 +2,6 @@ from typing import List
 from collections import defaultdict
 import sys
 import logging
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 from preprocessing.location import CONSEQUENCES
 
 def update_thresholds(config_dict: defaultdict):
@@ -110,7 +109,8 @@ def update_thresholds(config_dict: defaultdict):
         ('IntSplice2', '>', 0.5, 'Splicing'),
         ('CI-SpliceAI', '>', 0.190, 'Splicing'),
         ('Pangolin', '>', 0.2, 'Splicing'),
-        ('SPiP', '>', 0.5, 'Splicing')
+        ('SPiP', '>', 0.5, 'Splicing'),
+        ('labranchoR', '>', 0.1, 'Splicing')
     ]
 
     DEFAULT_TOOLS = [t[0] for t in _default_list]
