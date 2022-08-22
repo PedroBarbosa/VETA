@@ -341,8 +341,8 @@ class IntronicAnalysis(object):
             logging.info("Problem plotting info about intronic bins. Skipping.")
 
         for _bin, _filter_func in filter_intronic_bins:
-            if "all_except" in _bin:
-                continue
+            #if "all_except" in _bin:
+            #    continue
 
             if _bin in self.bin_to_exclude:
                 continue
