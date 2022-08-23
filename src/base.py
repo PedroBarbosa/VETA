@@ -115,7 +115,7 @@ class Base(object):
         self.thresholds = update_thresholds(tools_config)
         self.thresholds = subset_toolset_by_scope(self.thresholds, scopes_to_predict)
         self.available_tools = [t[0] for t in self.thresholds]
-    
+
         # TODO change global thresholds list to remove excess of fields when custom models are provided
         self.tools_config = {k: v for k, v in tools_config.items() if k in self.available_tools}
         self.variant_types = subset_variants_by_type(types_of_variant)
@@ -315,7 +315,7 @@ class Base(object):
             "LINSIGHT": available_functions['to_numeric'],
             "GWAVA": available_functions['to_numeric'],
             "CADD": available_functions['to_numeric'],
-            "CADD_Splice": available_functions['to_numeric'],
+            "CADD-Splice": available_functions['to_numeric'],
             "Eigen": available_functions['to_numeric'],
             "FATHMM-MKL": available_functions['to_numeric'],
             "FunSeq2": available_functions['top_max'],
@@ -352,7 +352,12 @@ class Base(object):
 
             # get function, if provided (5th col in config)
             for _tool, info in _absent_tools.items():
-                _function = info[4] if len(info) > 4 else 'to_numeric'
+                if len(info) > 4:    
+                    _function = info[4]
+                    self.tools_config[_tool] = info[:-1]
+                else:
+                    logging.info('Processing function was not provided for {}. Using the default to_numeric function. Be careful.'.format(_tool))
+                    _function = 'to_numeric'
                 clean_functions[_tool] = available_functions[_function]
 
         # For each tool belonging to the given scope
@@ -430,7 +435,7 @@ class Base(object):
         AVAILABLE_FUNCTIONS = ['to_numeric', 'top_max', 'top_min', 'top_min_abs',
                                'categorical_to_numeric', 'kipoi_like', 'carol_like', 
                                'trap', 'scap', 'conspliceml', 'spliceai', 'ci_spliceai',
-                               'pangolin']
+                               'pangolin', 'spip', 'labranchor']
 
         data = defaultdict(list)
         if isinstance(config, str):

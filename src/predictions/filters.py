@@ -138,8 +138,13 @@ def update_thresholds(config_dict: defaultdict):
 
         # If a custom method
         else:
-            custom = [_tool] + info[1:]
-            _updated_list.append(custom)
+            if len(info) <= 4:
+                custom = [_tool] + info[1:]
+            # If custom function, remove it
+            elif len(info) == 5:
+                custom = [_tool] + info[1:-1]
+                
+            _updated_list.append(tuple(custom))
 
     return _updated_list
 

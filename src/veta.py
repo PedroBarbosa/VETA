@@ -1,6 +1,6 @@
 import argparse
-import logging
 import sys
+import logging
 from importlib import resources
 import config
 from interrogate import PredictionsEval
@@ -13,6 +13,7 @@ hgvs_logger = logging.getLogger('hgvs')
 hgvs_logger.setLevel(logging.CRITICAL)
 scikit_logger = logging.getLogger('sklearn')
 scikit_logger.setLevel(logging.CRITICAL)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(message)s')
 
 CONFIG_PATH = resources.open_text(config, 'tools_config.txt')
 
