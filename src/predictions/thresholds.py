@@ -346,8 +346,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
                 if isinstance(t, str):
                     t = t.split()[0]
                 info = [v for v in threshold_list if v[0] == tool][0]
-                vcf_field = ','.join(
-                    [v for sublist in tools_config[tool] for v in sublist])
+                vcf_field = ','.join(tools_config[tool][0])
                 outline = [tool, vcf_field, info[1], str(t), info[3]]
                 config.write('\t'.join(outline) + '\n')
 

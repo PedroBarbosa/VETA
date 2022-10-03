@@ -381,14 +381,38 @@ def process_spliceai(preds: pd.Series, check_gene_name: bool = True):
             return _max
     return np.nan
 
+def process_conspliceml_like(preds: pd.Series):
+    """
+    Process ConSpliceML-like scores (any tool with 'something|pred' format)
+    to return a single numeric value for variant
+    """
+    assert len(preds) == 1, "Multiple VCF fields were wrongly provided for a tool that uses the 'conspliceml_like' function."
+    
+    if all(v is None or v == "." for v in preds):
+        return np.nan
+    
+    if all("|" not in v for v in preds):
+        return np.nan
+    
+    _preds = preds[0].split(",")
+    _max = 0
+    for _p in _preds:
+       
+        new_max = round(float(_p.split("|")[1]), 3)
+        if abs(new_max) > _max:
+            _max = abs(new_max)
+
+    return _max
+
 def process_conspliceml(preds: pd.Series):
     """
-    Process ConSpliceML scores to return 
+    Process ConSpliceML  scores to return
     a single numeric value for the gene
     where variant occurs
     
     :return float: Prediction value
     """
+  
     assert len(preds.ConSpliceML) == 1, "Multiple VCF fields were provided in the config for ConSpliceML."
     
     if all(v is None or v == "." for v in preds.ConSpliceML):
@@ -396,6 +420,7 @@ def process_conspliceml(preds: pd.Series):
 
     _preds = preds.ConSpliceML[0].split(",")
     for _p in _preds:
+        
         if _p.split("|")[0] == preds.SYMBOL:
             return round(float(_p.split("|")[1]), 3)
 

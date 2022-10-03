@@ -265,6 +265,7 @@ class Base(object):
                                'trap': [process_trap, None, None],
                                'scap': [process_scap, None, None],
                                'conspliceml': [process_conspliceml, None, None],
+                               'conspliceml_like': [process_conspliceml_like, None, None],
                                'pangolin': [process_pangolin, None, None],
                                'spip': [process_spip, None, None],
                                'labranchor': [process_labranchor, None, None]
@@ -339,6 +340,7 @@ class Base(object):
             "CI-SpliceAI": available_functions['spliceai'],
             "Pangolin": available_functions['pangolin'],
             "SPiP": available_functions['spip'],
+            "MLCsplice": available_functions['top_max'],
             "labranchoR": available_functions['labranchor']
         }
 
@@ -354,15 +356,13 @@ class Base(object):
             for _tool, info in _absent_tools.items():
                 if len(info) > 4:    
                     _function = info[4]
-                    self.tools_config[_tool] = info[:-1]
+                    #self.tools_config[_tool] = info[:-1]
                 else:
                     logging.info('Processing function was not provided for {}. Using the default to_numeric function. Be careful.'.format(_tool))
                     _function = 'to_numeric'
                 clean_functions[_tool] = available_functions[_function]
-
         # For each tool belonging to the given scope
         for _tool, info in self.tools_config.items():
-
             # if it is known tool
             if _tool in clean_functions.keys():
                 # get function to apply
@@ -393,6 +393,7 @@ class Base(object):
                     # function to specific tools)
                     if all([_v is None for _v in [is_max, is_absolute]]):
                         df[_tool] = df[_tool].apply(_f)
+                                   
                     else:
                         df[_tool] = df[_tool].apply(_f, is_max=is_max,
                                                     absolute=is_absolute)
@@ -429,12 +430,13 @@ class Base(object):
                                  "Eigen", "FunSeq2", "CADD_v1.5", "CADD-Splice", "DANN", "CAPICE",
                                  "HAL", "SPIDEX", "dbscSNV", "MaxEntScan", "SpliceAI", "S-CAP", "ConSpliceML",
                                  "TraP", "MMSplice", "SQUIRLS", "IntSplice2", "kipoiSplice4", "kipoiSplice4_cons",
-                                 "CI-SpliceAI", "Pangolin", "SPiP", "labranchoR"]
+                                 "CI-SpliceAI", "Pangolin", "SPiP", "labranchoR", "MLCsplice"]
 
         AVAILABLE_SCOPES = ["Protein", "Conservation", "Whole_genome", "Splicing"]
         AVAILABLE_FUNCTIONS = ['to_numeric', 'top_max', 'top_min', 'top_min_abs',
                                'categorical_to_numeric', 'kipoi_like', 'carol_like', 
-                               'trap', 'scap', 'conspliceml', 'spliceai', 'ci_spliceai',
+                               'trap', 'scap', 'conspliceml', 'conspliceml_like',
+                               'spliceai', 'ci_spliceai',
                                'pangolin', 'spip', 'labranchor']
 
         data = defaultdict(list)

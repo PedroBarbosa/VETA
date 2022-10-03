@@ -110,6 +110,7 @@ def update_thresholds(config_dict: defaultdict):
         ('CI-SpliceAI', '>', 0.190, 'Splicing'),
         ('Pangolin', '>', 0.2, 'Splicing'),
         ('SPiP', '>', 0.5, 'Splicing'),
+        ('MLCsplice', '>', 0.5, 'Splicing'),
         ('labranchoR', '>', 0.1, 'Splicing')
     ]
 
