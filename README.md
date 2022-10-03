@@ -268,6 +268,7 @@ List of tools available (more will be continuosly added)
 |                                 | kipoiSplice4_cons | > 0.5                | Yes                       | kipoi         |
 |                                 | ConSpliceML       | > 0.5                | Yes                       | vcfanno       |
 |                                 | IntSplice2        | > 0.5                | Yes                       | vcfanno       |
+|                                 | MLCsplice         | > 0.5                | Yes                       | vcfanno       |
 |                                 | SQUIRLS           | > 0.5                |                           | model_inference |
 |                                 | CI-SpliceAI       | > 0.190              | No                        | model_inference |
 |                                 | Pangolin          | \|splicing_diff\| > 0.2 | No                     | model_inference |
