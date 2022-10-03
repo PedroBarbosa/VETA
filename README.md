@@ -269,7 +269,7 @@ List of tools available (more will be continuosly added)
 |                                 | ConSpliceML       | > 0.5                | Yes                       | vcfanno       |
 |                                 | IntSplice2        | > 0.5                | Yes                       | vcfanno       |
 |                                 | MLCsplice         | > 0.5                | Yes                       | vcfanno       |
-|                                 | SQUIRLS           | > 0.5                |                           | model_inference |
+|                                 | SQUIRLS           | > 0.5                |Yes                           | model_inference |
 |                                 | CI-SpliceAI       | > 0.190              | No                        | model_inference |
 |                                 | Pangolin          | \|splicing_diff\| > 0.2 | No                     | model_inference |
 |                                 | SPiP              | > 0.5                | Yes                       | model_inference |
