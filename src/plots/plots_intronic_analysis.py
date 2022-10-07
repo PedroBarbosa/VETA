@@ -172,13 +172,14 @@ def plot_metrics_by_bin_split_ss(df: pd.DataFrame,
     bins_to_exclude = ['1-2', '3-10'] if aggregate_classes else ['1-10']
     bins_to_exclude.extend(["all_intronic", "all_except_1-2", "all_except_1-10"])
 
+    df['fraction_scored'] = 1 - df.fraction_nan
     metrics = {"F1": "F1_Score",
                "weighted_F1": "F1 score (weighted)",
-               "fraction_nan": "Fraction unscored"}
+               "fraction_scored": "Fraction scored"}
 
     avg = df.groupby(['tool', 'variant_class']).agg({'F1':'mean',
                              'weighted_F1': 'mean',
-                             'fraction_nan': 'mean'})
+                             'fraction_scored': 'mean'})
     
     avg = avg.round(2)
     avg.columns = ["avg_{}".format(x) for x in avg.columns]
@@ -237,10 +238,7 @@ def plot_metrics_by_bin_split_ss(df: pd.DataFrame,
         legend_out = True   
         # Comment code above (from # Add avg ..) to just display tool names in the middle of the two facets
         
-        if metric != "fraction_nan":
-            _df = _df.sort_values("avg_{}".format(metric), ascending=False)
-        else:
-            _df = _df.sort_values("avg_{}".format(metric))
+        _df = _df.sort_values("avg_{}".format(metric), ascending=False)
 
         g = sns.catplot(x="bin",
             y=metric,
@@ -304,13 +302,15 @@ def plot_metrics_by_bin(df: pd.DataFrame,
     bins_to_exclude = ['1-2', '3-10'] if aggregate_classes else ['1-10']
     bins_to_exclude.extend(["all_intronic", "all_except_1-2", "all_except_1-10"])
     variant_class = df.name
+    
+    df['fraction_scored'] = 1 - df.fraction_nan
     metrics = {"F1": "F1_Score",
                "weighted_F1": "F1 score (weighted)",
-               "fraction_nan": "Fraction unscored"}
+               "fraction_scored": "Fraction scored"}
     
     avg = df.groupby('tool').agg({'F1':'mean',
                              'weighted_F1': 'mean',
-                             'fraction_nan': 'mean'})
+                             'fraction_scored': 'mean'})
     
     avg = avg.round(3)
     avg.columns = ["avg_{}".format(x) for x in avg.columns]
@@ -332,11 +332,7 @@ def plot_metrics_by_bin(df: pd.DataFrame,
         _df[metric] = pd.to_numeric(_df[metric])
         _df['tool'] = df.tool + " (mean=" + df["avg_{}".format(metric)].astype(str) + ")"
         
-        if metric != "fraction_nan":
-            _df = _df.sort_values("avg_{}".format(metric), ascending=False)
-        else:
-            _df = _df.sort_values("avg_{}".format(metric))
-
+        _df = _df.sort_values("avg_{}".format(metric), ascending=False)
         g = sns.catplot(x="bin",
             y=metric,
             kind='point',
