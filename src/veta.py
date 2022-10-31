@@ -145,19 +145,6 @@ def main():
     predict_parser.add_argument(
         dest='vcf', help="VCF file to evaluate tools predictions.")
 
-    predict_parser.add_argument('-b', '--best_tools', metavar='',
-                                help="Restrict heatmap analysis to the best set of tools "
-                                     "obtained from a previous run using a reference "
-                                     "catalog (e.g. Clinvar). It must refer to the file "
-                                     "\'tools_ranking*.csv\' that is written when running "
-                                     "the aforementioned analysis. Default: Use all tools "
-                                     "available in the analysis. It requires '--skip_heatmap' "
-                                     "is 'False'")
-
-    predict_parser.add_argument('-n', '--n_best_tools', metavar='', type=int, default=5,
-                                help="Number of best tools selected from the ranking "
-                                     "provided in the \'--best_tools\' argument. Default: 5.")
-
     predict_parser.add_argument('--plot_these_tools', metavar='tool_name', nargs='+',
                                 help="Plot scores distribution for the given tools.")
 
@@ -193,8 +180,6 @@ def main():
                         args.aggregate_classes,
                         args.top_vep_consequence,
                         args.do_intronic_analysis,
-                        args.best_tools,
-                        args.n_best_tools,
                         args.plot_these_tools,
                         args.labels,
                         args.allele_frequency,

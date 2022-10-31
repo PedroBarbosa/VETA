@@ -197,8 +197,9 @@ def process_vcf(vcf: str,
 
         body_variants = tempfile.NamedTemporaryFile()
         subprocess.call(["bcftools", "view", "-H", vcf], stdout=body_variants)
-
+ 
         list_files = osutils.split_file_in_chunks(body_variants.name, header, n_variants)
+
         with multiprocessing.Pool() as p:
             df_list = list(tqdm(p.imap(partial(_iter_variants, **args), list_files)))
 
@@ -239,7 +240,7 @@ def _iter_variants(vcf: str, **kwargs):
         if not vep_annotation:
             continue
         
-        if record.ID != ".":
+        if record.ID != "." and record.ID is not None:
             key = record.CHROM + "_" + str(record.POS) + "_" + str(record.ID) + "_" + str(record.ALT[0])
 
         else:
@@ -280,7 +281,7 @@ def _iter_variants(vcf: str, **kwargs):
 
         vep_info = _select_consequence(vep_annotation, **kwargs)
         # Add some VEP fields, if they exist
-        for _field in ['Existing_variation', 'HGVSc', 'SYMBOL', 'Consequence']:
+        for _field in ['Existing_variation', 'HGVSc', 'HGVSg', 'SYMBOL', 'Consequence']:
             colnames.append(_field)
             try:
                 _single_out.append(vep_info[kwargs['all_vep_annotations'].index(_field)])
@@ -330,10 +331,11 @@ def _iter_variants(vcf: str, **kwargs):
         df = pd.DataFrame( _single_out).T
         df.columns = colnames
         scores.append(df)
-
     vcf_data.close()
-    scores = pd.concat(scores).set_index('index')
-    return scores
+
+    if len(scores) != 0:
+        return pd.concat(scores).set_index('index')
+    
 
 
 def _check_if_field_exists(field: list, available: list):

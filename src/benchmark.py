@@ -209,9 +209,13 @@ class BenchmarkTools(Base):
                                     "Skipping heatmap generation.".format(_location, var_type))
 
                 ensure_folder_exists(os.path.join(outdir, "results_tsv"))
-                out_preds = os.path.join(outdir, "results_tsv", "preds_{}_{}.tsv").format(var_type, _location)
+                out_preds = os.path.join(outdir, "results_tsv", "preds_{}_{}_class.tsv").format(var_type, _location)
+                out_preds_scores = os.path.join(outdir, "results_tsv", "preds_{}_{}_scores.tsv").format(var_type, _location)
                 out_c = ['chr', 'pos', 'ref', 'alt', 'SYMBOL'] + [x for x in list(df) if '_prediction' in x] + ['label']
+                out_c_scores = ['chr', 'pos', 'ref', 'alt', 'SYMBOL'] + [x for x in list(df) if '_prediction' not in x and x not in ['count_class', 'blank', 'label']]
+  
                 df[out_c].to_csv(out_preds, index=False, sep="\t")
+                df[out_c_scores].to_csv(out_preds_scores, index=False, sep="\t")
                 roc_metrics_per_tool, pr_metrics_per_tool = [], []
 
                 for tool, direction, _, _ in self.thresholds:
@@ -247,8 +251,8 @@ class BenchmarkTools(Base):
                             logging.info("Warn: {} scored some '{}' variants (scored={}), but they account for less than "
                                         "33% of the dataset size. ROC analysis will be skipped for this tool.".format(tool, _location, scored.shape[0]))
                         
-                        elif min(n_pos_pred, n_neg_pred) < 10:
-                            logging.info("Warn: No minimum number of predictions on each class (10) found. Skipping ROC analysis for {} tool in {} variant set".format(tool, _location))
+                        elif min(n_pos_pred, n_neg_pred) < 15:
+                            logging.info("Warn: No minimum number of predictions on each class (15) found. Skipping ROC analysis for {} tool in {} variant set".format(tool, _location))
                             
                         else:
                     

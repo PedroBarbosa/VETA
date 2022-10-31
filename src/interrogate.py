@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from typing import List
 import numpy as np
-
+import pandas as pd
 from base import Base
 from plots.plots_interrogate_mode import *
 from predictions.apply import apply_tool_predictions
@@ -25,8 +25,6 @@ class PredictionsEval(Base):
                  aggregate_classes: bool = False,
                  select_conseqs: str = "in_gene_body",
                  do_intronic_analysis: bool = False,
-                 best_tools: str = None,
-                 n_best_tools: int = None,
                  plot_these_tools: List = None,
                  labels: str = None,
                  allele_frequency_col: str = "gnomADg_AF",
@@ -37,19 +35,6 @@ class PredictionsEval(Base):
         ----
         Base args described in Base class
         ----
-        :param str best_tools: Restrict analysis to the best set
-            of tools obtained from a previous VETA run using a
-            reference catalog (e.g. Clinvar). It must refer to the
-            file `tools_ranking*.tsv` that is written when running
-
-            the aforementioned analysis. Default: `None`, use all
-            tools  available considering the `scope_to_predict`
-            argument.
-
-        :param int n_best_tools: Number of best tools selected
-            from the ranking provided in the `--best_tools` argument.
-            Default: `5`.
-
         :param List plot_these_tools: Plot scores distribution for the
             given tools. Default: `None`.
 
@@ -73,9 +58,6 @@ class PredictionsEval(Base):
                          skip_heatmap=skip_heatmap,
                          tools_config=tools_config)
 
-        if best_tools is not None:
-            check_file_exists(best_tools)
-
         if plot_these_tools is not None:
             assert set(plot_these_tools).issubset(self.available_tools), "Invalid tool(s) name(s) in the " \
                                                                          "'--plot_these_tools' argument. " \
@@ -87,8 +69,6 @@ class PredictionsEval(Base):
                              "interrogate mode, since all variants refer to a "
                              "single class type (--label set to {})".format(self.labels))
 
-        self.best_tools = check_file_exists(best_tools)
-        self.n_best_tools = n_best_tools
         self.plot_these_tools = plot_these_tools
         self.labels = labels
 
@@ -102,6 +82,15 @@ class PredictionsEval(Base):
 
         :return:
         """
+        def update_hgvsc(row: pd.Series):
+            try:
+                return row.SYMBOL + ":" + row.HGVSc.split(":")[1]
+            except IndexError:
+                if not row.SYMBOL or row.SYMBOL == "":
+                    return row.HGVSg
+                else:
+                    return row.SYMBOL + ":" + row.HGVSg
+                    
 
         df_with_pred = apply_tool_predictions(self.df, self.thresholds). \
             rename(columns={'index': 'variant_id'})
@@ -128,21 +117,34 @@ class PredictionsEval(Base):
             # df = apply_tool_predictions(df, threshold_list)
             logging.info("Extracting predictions")
 
-            out_c = ['chr', 'pos', 'ref', 'alt', 'Consequence', 'HGVSc', 'SYMBOL'] + [col for col in _df_by_type.columns if '_prediction' in col]
+            to_remove_cols = ['variant_id', 'type', 'subtype', 'Existing_variation', 'location', 'label', 'outcome']
+            out_c = ['chr', 'pos', 'ref', 'alt', 'Consequence', 'HGVSc', 'HGVSg', 'SYMBOL'] + [col for col in _df_by_type.columns if '_prediction' in col]
+            out_c_raw = [col for col in _df_by_type.columns if not '_prediction' in col and col not in to_remove_cols]
+  
             out_df = _df_by_type[out_c]
-            out_df = out_df.rename(columns={col: col.split('_prediction')[0] for col in out_df.columns}).to_csv(os.path.join(outdir, "individual_predictions.tsv"), index=False, sep="\t")
+            out_df.rename(columns={col: col.split('_prediction')[0] for col in out_df.columns}).to_csv(os.path.join(outdir, "individual_predictions.tsv"), index=False, sep="\t")
+            _df_by_type[out_c_raw].to_csv(os.path.join(outdir, "individual_predictions_raw_scores.tsv"), index=False, sep="\t")
             
             _df_just_pred = pd.concat([_df_by_type['variant_id'],
                                        _df_by_type[[col for col in _df_by_type.columns if '_prediction' in col]],
                                        _df_by_type["HGVSc"],
+                                       _df_by_type["HGVSg"],
                                        _df_by_type["SYMBOL"],
                                        _df_by_type["location"].to_frame()],
                                       axis=1)
-            
-            _df_just_pred['HGVSc'] = _df_just_pred.apply(lambda x: x.SYMBOL + ":" + x.HGVSc.split(":")[1], axis=1)
+                    
+            _df_just_pred['HGVSc'] = _df_just_pred.apply(update_hgvsc, axis=1)
             _df_just_pred = _df_just_pred.rename(columns={col: col.split('_prediction')[0]
                                                           for col in _df_just_pred.columns})
-       
+
+            _df_just_pred['tools_preds'] = _df_just_pred.apply(lambda row: row[row == True].index.tolist(), axis=1)
+            _df_just_pred['tools_preds'] = _df_just_pred['tools_preds'].apply(lambda x: ';'.join(x))
+            any_patho = _df_just_pred[_df_just_pred.tools_preds.apply(lambda x: len(x)) > 0]
+            if any_patho.shape[0] > 0:
+                any_patho[['variant_id', 'HGVSc', 'HGVSg', 'tools_preds']].to_csv(os.path.join(outdir, 'variants_with_any_pathogenic_pred.tsv'), sep="\t")
+            else:
+                logging.info('No variant had any pathogenic prediction by any tool')
+            _df_just_pred.drop(columns='tools_preds', inplace=True)
             ##############
             ### Ratios ###
             ##############
@@ -150,34 +152,34 @@ class PredictionsEval(Base):
             logging.info("Inspecting variants for which a large "
                         "fraction of tools predicts pathogenicity.")
 
-            # TODO calculate ratios more efficiently 
-            ratios_df = _df_just_pred.set_index('HGVSc').drop(["location", "variant_id", "SYMBOL"], axis=1).copy()
-        
-            ratios_df = ratios_df.apply(lambda x: x.value_counts(True, dropna=False),
-                                        axis=1).fillna(0).sort_values([True], ascending=False)
-            ratios_df = ratios_df.loc[:,~ratios_df.columns.duplicated()]
-    
-            ratios_df.rename(columns={False: 'Is benign',
-                                        True: 'Is pathogenic',
-                                        np.nan: "Unpredictable"},
-                                inplace=True)
-   
-            ratios_df = self._fix_col_names(ratios_df)
+
+            ratios_df = _df_just_pred.set_index('HGVSc').drop(["location", "variant_id", "HGVSg", "SYMBOL"], axis=1).copy()
+
+            n_tools = len(list(ratios_df))
+            patho_counts = ratios_df.eq(True).sum(axis=1)
+            benign_counts = ratios_df.eq(False).sum(axis=1)
+            unpredictable_counts = ratios_df.fillna(-1).eq(-1).sum(axis=1)
+            ratios_df = pd.concat([patho_counts, benign_counts, unpredictable_counts], axis=1)
+            ratios_df.columns = ['Is pathogenic', 'Is benign', 'Unpredictable']
+     
+            ratios_df = ratios_df / n_tools
+            #ratios_df = self._fix_col_names(ratios_df)
 
             _top_predicted_patho = ratios_df[ratios_df['Is pathogenic'] > 0.5]
+      
             _top_predicted_benign = ratios_df[ratios_df['Is benign'] > 0.5]
             if _top_predicted_patho.shape[0] > 0:
                 _top_predicted_patho.to_csv(os.path.join(outdir, "top_variant_candidates.tsv"), sep="\t")
 
-
             plot_area(ratios_df, outdir)
-            ratios_df["Unpredictable"] *= 100
-
+        
+            ratios_df['Unpredictable'] *= 100
+    
             plot_heatmap(ratios_df, outdir)
             plot_heatmap(_top_predicted_patho, 
                             outdir, 
                             display_annot=True)
-                
+
             plot_heatmap(_top_predicted_patho, 
                         outdir, 
                         display_annot=True,
@@ -206,18 +208,8 @@ class PredictionsEval(Base):
             if self.skip_heatmap is False:
                 logging.info("Generating heatmap")
                 class_dict = {True: 1, False: 0, np.nan: -1}
-                if self.best_tools is not None:
-                    tools = pd.read_csv(self.best_tools, sep="\t")['tool'].head(self.n_best_tools).tolist()
-                    tools.append("location")
-
-                    if self.labels:
-                        tools.append("label")
-
-                    _df = _df_just_pred[tools].replace(class_dict)
-
-                else:
-                    _df = _df_just_pred.replace(class_dict)
-
+                _df = _df_just_pred.replace(class_dict)
+                
                 plot_heatmap_toptools(_df, filters=self.location_filters, outdir=outdir)
 
             ##################
@@ -257,15 +249,17 @@ class PredictionsEval(Base):
         assert "F1" not in self.metric, "Can't use F1-based metrics in the inspect mode since it is " \
                                         "necessary to have at least two classes for its calculation." \
                                         "at least "
-      
+
+        os.makedirs(os.path.join(outdir, 'out_performance'), exist_ok=True)
+        outdir = os.path.join(outdir, 'out_performance')
         for _location in self.location_filters:
 
             outfile = os.path.join(outdir, "statistics_{}_{}.tsv").format(var_type, _location)
             statistics = defaultdict(list)
-            
+
             df = df_pred[df_pred.location == _location].copy()
             if df.empty:
-                logging.info("WARN: Input VCF does not have any {} variants. "
+                logging.info("WARN: Input VCF does not have any '{}' variants. "
                              "Skipping label performance analysis.".format(_location))
                 continue
 

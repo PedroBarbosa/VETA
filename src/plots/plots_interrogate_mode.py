@@ -25,8 +25,8 @@ def plot_area(df: pd.DataFrame, outdir: str):
                   np.nan: "grey",
                   "Is benign": "darkblue",
                   "Is pathogenic": "darkred"}
-
-    ax = df.plot.area(color=[map_colors.get(x)
+    
+    ax = df.sort_values(['Is pathogenic', 'Is benign'], ascending=False).plot.area(color=[map_colors.get(x)
                       for x in df.columns], alpha=0.65)
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
     ax.set_ylabel('Fraction of tools')
@@ -67,6 +67,7 @@ def plot_heatmap(df: pd.DataFrame,
 
     plot_benign = False
     fig, ax = plt.subplots(1, 2, figsize=(5, 7))
+
     if display_annot:
 
         if isinstance(benign_too, pd.DataFrame):
@@ -122,11 +123,12 @@ def plot_heatmap(df: pd.DataFrame,
         ax[1].set_ylabel('')
 
     else:
+        _linewidth = 0.001 if df.shape[0] > 2000 else .5
         sns.heatmap(df[["Is pathogenic"]][::-1], ax=ax[0], cbar_kws={'label': 'Fraction of tools'},
                     vmax=1,
                     vmin=0,
                     cmap="OrRd",
-                    linewidths=.5,
+                    linewidths=_linewidth,
                     linecolor='k',
                     yticklabels=display_annot)
 
@@ -134,7 +136,7 @@ def plot_heatmap(df: pd.DataFrame,
                     vmax=100,
                     vmin=0,
                     cmap="OrRd",
-                    linewidths=.5,
+                    linewidths=_linewidth,
                     linecolor='k',
                     yticklabels=False)
         ax[0].set_ylabel('All variants ({})'.format(df.shape[0]))
@@ -161,20 +163,25 @@ def plot_heatmap_toptools(df: pd.DataFrame, filters, outdir):
 
     if 'label' in df.columns:
         df.rename(columns={"label": "Ground Truth (*)"}, inplace=True)
-
+    
+    os.makedirs(os.path.join(outdir, 'out_heatmaps'), exist_ok=True)
+    outdir = os.path.join(outdir, 'out_heatmaps')
     for filter_name in filters:
 
         df_f = df[df.location == filter_name].copy()
-        df_f = df_f.drop(columns=['variant_id', 'HGVSc', 'location', "SYMBOL"])
+        df_f = df_f.drop(columns=['variant_id', 'HGVSc', 'HGVSg', 'location', "SYMBOL"])
         if df_f.shape[0] < 5:
             continue
 
         fname = os.path.join(
             outdir, "top_tools_heatmap_{}.pdf".format(filter_name))
 
-        plot_heatmap(df_f, fname,
-                     cluster_rows=True,
-                     skip_preparation=True)
+        try:
+            plot_heatmap(df_f, fname,
+            cluster_rows=True, 
+            skip_preparation=True)
+        except RecursionError:
+            pass
 
 
 def plot_accuracy(stats_df: pd.DataFrame,
@@ -232,6 +239,8 @@ def plot_tool_score_distribution(_df: pd.DataFrame,
         reference thresholds
     :param outdir: Output directory
     """
+    os.makedirs(os.path.join(outdir, 'out_score_distribution'), exist_ok=True)
+    outdir = os.path.join(outdir, 'out_score_distribution')
     plt.subplots(figsize=(7, 5))
     nas = sum(pd.isnull(_df[tool]))
 

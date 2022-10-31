@@ -66,5 +66,5 @@ kipoiSplice4	kipoisplice_4
 CI-SpliceAI	CI-SpliceAI
 Pangolin	Pangolin
 SPiP	SPiP
-MLCsplice   MLCsplice
+MLCsplice	MLCsplice
 labranchoR	labranchoR
