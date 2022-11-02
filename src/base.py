@@ -284,7 +284,7 @@ class Base(object):
             "Polyphen2HVAR": available_functions['top_max'],
             "Polyphen2HDIV": available_functions['top_max'],
             "MutationAssessor": available_functions['top_max'],
-            "MutationTaster": available_functions['top_max'],
+            "MutationTaster2": available_functions['top_max'],
             "FATHMM": available_functions['top_min'],
             "Provean": available_functions['top_min'],
             "Mutpred": available_functions['to_numeric'],
@@ -310,12 +310,12 @@ class Base(object):
             "EVE_Class20": available_functions['categorical_to_numeric'],
             "EVE_Class50": available_functions['categorical_to_numeric'],
             "EVE_Class90": available_functions['categorical_to_numeric'],
-            "EVE_score": available_functions['to_numeric'],
+            "EVE": available_functions['to_numeric'],
             
             "fitCons": available_functions['to_numeric'],
             "LINSIGHT": available_functions['to_numeric'],
             "GWAVA": available_functions['to_numeric'],
-            "CADD": available_functions['to_numeric'],
+            "CADD_v1.5": available_functions['to_numeric'],
             "CADD-Splice": available_functions['to_numeric'],
             "Eigen": available_functions['to_numeric'],
             "FATHMM-MKL": available_functions['to_numeric'],
@@ -351,7 +351,7 @@ class Base(object):
 
         # If new custom tool
         if _absent_tools:
-
+ 
             # get function, if provided (5th col in config)
             for _tool, info in _absent_tools.items():
                 if len(info) > 4:    

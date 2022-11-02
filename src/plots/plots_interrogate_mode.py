@@ -1,5 +1,6 @@
 import os
 from typing import List
+from charset_normalizer import logging
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -166,8 +167,9 @@ def plot_heatmap_toptools(df: pd.DataFrame, filters, outdir):
     
     os.makedirs(os.path.join(outdir, 'out_heatmaps'), exist_ok=True)
     outdir = os.path.join(outdir, 'out_heatmaps')
-    for filter_name in filters:
 
+    for filter_name in filters:
+        
         df_f = df[df.location == filter_name].copy()
         df_f = df_f.drop(columns=['variant_id', 'HGVSc', 'HGVSg', 'location', "SYMBOL"])
         if df_f.shape[0] < 5:
@@ -181,6 +183,7 @@ def plot_heatmap_toptools(df: pd.DataFrame, filters, outdir):
             cluster_rows=True, 
             skip_preparation=True)
         except RecursionError:
+            logging.info("WARN: Error when generating heatmap for '{}' variants".format(filter_name))
             pass
 
 
