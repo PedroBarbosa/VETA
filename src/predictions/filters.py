@@ -18,12 +18,12 @@ def update_thresholds(config_dict: defaultdict):
     """
     _default_list = [
         ('GERP', '>', 4.4, 'Conservation'),
-        ('phyloP', '>', 7.367, 'Conservation'),
+        ('phyloP', '>', 1.6, 'Conservation'),
         ('SiPhy', '>', 12.17, 'Conservation'),
         ('phastCons', '>', 0.99, 'Conservation'),
         ('CDTS', '<', 10, 'Conservation'),
         ('fitCons', '>', 0.4, 'Whole_genome'),
-        ('LINSIGHT', '>', 0.4, 'Whole_genome'),
+        ('LINSIGHT', '>', 0.056, 'Whole_genome'), # S-CAP paper
 
         ('Sift', '<', 0.001, 'Protein'),
         ('Polyphen2HVAR', '>', 0.978, 'Protein'),
@@ -60,13 +60,13 @@ def update_thresholds(config_dict: defaultdict):
         ('EVE', '>', 0.5, 'Protein'),
 
         ('CAPICE', '>', 0.02, 'Whole_genome'),
-        ('CADD_v1.5', '>', 25.3, 'Whole_genome'),
-        ('CADD-Splice', '>', 25.3, 'Whole_genome'),
+        ('CADD_v1.5', '>', 15, 'Whole_genome'),
+        ('CADD-Splice', '>', 15, 'Whole_genome'),
 
         ('DANN', '>', 0.9, 'Whole_genome'),
         ('GWAVA', '>', 0.5, 'Whole_genome'),
         ('FATHMM-MKL', '>', 0.5, 'Whole_genome'),
-        ('Eigen', '>', 1, 'Whole_genome'),  # M-CAP paper
+        ('Eigen', '>', 4.86, 'Whole_genome'),  # S-CAP paper
         ('ReMM', '>', 0.984, 'Whole_genome'),
         ('FunSeq2', '>', 1.5, 'Whole_genome'),
 
@@ -105,11 +105,11 @@ def update_thresholds(config_dict: defaultdict):
         # the gain (positive entropy value) or for the loss
         # (negative entropy value).
         ('MaxEntScan', '>', 3, 'Splicing'),
-        ('SQUIRLS', '>', 0.5, 'Splicing'),
+        ('SQUIRLS', '>', 0.074, 'Splicing'), #CI-SpliceAI paper
         ('IntSplice2', '>', 0.5, 'Splicing'),
         ('CI-SpliceAI', '>', 0.190, 'Splicing'),
         ('Pangolin', '>', 0.2, 'Splicing'),
-        ('SPiP', '>', 0.5, 'Splicing'),
+        ('SPiP', '>', 0.452, 'Splicing'),
         ('MLCsplice', '>', 0.5, 'Splicing'),
         ('labranchoR', '>', 0.1, 'Splicing')
     ]
