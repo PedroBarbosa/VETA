@@ -184,9 +184,10 @@ This analysis can be enabled with the following flag:
 
 ```veta benchmark --do_intronic_analysis```
 
-It is also possible to set ``--split_ss`` so that separate analysis is performed for splicing acceptor-associated and donor-associated variants (assignment based on `HGVSc` expression):
+It is also possible to set ``--split_splice_sites`` so that separate analysis is performed for splicing acceptor-associated and donor-associated variants (assignment based on `HGVSc` expression for variants less 1000bp from the splice site):
 
-```veta benchmark --do_intronic_analysis --split_ss```
+```veta benchmark --do_intronic_analysis --split_splice_sites```
+
 
 <img src="src/config/example_imgs/per_bin_score_split_ss.png" height="200"/>
 

@@ -121,9 +121,9 @@ class Base(object):
         self.variant_types = subset_variants_by_type(types_of_variant)
 
         if self.location_from == "Consequence" and self.do_intronic_analysis:
-            raise ValueError('If \'--is_intronic\' is set, \'--location\' '
-                             'must be \'HGVSc\' because intronic bin analysis '
-                             'will be performed based on the HGVS nomenclature.')
+            raise ValueError('If \'--do_intronic_analysis\' is set, \'--location\' '
+                             'must be \'HGVSc\' because intronic bin are assigned '
+                             'based on the distance offset extracted from HGVSc expressions.')
 
         if isinstance(vcf, str):
             check_file_exists(vcf)
