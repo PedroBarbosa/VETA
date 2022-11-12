@@ -29,7 +29,7 @@ class BenchmarkTools(Base):
                  metric: str = "weighted_accuracy",
                  location: str = "HGVSc",
                  aggregate_classes: bool = False,
-                 select_conseqs: str = "in_gene_body",
+                 select_conseqs: str = "gene_body",
                  do_intronic_analysis: bool = False,
                  split_splice_sites: bool = False,
                  clinvar_stars: str = "1s_l",

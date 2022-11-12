@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 from collections import OrderedDict, defaultdict
 from functools import partial
-import hgvs.parser
+import re
 import pandas as pd
 from cyvcf2 import VCF
 from tqdm import tqdm
@@ -279,6 +279,8 @@ def _iter_variants(vcf: str, **kwargs):
                                 record.var_type,
                                 record.var_subtype])
 
+        if record.POS == 44874309:
+            a=1
         vep_info = _select_consequence(vep_annotation, **kwargs)
         # Add some VEP fields, if they exist
         for _field in ['Existing_variation', 'HGVSc', 'HGVSg', 'SYMBOL', 'Consequence']:
@@ -388,24 +390,50 @@ def _select_consequence(vep_annotations: str, **kwargs):
         if kwargs['select_conseq'] == "first":
             return vep_annotations.split(",")[0].split("|")
         
-        elif kwargs['select_conseq'] == "in_gene_body":
+        elif kwargs['select_conseq'] in ["gene_body", "smallest_offset"]:
        
             try:
                 hgvsc_index = kwargs['all_vep_annotations'].index('HGVSc')
-                to_return = []
-                for block in vep_annotations.split(","):
-                    
-                    _block = block.split("|")
-                    if _block[hgvsc_index]:
-                        return _block
-                
-                # If not block in gene_body, return the first
-                if not to_return:
-                    return vep_annotations.split(",")[0].split("|")
-                
+            
             except ValueError:
                 raise ValueError('HGVSc not present in VEP annotations.'
-                                 'Can not select top consequence block based on the \'in_gene_body\' flag')
+                                 'Can\'t select top consequence block based '
+                                 'on the \'gene_body\' flag')
+            
+         
+            if kwargs['select_conseq'] == "gene_body":
+            
+                for block in vep_annotations.split(","):
+                    _block = block.split("|")
+                
+                    if _block[hgvsc_index]:
+                        return _block
+        
+                return vep_annotations.split(",")[0].split("|")
+            
+            else:
+                i = 0
+                offset = 5000000
+                for _i, block in enumerate(vep_annotations.split(",")):
+                    _block = block.split("|")
+                    
+                    # if gene body
+                    if _block[hgvsc_index]:
+                    
+                        _aux = re.findall(r'c.+[+-](\d+)', _block[hgvsc_index].split(" ")[0])
+             
+                        if len(_aux) > 0:
+                            _offset = int(_aux[0])
+                         
+                        else:
+                            _offset = 0
+                        
+                        # keep the smallest offset
+                        if _offset < offset:
+                            offset = _offset
+                            i = _i
+                            
+                return vep_annotations.split(",")[i].split("|")             
             
     else:
         return vep_annotations.split("|")

@@ -62,10 +62,11 @@ def main():
                                '(e.g. missense, synonymous variants will be evaluated as coding variants).',
                                action='store_true')
     
-    parent_parser.add_argument('-v', '--top_vep_consequence', metavar='', default='in_gene_body', choices=("first", "in_gene_body"), 
+    parent_parser.add_argument('-v', '--top_vep_consequence', metavar='', default='gene_body', choices=("first", "gene_body", "smallest_offset"), 
                                help='How to select the top VEP consequence for each variant. Available options: {%(choices)s}. '
-                               'Default: "in_gene_body": First consequence ocurring in the body of a gene is selected. '
-                               'If "first" is set, first consequence is selected')
+                               'Default: "gene_body": First consequence occurring in the body of a gene is selected. '
+                               'If "first" is set, first consequence is selected. '
+                               'If "smallest_offset" is set, consequence within body genes with the smallest offset is selected (e.g. exonic variants first, then intronic variants closest to a splice site).')
     
     parent_parser.add_argument('-i', '--do_intronic_analysis', help='Perform additional analysis of '
                                'intronic variants extracted from '
