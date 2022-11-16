@@ -183,7 +183,7 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
     ensure_folder_exists(outdir)
 
     available_for_threshold_analysis = [
-        'coding', 'missense', 'splice_site', 'splice_region', 'intronic', 'deep_intronic']
+        'all', 'coding', 'missense', 'splice_site', 'splice_region', 'intronic', 'deep_intronic']
 
     # Output dict initialization
     thresholds_to_return = {}
@@ -198,8 +198,13 @@ def perform_threshold_analysis(dataset: pd.DataFrame,
 
         if _loc not in available_for_threshold_analysis:
             continue
-
-        df_f = dataset[dataset.location == _loc].copy()
+        
+        elif _loc == 'all':
+            df_f = dataset.copy()
+        
+        else:
+            df_f = dataset[dataset.location == _loc].copy()
+            
         print()
         logging.info("-------------------------")
         logging.info("Looking at {} variants (N={}, {} pos and {} neg)".format(_loc,

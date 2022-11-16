@@ -230,7 +230,7 @@ class BenchmarkTools(Base):
                        
                         if 0 < scored.shape[0] < df.shape[0] * 0.05:
                             logging.info("Warn: {} scored some '{}' variants (scored={}), but they account for less than "
-                                        "5% of the dataset size. Plots will not show those results".format(tool, _location, scored.shape[0]))
+                                        "5% of the dataset size. No plot will not show those results".format(tool, _location, scored.shape[0]))
                             continue
 
                         # Distributions of each class are only plotted for SNPs and
