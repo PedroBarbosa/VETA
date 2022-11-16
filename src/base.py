@@ -268,7 +268,8 @@ class Base(object):
                                'conspliceml_like': [process_conspliceml_like, None, None],
                                'pangolin': [process_pangolin, None, None],
                                'spip': [process_spip, None, None],
-                               'labranchor': [process_labranchor, None, None]
+                               'labranchor': [process_labranchor, None, None],
+                               'absplice_dna': [process_absplice, None, None]
                                }
 
         logging.info("Engineering the scores.")
@@ -332,7 +333,7 @@ class Base(object):
             "TraP": available_functions['trap'],
             "SPIDEX": available_functions['to_numeric'],
             "dbscSNV": available_functions['top_max'],
-            "MaxEntScan": available_functions['to_numeric'],
+            "MaxEntScan": available_functions['top_max'],
             "SpliceAI": available_functions['spliceai'],
             "SQUIRLS": available_functions['to_numeric'],
             "ConSpliceML": available_functions['conspliceml'],
@@ -341,6 +342,7 @@ class Base(object):
             "Pangolin": available_functions['pangolin'],
             "SPiP": available_functions['spip'],
             "MLCsplice": available_functions['top_max'],
+            "AbSplice-DNA": available_functions['absplice_dna'],
             "labranchoR": available_functions['labranchor']
         }
 
@@ -430,7 +432,7 @@ class Base(object):
                                  "Eigen", "FunSeq2", "CADD_v1.5", "CADD-Splice", "DANN", "CAPICE",
                                  "HAL", "SPIDEX", "dbscSNV", "MaxEntScan", "SpliceAI", "S-CAP", "ConSpliceML",
                                  "TraP", "MMSplice", "SQUIRLS", "IntSplice2", "kipoiSplice4", "kipoiSplice4_cons",
-                                 "CI-SpliceAI", "Pangolin", "SPiP", "labranchoR", "MLCsplice"]
+                                 "CI-SpliceAI", "Pangolin", "SPiP", "labranchoR", "MLCsplice", "AbSplice-DNA"]
 
         AVAILABLE_SCOPES = ["Protein", "Conservation", "Whole_genome", "Splicing"]
         AVAILABLE_FUNCTIONS = ['to_numeric', 'top_max', 'top_min', 'top_min_abs',

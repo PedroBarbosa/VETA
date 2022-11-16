@@ -690,4 +690,37 @@ def process_labranchor(preds: list):
         if score > _max:
             _max = score
     return _max
+
+
+def process_absplice(preds: list):
+    """
+    Process AbSplice_DNA scores so that the 
+    the tissue with the highest score is returned
+
+
+    :param list preds: List with the per-tissue
+    AbSplice_Dna predictions for the given variant
     
+    :return float: Prediction value to be evaluated
+    """
+    assert len(preds) == 1, "Multiple VCF fields were provided in the config for AbSplice_DNA."
+    
+    if preds[0] is None:
+        return np.nan
+    
+    # If variant overlaps multiple genes, there are multiple predictions
+    _preds = preds[0].split(",")
+    
+    _max = -1
+    for _p in _preds:
+        
+        # index 0 is the gene name
+        _p = _p.split("|")[1:]
+        
+        top_score = max([-1 if x == '' else float(x) for x in _p])
+        if top_score > _max:
+            _max = top_score
+    
+    if _max == -1:
+        return np.nan 
+    return _max

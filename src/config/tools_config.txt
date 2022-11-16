@@ -56,7 +56,7 @@ IntSplice2	IntSplice2
 HAL	HAL_DIFF
 SPIDEX	dpsi_zscore
 dbscSNV	ada_score,rf_score
-MaxEntScan	MaxEntScan_diff
+MaxEntScan	maxentscan_5,maxentscan_3
 SpliceAI	SpliceAI,SpliceAI_ind
 S-CAP	SCAP
 TraP	TraP
@@ -67,4 +67,5 @@ CI-SpliceAI	CI-SpliceAI
 Pangolin	Pangolin
 SPiP	SPiP
 MLCsplice	MLCsplice
+AbSplice-DNA      AbSplice_DNA
 labranchoR	labranchoR
