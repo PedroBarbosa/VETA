@@ -120,10 +120,33 @@ class PredictionsEval(Base):
             to_remove_cols = ['variant_id', 'type', 'subtype', 'Existing_variation', 'location', 'label', 'outcome']
             out_c = ['chr', 'pos', 'ref', 'alt', 'Consequence', 'HGVSc', 'HGVSg', 'SYMBOL'] + [col for col in _df_by_type.columns if '_prediction' in col]
             out_c_raw = [col for col in _df_by_type.columns if not '_prediction' in col and col not in to_remove_cols]
-  
+
             out_df = _df_by_type[out_c]
-            out_df.rename(columns={col: col.split('_prediction')[0] for col in out_df.columns}).to_csv(os.path.join(outdir, "individual_predictions.tsv"), index=False, sep="\t")
-            _df_by_type[out_c_raw].to_csv(os.path.join(outdir, "individual_predictions_raw_scores.tsv"), index=False, sep="\t")
+            out_df_raw = _df_by_type[out_c_raw]
+            
+            # Add used threshold to the header
+            tool_idx = {t[0]: i for i, t in enumerate(self.thresholds)}
+            
+            for i, _cols in enumerate([out_c, out_c_raw]):
+                tool_rename = {}
+                for c in _cols:
+                    tool = c.split('_')[0]
+                    if tool in tool_idx.keys():
+                        direction = str(self.thresholds[tool_idx[tool]][1])
+                        thresh = str(self.thresholds[tool_idx[tool]][2])
+                        tool_rename[c] = tool + ' ({}{})'.format(direction, thresh)
+                    else:
+                        tool_rename[c] = c
+                    
+                if i == 0:
+                    out_df = out_df.rename(columns=tool_rename) 
+                    out_df.to_csv(os.path.join(outdir, "individual_predictions.tsv"), 
+                                  index=False, 
+                                  sep="\t")
+                else:
+                    out_df_raw = out_df_raw.rename(columns=tool_rename)
+                    out_df_raw.to_csv(os.path.join(outdir, "individual_predictions_raw_scores.tsv"),index=False,
+                                      sep="\t")
             
             _df_just_pred = pd.concat([_df_by_type['variant_id'],
                                        _df_by_type[[col for col in _df_by_type.columns if '_prediction' in col]],
@@ -257,7 +280,11 @@ class PredictionsEval(Base):
             outfile = os.path.join(outdir, "statistics_{}_{}.tsv").format(var_type, _location)
             statistics = defaultdict(list)
 
-            df = df_pred[df_pred.location == _location].copy()
+            if _location == "all":
+                df = df_pred.copy()
+            else:
+                df = df_pred[df_pred.location == _location].copy()
+                
             if df.empty:
                 logging.info("WARN: Input VCF does not have any '{}' variants. "
                              "Skipping label performance analysis.".format(_location))
