@@ -164,7 +164,7 @@ class PredictionsEval(Base):
             _df_just_pred['tools_preds'] = _df_just_pred['tools_preds'].apply(lambda x: ';'.join(x))
             any_patho = _df_just_pred[_df_just_pred.tools_preds.apply(lambda x: len(x)) > 0]
             if any_patho.shape[0] > 0:
-                any_patho[['variant_id', 'HGVSc', 'HGVSg', 'tools_preds']].to_csv(os.path.join(outdir, 'variants_with_any_pathogenic_pred.tsv'), sep="\t")
+                any_patho[['variant_id', 'HGVSc', 'HGVSg', 'tools_preds']].to_csv(os.path.join(outdir, 'variants_with_any_pathogenic_pred.tsv'), index=False, sep="\t")
             else:
                 logging.info('No variant had any pathogenic prediction by any tool')
             _df_just_pred.drop(columns='tools_preds', inplace=True)
