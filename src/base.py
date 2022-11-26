@@ -38,7 +38,8 @@ class Base(object):
                  is_clinvar: bool = False,
                  allele_frequency_col: str = "gnomADg_AF",
                  skip_heatmap: bool = False,
-                 tools_config: str = TOOLS_CONFIG):
+                 tools_config: str = TOOLS_CONFIG,
+                 interrogate_mode: bool = False):
 
         """
         :param Union[Tuple, str] vcf: Input VCF(s) to analyse.
@@ -93,7 +94,10 @@ class Base(object):
         :param str tools_config: Path to the tools config
             where available tools in VCF are mapped to the
             corresponding VCF annotation
-
+            
+        :param bool interrogate_mode: Whether veta run
+            is in interrogate mode
+            
         :return pd.DataFrame: Processed dataframe
         """
         self.metric = metric
@@ -105,7 +109,7 @@ class Base(object):
         self.location_filters = _extract_possible_filters(self.aggregate_classes)
 
         self.is_clinvar = is_clinvar
-
+        self.is_interrogate_mode = interrogate_mode
         self.out_dir = setup_output_directory(out_dir)
         ensure_folder_exists(self.out_dir)
         self.allele_frequency_col = allele_frequency_col
@@ -495,8 +499,8 @@ class Base(object):
                                                               "line:\n{}".format(_fields[5], AVAILABLE_FUNCTIONS,
                                                                                  line)
                     data[_fields[0]].append(_fields[5])
-
-        if len(data) < 2:
+    
+        if len(data) < 2 and self.is_interrogate_mode is False:
             raise ValueError('Config file requires at least two tools to be compared.')
 
         return data

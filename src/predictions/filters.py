@@ -125,8 +125,8 @@ def update_thresholds(config_dict: defaultdict):
         if _tool in DEFAULT_TOOLS and len(info) > 1:
             logging.info("Warn: Threshold information about "
                          "{} tool already exists by default "
-                         "in VETA. These thresholds will be "
-                         "updated to the one provided by the user:"
+                         "in VETA. This threshold will be "
+                         "updated to the one provided in this run:"
                          "\'{}\'.".format(_tool, info))
 
             updated_info = tuple([_tool] + info[1:])

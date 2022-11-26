@@ -29,7 +29,8 @@ class PredictionsEval(Base):
                  labels: str = None,
                  allele_frequency_col: str = "gnomADg_AF",
                  skip_heatmap: bool = False,
-                 tools_config: str = None):
+                 tools_config: str = None,
+                 interrogate_mode: bool = False):
 
         """
         ----
@@ -56,7 +57,8 @@ class PredictionsEval(Base):
                          is_clinvar=False,
                          allele_frequency_col=allele_frequency_col,
                          skip_heatmap=skip_heatmap,
-                         tools_config=tools_config)
+                         tools_config=tools_config,
+                         interrogate_mode=interrogate_mode)
 
         if plot_these_tools is not None:
             assert set(plot_these_tools).issubset(self.available_tools), "Invalid tool(s) name(s) in the " \

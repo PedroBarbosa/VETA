@@ -169,7 +169,7 @@ def main():
     ## Argparse args processing ##
     ##############################
     if args.command == "interrogate":
-      
+
         assert args.metric not in ['F1', 'weighted_F1', 'mcc', 'norm_mcc', 'weighted_norm_mcc'], "Metric provided is not valid for interrogate mode."
      
         PredictionsEval(args.vcf,
@@ -185,7 +185,9 @@ def main():
                         args.labels,
                         args.allele_frequency,
                         args.skip_heatmap,
-                        args.config)
+                        args.config,
+                        interrogate_mode=True
+                        )
 
     elif args.command == "benchmark":
         if args.clinvar_stars not in clinvar_stars:
