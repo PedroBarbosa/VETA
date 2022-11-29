@@ -668,16 +668,16 @@ def process_kipoi_tools(x: list, _max: bool = True):
 
 def process_labranchor(preds: list):
     """
-    Process labranchoR scores so that the 
+    Process LaBranchoR scores so that the 
     the risk of the variant impacting
     splicing is returned
     
     :param list preds: List with the
-    labranchoR predictions for the given variant
+    LaBranchoR predictions for the given variant
     
     :return float: Prediction value to be evaluated
     """
-    assert len(preds) == 1, "Multiple VCF fields were provided in the config for labranchoR."
+    assert len(preds) == 1, "Multiple VCF fields were provided in the config for LaBranchoR."
     
     if all(v is None or v == "." for v in preds):
         return np.nan

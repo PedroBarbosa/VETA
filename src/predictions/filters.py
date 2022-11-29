@@ -112,7 +112,7 @@ def update_thresholds(config_dict: defaultdict):
         ('SPiP', '>', 0.452, 'Splicing'),
         ('MLCsplice', '>', 0.5, 'Splicing'),
         ('AbSplice-DNA', '>', 0.01, 'Splicing'),
-        ('labranchoR', '>', 0.1, 'Splicing')
+        ('LaBranchoR', '>', 0.1, 'Splicing')
     ]
 
     DEFAULT_TOOLS = [t[0] for t in _default_list]
