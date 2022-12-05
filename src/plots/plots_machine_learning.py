@@ -50,6 +50,8 @@ def plot_feature_correlation(df: pd.DataFrame,
     ax.axvline(x=corr.shape[0], color='k', linewidth=10)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=70)
     plt.tight_layout()
+    outdir = os.path.join(outdir, 'feature_correlation')
+    os.makedirs(outdir, exist_ok=True)
     plt.savefig(os.path.join(outdir, 'pearson_correlation_{}.pdf'.format(location)))
     plt.close()
 
@@ -91,6 +93,8 @@ def plot_feature_importance(importance_scores: dict,
         plt.xlabel('Feature Importance')
 
     elif method == 'information_gain':
+        out_dir = os.path.join(out_dir, "mutual_information_gain")
+        os.makedirs(out_dir, exist_ok=True)
         p = plt.barh(range(len(importance_scores)), importance_scores.values(),
                      color='darkgrey',
                      edgecolor='k',
@@ -165,7 +169,8 @@ def plot_decision_tree(dt_pipeline: Pipeline,
     :param str out_dir: Output directory
     """
     _clf = dt_pipeline.named_steps['dt']
-
+    out_dir = os.path.join(out_dir, "decision_tree")
+    os.makedirs(out_dir, exist_ok=True)
     for bool_ in [False, True]:
         viz = dtreeviz(_clf,
                        x,

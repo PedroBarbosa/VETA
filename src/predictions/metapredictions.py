@@ -39,8 +39,8 @@ class Metapredictions(object):
             comparison step (per each location), ranked by the
             metric provided by the user.
         :param float missing_rate_allowed: Fraction of missing values
-            allowed in a tool so that it is not discarded from the
-            analysis. Default: `0.5`. Tools with bigger rate will
+            allowed per class in a tool so that it is not discarded from the
+            analysis. Default: `0.3`. Tools with bigger rate will
             not be used. If missing rate is lower than this value,
             tool will be included and missing values will be imputed
             with median.
@@ -67,9 +67,18 @@ class Metapredictions(object):
         self.rank_metric = rank_metric
         self.only_numeric = only_numeric
 
-        # Remove tools with too many missing data
-        self.df = df.dropna(thresh=df.shape[0] * missing_rate_allowed, axis=1).copy()
-
+        # Remove tools with too many missing data in any of the classes
+        _patho = df[df.label].copy()
+        _benign = df[~df.label].copy()
+        
+        na_patho = set(list(df)).difference(set(list(_patho.dropna(thresh=_patho.shape[0] * missing_rate_allowed, axis=1))))
+        na_benign = set(list(df)).difference(set(list(_benign.dropna(thresh=_benign.shape[0] * missing_rate_allowed, axis=1))))
+        to_remove = list(na_patho.union(na_benign))
+        logging.info('Features (tool scores) that will not be used because they display high rate of missing predictions (> {}): {}'.format(missing_rate_allowed,
+                                                                                                                                           to_remove))
+        
+        self.df = df.drop(to_remove, axis=1)
+ 
         # Update threshold list
         self.thresholds = [t for t in thresholds if t[0] in self.df.columns]
 
@@ -93,6 +102,9 @@ class Metapredictions(object):
         if undersample:
             self.X_resampled, self.y_resampled = self.undersample_data()
 
+        data_to_write = np.append(self.X, self.y.reshape(self.y.shape[0], -1), axis=1)
+        pd.DataFrame(data_to_write, columns=self.features + ['label']).to_csv(os.path.join(self.out_dir, 'ml_processed_data_used.tsv'), sep="\t", index=False)       
+    
     def build_converter(self):
         """
         Prepares a mapper between Pandas Dataframe and sklearn matrix
@@ -126,7 +138,7 @@ class Metapredictions(object):
         """
 
         rus = RandomUnderSampler(sampling_strategy="majority",
-                                 random_state=11)
+                                 random_state=0)
 
         X_resampled, y_resampled = rus.fit_sample(self.X, self.y)
         return X_resampled, y_resampled
@@ -150,7 +162,7 @@ class Metapredictions(object):
         trained_models = {}
         # Split training and test data to have equally
         # balanced classes in both training and test
-        sss = StratifiedShuffleSplit(n_splits=1, test_size=0.2)  # , random_state=11)
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=0.2 , random_state=0)
 
         for train_idx, test_idx in sss.split(self.X, self.y):
             train_X, test_X = self.X[train_idx], self.X[test_idx]
@@ -194,8 +206,8 @@ class Metapredictions(object):
 
             assert self.rank_metric in _clf_performance.columns, "Ranking metric provided is not available."
 
-            out_metrics = os.path.join(self.out_dir, "metrics_{}_clf_along_best_tools.pdf".format(self.location))
-            plot_metrics(merged, out_metrics, self.rank_metric)
+            out_file = os.path.join(self.out_dir, "metrics_{}_clf_along_best_tools.pdf".format(self.location))
+            plot_metrics(merged, out_file, self.rank_metric)
 
             ##########################################
             ### Top tools performance on TEST data ###
@@ -234,8 +246,10 @@ class Metapredictions(object):
             single_tool_perfor = self._dict_to_df(out_metrics)
             merged = pd.concat([_clf_performance, single_tool_perfor], ignore_index=True)
 
-            out_metrics = os.path.join(self.out_dir, "metrics_{}_clf_only_on_test_data.pdf".format(self.location))
-            plot_metrics(merged, out_metrics, self.rank_metric)
+            out_file = os.path.join(self.out_dir, "metrics_{}_clf_only_on_test_data.pdf".format(self.location))
+            merged.to_csv(os.path.join(self.out_dir, "metrics_{}_clf_only_on_test_data_N_variants_equals_to_{}.tsv".format(self.location, test_X.shape[0])), sep="\t", index=False)
+            plot_metrics(merged, out_file, self.rank_metric)
+            
         return trained_models
 
     def expand_classifiers_list(self):
@@ -308,6 +322,8 @@ class Metapredictions(object):
 
         :param dict trained_clfs: Dict with trained classifiers
         """
+        self.out_dir = os.path.join(self.out_dir, "feature_ranking")
+        os.makedirs(self.out_dir, exist_ok=True)
         self.information_gain()
 
         try:
@@ -324,7 +340,7 @@ class Metapredictions(object):
         Calculates mutual information for the target label.
         Uses all the data
         """
-        ig = mutual_info_classif(self.X, self.y, discrete_features=False)
+        ig = mutual_info_classif(self.X, self.y, discrete_features=False, random_state=0)
         indices = np.argsort(ig)
         sorted_tools = [self.features[i] for i in indices]
         plot_feature_importance(dict(zip(sorted_tools, ig[indices])),
@@ -346,11 +362,12 @@ class Metapredictions(object):
         sorted_tools = [self.features[i] for i in indices]
         importance_map = dict(zip(sorted_tools, _clf.feature_importances_[indices]))
         std = np.std([_clf.feature_importances_ for _tree in _clf.estimators_], axis=0)[indices]
-
+        out_dir = os.path.join(self.out_dir, "random_forest")
+        os.makedirs(out_dir, exist_ok=True)
         plot_feature_importance(importance_map,
                                 'feature_importance',
                                 self.location,
-                                self.out_dir,
+                                out_dir,
                                 std=std)
 
     def recursive_feature_elimination(self, trained_clfs: dict):
@@ -367,7 +384,10 @@ class Metapredictions(object):
         for _name, _clf in trained_clfs.items():
             new_clf, selector = "", ""
             if _name == "Random_Forest":
+                out_dir = os.path.join(self.out_dir, 'random_forest')
+                os.makedirs(out_dir, exist_ok=True)
                 best_params = _clf.named_steps['rf'].get_params()
+                print(best_params)
                 new_clf = RandomForestClassifier(**best_params)
                 selector = RFECV(new_clf,
                                  min_features_to_select=1,
@@ -377,11 +397,14 @@ class Metapredictions(object):
                 selector = selector.fit(self.X, self.y)
 
             elif _name == "Logistic_Regression":
+                out_dir = os.path.join(self.out_dir, 'logistic_regression')
+                os.makedirs(out_dir, exist_ok=True)
                 # Couldn't use a pipeline in the RFECV, therefore
                 # data needs to be scaled separately here
                 scaler = StandardScaler()
                 _X = scaler.fit_transform(self.X)
                 best_params = _clf.named_steps['lr'].get_params()
+                print(best_params)
                 new_clf = LogisticRegression(**best_params)
 
                 selector = RFECV(new_clf,
@@ -395,7 +418,7 @@ class Metapredictions(object):
                 continue
 
             plot_rfecv(selector, 1, self.features,
-                       _name, self.location, self.out_dir)
+                       _name, self.location, out_dir)
 
     def generate_tree_plot(self, trained_clfs: dict):
         """

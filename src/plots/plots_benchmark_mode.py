@@ -560,11 +560,11 @@ def plot_curve(data: list,
 
         # If many tools to plot, change color pallette
         if df_metrics.tool.unique().size > 12:
-            sns.set(rc={'figure.figsize':(8, 6)})
+            sns.set(rc={'figure.figsize':(6, 4)})
             sns.set_palette(sns.mpl_palette("magma", df_metrics.tool.unique().size))
-            fontsize="xx-small"
+            fontsize="small"
         else:
-            sns.set(rc={'figure.figsize':(8, 6)})
+            sns.set(rc={'figure.figsize':(6, 4)})
             sns.set_palette(sns.color_palette("Paired"))
             fontsize="medium"
             

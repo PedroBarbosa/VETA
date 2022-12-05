@@ -321,7 +321,7 @@ class BenchmarkTools(Base):
                                             "specificity", "sensitivity",
                                             "precision", "mcc", "norm_mcc", "weighted_norm_mcc"]].sort_values([self.metric], ascending=False)
 
-                top_tools[_location] = ranked_stats.head(7) if ranked_stats.shape[0] > 10 else ranked_stats
+                top_tools[_location] = ranked_stats.head(20) if ranked_stats.shape[0] > 20 else ranked_stats
                 f1_at_ref_threshold[_location] = dict(zip(ranked_stats.tool, ranked_stats.F1))
                 ranked_stats.to_csv(out_ranks, sep="\t", index=False)
 
@@ -410,7 +410,10 @@ class BenchmarkTools(Base):
             logging.info("----------")
             logging.info("Analyzing '{}' variants.".format(_loc))
             logging.info("----------")
-            df_f = self.df[self.df.location == _loc].copy()
+            if _loc == "all":
+                df_f = self.df.copy()
+            else:
+                df_f = self.df[self.df.location == _loc].copy()
 
             if df_f.shape[0] < 100:
                 logging.info("Less than 100 variants in '{}' dataframe (N={}). "

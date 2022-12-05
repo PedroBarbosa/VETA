@@ -102,7 +102,7 @@ class Classifiers(object):
 
         :return Pipeline: returns a Pipeline for the best estimator
         """
-        pipeline = Pipeline(steps=[('dt', tree.DecisionTreeClassifier())])
+        pipeline = Pipeline(steps=[('dt', tree.DecisionTreeClassifier(random_state=0))])
 
         params_grid = {'dt__criterion': ['gini', 'entropy'],
                        'dt__splitter': ['best', 'random'],
@@ -119,7 +119,7 @@ class Classifiers(object):
 
         :return Pipeline: returns a Pipeline for the best estimator
         """
-        pipeline = Pipeline(steps=[('rf', RandomForestClassifier())])
+        pipeline = Pipeline(steps=[('rf', RandomForestClassifier(random_state=0))])
 
         params_grid = {'rf__n_estimators': [10, 50, 100],
                        'rf__criterion': ['gini', 'entropy'],
@@ -127,9 +127,9 @@ class Classifiers(object):
                        'rf__min_samples_split': [2, 4],
                        'rf__min_samples_leaf': [2, 4],
                        'rf__max_features': ["auto"],
-                       'rf__bootstrap': [True, False],
+                       'rf__bootstrap': [True],
                        # 'rf__ccp_alpha': [0.0, 0.1],
-                       'rf__max_samples': [None, 0.9]}
+                       'rf__max_samples': [None, 0.8, 0.9]}
 
         return self.do_grid_search("rf", pipeline, params_grid)
 
@@ -139,7 +139,7 @@ class Classifiers(object):
 
         :return Pipeline: returns a Pipeline for the best estimator
         """
-        pipeline = Pipeline(steps=[('ab', AdaBoostClassifier())])
+        pipeline = Pipeline(steps=[('ab', AdaBoostClassifier(random_state=0))])
 
         params_grid = {'ab__n_estimators': [10, 50, 100],
                        'ab__learning_rate': [0.5, 1]
@@ -155,14 +155,14 @@ class Classifiers(object):
         :return Pipeline: returns a Pipeline for the best estimator
         """
         pipeline = Pipeline(steps=[('scaler', StandardScaler()),
-                                   ('svm', LinearSVC())])
+                                   ('svm', LinearSVC(random_state=0))])
 
         # Pipeline that tests multiple SVM classifiers
-        params_grid = [{'svm': (SVC(),),
+        params_grid = [{'svm': (SVC(random_state=0),),
                         'svm__C': (0.001, 0.01, 0.1, 1, 10),
                         'svm__kernel': ('poly', 'rbf', 'sigmoid')},
 
-                       {'svm': (LinearSVC(),),
+                       {'svm': (LinearSVC(random_state=0),),
                         # 'svm__penalty': ('l1', 'l2'),
                         'svm__loss': ('hinge', 'squared_hinge'),
                         'svm__C': ([0.001, 0.01, 0.1, 1, 10]),
@@ -179,7 +179,7 @@ class Classifiers(object):
         :return Pipeline: returns a Pipeline for the best estimator
         """
         pipeline = Pipeline(steps=[('scaler', StandardScaler()),
-                                   ('lr', LogisticRegression())])
+                                   ('lr', LogisticRegression(random_state=0))])
 
         params_grid = {'lr__penalty': ['l1', 'l2'],
                        'lr__solver': ['liblinear']}
@@ -193,7 +193,7 @@ class Classifiers(object):
         :return Pipeline: returns a Pipeline for the best estimator
         """
         pipeline = Pipeline(steps=[('scaler', StandardScaler()),
-                                   ('gp', SymbolicClassifier())])
+                                   ('gp', SymbolicClassifier(random_state=0))])
 
         params_grid = {'gp__generations': [10, 50, 100]}
 
@@ -219,7 +219,7 @@ class Classifiers(object):
         # If there are no parameters to tune, apply CV directly
         if params_grid is None:
             res = cross_validate(pipeline, self.x, self.y,
-                                 cv=5,
+                                 cv=10,
                                  scoring=self.scoring,
                                  n_jobs=njobs)
 
@@ -237,8 +237,9 @@ class Classifiers(object):
                                   params_grid,
                                   scoring=self.scoring,
                                   refit=self.refit_metric,
-                                  cv=5,
-                                  n_jobs=njobs)
+                                  cv=10,
+                                  n_jobs=njobs,
+                                  )
 
             search.fit(self.x, self.y)
             logging.info("Best parameters found for {} estimator: {}".format(name, search.best_params_))
