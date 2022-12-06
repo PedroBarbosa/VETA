@@ -186,8 +186,10 @@ class Metapredictions(object):
             # , 'Genetic_Programming']
 
             out_metrics = {}
+            out_best_params = []
             for _c in classifier_list:
-                pipeline_out = clf.train(_c)
+                pipeline_out, best_params, cv_score = clf.train(_c)
+                out_best_params.append([_c, ';'.join(['{}={}'.format(k,v) for k, v in best_params.items()]) if best_params else None, cv_score])
                 y_pred = pipeline_out.predict(test_X)
 
                 # Update dict like in top_tools
@@ -197,7 +199,11 @@ class Metapredictions(object):
                 trained_models[_c] = pipeline_out
 
             _clf_performance = self._dict_to_df(out_metrics)
-
+            out_file = os.path.join(self.out_dir, "{}_gridSearch_output.tsv".format(self.location))
+            pd.DataFrame.from_records(out_best_params, columns=['Classifier', 'Parameters_of_best_estimator', 'Cross_validation_score']).to_csv(out_file,
+                                                                                                                                                index=False,
+                                                                                                                                                sep='\t')
+            
             #####################################
             ### Top tools overall performance ###
             #####################################
@@ -206,7 +212,7 @@ class Metapredictions(object):
 
             assert self.rank_metric in _clf_performance.columns, "Ranking metric provided is not available."
 
-            out_file = os.path.join(self.out_dir, "metrics_{}_clf_along_best_tools.pdf".format(self.location))
+            out_file = os.path.join(self.out_dir, "{}_metrics_clf_along_best_tools.pdf".format(self.location))
             plot_metrics(merged, out_file, self.rank_metric)
 
             ##########################################
@@ -246,8 +252,8 @@ class Metapredictions(object):
             single_tool_perfor = self._dict_to_df(out_metrics)
             merged = pd.concat([_clf_performance, single_tool_perfor], ignore_index=True)
 
-            out_file = os.path.join(self.out_dir, "metrics_{}_clf_only_on_test_data.pdf".format(self.location))
-            merged.to_csv(os.path.join(self.out_dir, "metrics_{}_clf_only_on_test_data_N_variants_equals_to_{}.tsv".format(self.location, test_X.shape[0])), sep="\t", index=False)
+            out_file = os.path.join(self.out_dir, "{}_metrics_clf_only_on_test_data.pdf".format(self.location))
+            merged.to_csv(os.path.join(self.out_dir, "{}_metrics_clf_only_on_test_data_N_variants_equals_to_{}.tsv".format(self.location, test_X.shape[0])), sep="\t", index=False)
             plot_metrics(merged, out_file, self.rank_metric)
             
         return trained_models
@@ -387,7 +393,7 @@ class Metapredictions(object):
                 out_dir = os.path.join(self.out_dir, 'random_forest')
                 os.makedirs(out_dir, exist_ok=True)
                 best_params = _clf.named_steps['rf'].get_params()
-                print(best_params)
+               
                 new_clf = RandomForestClassifier(**best_params)
                 selector = RFECV(new_clf,
                                  min_features_to_select=1,
@@ -404,7 +410,7 @@ class Metapredictions(object):
                 scaler = StandardScaler()
                 _X = scaler.fit_transform(self.X)
                 best_params = _clf.named_steps['lr'].get_params()
-                print(best_params)
+        
                 new_clf = LogisticRegression(**best_params)
 
                 selector = RFECV(new_clf,

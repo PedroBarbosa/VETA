@@ -228,7 +228,7 @@ class Classifiers(object):
                                                                                                name,
                                                                                                cv_score))
             # Fit all training data
-            return pipeline.fit(self.x, self.y)
+            return pipeline.fit(self.x, self.y), None, cv_score
 
         else:
             # StratifiedKFold is performed for each of parameter combination
@@ -246,7 +246,7 @@ class Classifiers(object):
             logging.info("Mean cross validated score ({}) of the best {} estimator: {:.3f}".format(self.refit_metric,
                                                                                                    name,
                                                                                                    search.best_score_))
-            return search.best_estimator_
+            return search.best_estimator_, search.best_params_, search.best_score_
 
     def train(self, name: str) -> Pipeline:
         """
