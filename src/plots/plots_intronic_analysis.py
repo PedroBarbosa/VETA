@@ -306,11 +306,15 @@ def plot_metrics_by_bin(df: pd.DataFrame,
     df['fraction_scored'] = 1 - df.fraction_nan
     metrics = {"F1": "F1_Score",
                "weighted_F1": "F1 score (weighted)",
-               "fraction_scored": "Fraction scored"}
+               "fraction_scored": "Fraction scored",
+               "roc_auc": "auROC",
+               "ap_score": "Average precision"}
     
     avg = df.groupby('tool').agg({'F1':'mean',
                              'weighted_F1': 'mean',
-                             'fraction_scored': 'mean'})
+                             'fraction_scored': 'mean',
+                             'roc_auc': 'mean',
+                             'ap_score': 'mean'})
     
     avg = avg.round(3)
     avg.columns = ["avg_{}".format(x) for x in avg.columns]

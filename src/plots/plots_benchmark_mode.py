@@ -580,7 +580,10 @@ def plot_curve(data: list,
         plt.savefig(fname, bbox_inches='tight')
         plt.close()
         sns.reset_defaults()
-
+        
+        _metric = 'roc_auc' if is_roc else 'ap_score'   
+        df_metrics = df_metrics[['tool', _metric]].drop_duplicates()
+        return dict(zip(df_metrics.tool, df_metrics[_metric])) 
 
 ###############################
 ## Heatmap related functions ##

@@ -395,41 +395,53 @@ class IntronicAnalysis(object):
                 )
                 stats_df = pd.concat(stats_df)
 
-            if not _bin in ["all_intronic", "all_except_1-2", "all_except_1-10", None]:
-                for tool_info in _per_bin:
-                    self.metrics_per_bin[tool_info[0]].append(
-                        [_aux_class, _bin, tool_info[1], tool_info[2], tool_info[3]]
-                    )
-
-            stats_out = os.path.join(
-                out_tsv, "statistics_{}_{}.tsv".format(_aux_class, _bin)
-            )
-            stats_df.drop(["filter"], axis=1).to_csv(stats_out, sep="\t", index=False)
-            af_plot = os.path.join(out_af, "AF_{}_{}.pdf".format(_aux_class, _bin))
-            unscored_plot = os.path.join(
-                out_fixed_thresh, "unscored_fraction_{}_{}.pdf".format(_aux_class, _bin)
-            )
-            metrics_plot = os.path.join(
-                out_fixed_thresh, "tools_metrics_{}_{}.pdf".format(_aux_class, _bin)
-            )
-
-            plot_allele_frequency(_df_i_bin, af_plot, self.af_column)
-            plot_unscored(stats_df, unscored_plot)
-            plot_metrics(stats_df, metrics_plot, self.metric)
-
-            plot_curve(
+            roc_m = plot_curve(
                 roc_metrics,
                 os.path.join(out_roc, "{}_{}_ROC.pdf".format(_aux_class, _bin)),
                 (n_pos, n_neg),
             )
 
-            plot_curve(
+            pr_m = plot_curve(
                 pr_metrics,
                 os.path.join(out_roc, "{}_{}_ROC_pr.pdf".format(_aux_class, _bin)),
                 (n_pos, n_neg),
                 is_roc=False,
             )
 
+            stats_out = os.path.join(out_tsv, "statistics_{}_{}.tsv".format(_aux_class, _bin))
+            af_plot = os.path.join(out_af, "AF_{}_{}.pdf".format(_aux_class, _bin))
+            unscored_plot = os.path.join(out_fixed_thresh, "unscored_fraction_{}_{}.pdf".format(_aux_class, _bin))
+            metrics_plot = os.path.join(out_fixed_thresh, "tools_metrics_{}_{}.pdf".format(_aux_class, _bin))
+
+            plot_allele_frequency(_df_i_bin, af_plot, self.af_column)
+            plot_unscored(stats_df, unscored_plot)
+            plot_metrics(stats_df, metrics_plot, self.metric)
+            
+            if not _bin in ["all_intronic", "all_except_1-2", "all_except_1-10", None]:
+
+                for tool_info in _per_bin:
+                    res = [_aux_class, _bin, tool_info[1], tool_info[2], tool_info[3]]
+
+                    if skip_roc:
+                        res.extend([None, None])
+                    else:
+                        res.append(roc_m[tool_info[0]]) if tool_info[0] in roc_m.keys() else res.append(None)
+                        res.append(pr_m[tool_info[0]]) if tool_info[0] in pr_m.keys() else res.append(None)
+                        
+                    self.metrics_per_bin[tool_info[0]].append(res)
+            
+            if roc_m:
+                stats_df = pd.merge(stats_df, pd.DataFrame.from_dict(roc_m, orient='index', columns=['auROC']), how = 'left', left_on = 'tool', right_index = True)
+            else:
+                stats_df['auROC'] = None
+            
+            if pr_m:
+                stats_df = pd.merge(stats_df, pd.DataFrame.from_dict(pr_m, orient='index', columns=['average_precision']), how = 'left', left_on = 'tool', right_index = True)
+            else:
+                stats_df['average_precision'] = None
+
+            stats_df.drop(["filter"], axis=1).to_csv(stats_out, sep="\t", index=False)
+            
         df_metrics_per_bin = pd.DataFrame(
             [[k] + i for k, v in self.metrics_per_bin.items() for i in v],
             columns=[
@@ -439,9 +451,11 @@ class IntronicAnalysis(object):
                 "F1",
                 "weighted_F1",
                 "fraction_nan",
+                "roc_auc",
+                "ap_score"
             ],
         )
-
+        df_metrics_per_bin.to_csv("~/Desktop/test_metrics.tsv", sep="\t")
         df_metrics_per_bin.groupby("variant_class").apply(
             plot_metrics_by_bin,
             os.path.join(out_all_bin_agg, "per_bin"),

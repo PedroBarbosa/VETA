@@ -309,7 +309,7 @@ class BenchmarkTools(Base):
                     
                     if _roc_data:
                         
-                        plot_curve(_roc_data, 
+                        _ = plot_curve(_roc_data, 
                                 os.path.join(outdir, "roc_analysis", "{}{}.pdf".format(bname, _location)),
                                 (n_pos, n_neg),
                                 is_roc=is_roc)
