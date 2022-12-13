@@ -455,7 +455,7 @@ class IntronicAnalysis(object):
                 "ap_score"
             ],
         )
-        df_metrics_per_bin.to_csv("~/Desktop/test_metrics.tsv", sep="\t")
+
         df_metrics_per_bin.groupby("variant_class").apply(
             plot_metrics_by_bin,
             os.path.join(out_all_bin_agg, "per_bin"),

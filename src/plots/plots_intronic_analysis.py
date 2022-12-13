@@ -304,21 +304,40 @@ def plot_metrics_by_bin(df: pd.DataFrame,
     variant_class = df.name
     
     df['fraction_scored'] = 1 - df.fraction_nan
+    df['weighted_roc_auc'] = df.apply(lambda x: None if x.roc_auc is None else x.fraction_scored * x.roc_auc, axis = 1)
+    df['weighted_ap_score'] = df.apply(lambda x: None if x.ap_score is None else x.fraction_scored * x.ap_score, axis = 1)
+    
+    # Keep only tools with auc and ap scores in all bins
+    na_rows = df.loc[df.isnull()['weighted_roc_auc'] | df.isnull()['weighted_ap_score']]
+    tools_to_remove = na_rows.tool.unique()
+    
+    _df = df[~df.tool.isin(tools_to_remove)]
+    _avg = _df.groupby('tool').agg({'weighted_roc_auc': 'mean',
+                                   'weighted_ap_score': 'mean'})
+    _avg = _avg.rename(columns={'weighted_roc_auc': 'avg_weighted_roc_auc_all_bins',
+                                'weighted_ap_score': 'avg_weighted_ap_score_all_bins'})
+    
     metrics = {"F1": "F1_Score",
                "weighted_F1": "F1 score (weighted)",
                "fraction_scored": "Fraction scored",
                "roc_auc": "auROC",
-               "ap_score": "Average precision"}
+               "weighted_roc_auc": "auROC (weighted)",
+               "weighted_roc_auc_all_bins": "auROC (weighted)",
+               "ap_score": "Average precision",
+               "weighted_ap_score": "Average precision (weighted)",
+               "weighted_ap_score_all_bins": "Average precision (weighted)"}
     
     avg = df.groupby('tool').agg({'F1':'mean',
                              'weighted_F1': 'mean',
                              'fraction_scored': 'mean',
                              'roc_auc': 'mean',
-                             'ap_score': 'mean'})
+                             'ap_score': 'mean',
+                             'weighted_roc_auc': 'mean',
+                             'weighted_ap_score': 'mean'})
     
     avg = avg.round(3)
     avg.columns = ["avg_{}".format(x) for x in avg.columns]
-    df = pd.merge(df, avg, on="tool", how='left')
+    df = pd.merge(df, avg, on="tool", how='left').merge(_avg, on='tool', how='left')
 
     n_tools = df.tool.unique().size 
     if n_tools > 10:
@@ -330,13 +349,17 @@ def plot_metrics_by_bin(df: pd.DataFrame,
 
     n_tools = df.tool.unique().size 
 
-    for metric, description in metrics.items():
-
-        _df = df.copy()
-        _df[metric] = pd.to_numeric(_df[metric])
-        _df['tool'] = df.tool + " (mean=" + df["avg_{}".format(metric)].astype(str) + ")"
+    for _metric, description in metrics.items():
         
-        _df = _df.sort_values("avg_{}".format(metric), ascending=False)
+        _df = df.copy()
+        if "_all_bins" in _metric:
+            _df = _df[~df['avg_{}'.format(_metric)].isnull()]   
+        metric = _metric.replace("_all_bins", "") 
+            
+        _df[metric] = pd.to_numeric(_df[metric])
+        _df['tool'] = _df.tool + " (mean=" + round(df["avg_{}".format(_metric)], 3).astype(str) + ")"
+        
+        _df = _df.sort_values("avg_{}".format(_metric), ascending=False)
         g = sns.catplot(x="bin",
             y=metric,
             kind='point',
@@ -363,7 +386,11 @@ def plot_metrics_by_bin(df: pd.DataFrame,
         plt.xlabel("Intron bin (bp)")
         plt.ylabel(description)
         plt.tight_layout()
-        out = fname + '_' + variant_class + "_" + metric + '.pdf'
+        
+        if '_all_bins' in _metric:
+            out = fname + '_' + variant_class + "_" + metric + '_tools_predicting_all_bins.pdf'    
+        else:
+            out = fname + '_' + variant_class + "_" + metric + '.pdf'
 
         plt.savefig(out, bbox_inches="tight")
         plt.close()
