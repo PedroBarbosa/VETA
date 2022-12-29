@@ -24,7 +24,7 @@ VETA is a tool that analyses the performance of several variant prediction metho
 
 # Table of Contents
 - [Table of Contents](#table-of-contents)
-  - [Intallation](#intallation)
+  - [Installation](#installation)
   - [Input requirements](#input-requirements)
   - [Running on reference datasets](#running-on-reference-datasets)
     - [Clinvar](#clinvar)
@@ -43,7 +43,7 @@ VETA is a tool that analyses the performance of several variant prediction metho
 
 
 <a name="installation"></a>
-## Intallation
+## Installation
 VETA requires python >= 3.8 and can simply be installed with pip package installer:
 
 ~~~~
