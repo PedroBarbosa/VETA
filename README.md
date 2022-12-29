@@ -56,7 +56,7 @@ If you run into problems, I recommend the creation of a conda environment, and f
 ~~~~
 git clone https://github.com/PedroBarbosa/VETA.git
 cd VETA
-conda env create -f conda\_environment.yml
+conda env create -f conda_environment.yml
 conda activate veta
 pip install .
 ~~~~
