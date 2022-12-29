@@ -1,6 +1,6 @@
 import os
 from typing import List
-from charset_normalizer import logging
+import logging
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
