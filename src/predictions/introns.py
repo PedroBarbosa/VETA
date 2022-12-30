@@ -138,12 +138,6 @@ class IntronicAnalysis(object):
         self.af_column = af_column
         self.metrics_per_bin = defaultdict(list)
         
-        # intronic variants
-        self.df = df[~df["intron_bin"].isnull()].copy(deep=True)
-        self.df = apply_tool_predictions(self.df, self.thresholds)
-        logging.info("-------------------------")
-        logging.info("Intronic analysis started")
-        logging.info("-------------------------")
         assert "intron_bin" in df.columns, (
             "Intronic bins are not present in the data."
             "Probably a first run of Clinvar "
@@ -151,6 +145,12 @@ class IntronicAnalysis(object):
             "args. To fix, just remove the 'tsv' in "
             "the input directory and try again."
         )
+        # intronic variants
+        self.df = df[~df["intron_bin"].isnull()].copy(deep=True)
+        self.df = apply_tool_predictions(self.df, self.thresholds)
+        logging.info("-------------------------")
+        logging.info("Intronic analysis started")
+        logging.info("-------------------------")
 
         loc_in_protein_coding = [
             "splice_site",
