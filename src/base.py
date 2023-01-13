@@ -137,10 +137,11 @@ class Base(object):
 
         else:
             _dfs = []
-            for f in vcf:
-                is_benign = False if "pathogenic" in f or "deleterious" in f else True
-                _dfs.append(self.get_df_ready(f, is_benign=is_benign))
-
+            for file in vcf:
+                f = os.path.basename(file).lower()
+                is_benign = False if any(x in f for x in ["pathogenic", "deleterious"]) else True
+                _dfs.append(self.get_df_ready(file, is_benign=is_benign))
+        
             self.df = pd.concat(_dfs).reset_index(drop=True)
 
         # Replace missing AF with 0 for AF plots
@@ -504,3 +505,4 @@ class Base(object):
             raise ValueError('Config file requires at least two tools to be compared.')
 
         return data
+
