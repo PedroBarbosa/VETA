@@ -239,7 +239,9 @@ def plot_metrics_by_bin_split_ss(df: pd.DataFrame,
         # Comment code above (from # Add avg ..) to just display tool names in the middle of the two facets
         
         _df = _df.sort_values("avg_{}".format(metric), ascending=False)
-
+        n_tools = _df.tool.unique().size 
+        markers = ['s', '>', '^', 'o', 'H']
+        _markers = markers * (n_tools // len(markers)) + markers[:n_tools % len(markers)]
         g = sns.catplot(x="bin",
             y=metric,
             kind='point',
@@ -253,7 +255,7 @@ def plot_metrics_by_bin_split_ss(df: pd.DataFrame,
             scale=0.75, 
             aspect=1.2,
             palette=pal,
-            markers='s',
+            markers=_markers,
             fontsize=fontsize,
             legend= legend_out,
             legend_out = legend_out,
@@ -347,8 +349,8 @@ def plot_metrics_by_bin(df: pd.DataFrame,
         pal = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=False, reverse=True, n_colors=n_tools)
         fontsize="medium"
 
-    n_tools = df.tool.unique().size 
-
+    markers = ['s', '>', '^', 'o', 'H']
+    _markers = markers * (n_tools // len(markers)) + markers[:n_tools % len(markers)]
     for _metric, description in metrics.items():
         
         _df = df.copy()
@@ -369,7 +371,7 @@ def plot_metrics_by_bin(df: pd.DataFrame,
             scale=0.75, 
             aspect=1.5,
             palette=pal,
-            markers='s',
+            markers=_markers,
             fontsize=fontsize,
             legend=False,
             dodge=True,

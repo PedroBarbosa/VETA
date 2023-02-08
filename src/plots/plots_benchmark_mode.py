@@ -5,7 +5,6 @@ import pandas as pd
 import seaborn as sns
 import logging
 plt.switch_backend('agg')
-sns.set(style="white")
 cmap = sns.diverging_palette(220, 10, as_cmap=True)
 from matplotlib.lines import Line2D
 import matplotlib.colors as c
@@ -512,8 +511,7 @@ def plot_curve(data: list,
     for the curve to be drawn. Default: `0.5`
     """
     os.makedirs(os.path.dirname(fname), exist_ok=True)
-    sns.set_style("white")
-
+ 
     data = [x for x in data if len(x) > 0]
     
     if data:
@@ -559,24 +557,26 @@ def plot_curve(data: list,
         df_metrics = df_metrics[~df_metrics.tool.str.contains("S-CAP")]
 
         # If many tools to plot, change color pallette
-        if df_metrics.tool.unique().size > 12:
+        if df_metrics.tool.unique().size > 10:
             sns.set(rc={'figure.figsize':(6, 4)})
             sns.set_palette(sns.mpl_palette("magma", df_metrics.tool.unique().size))
             fontsize="small"
         else:
             sns.set(rc={'figure.figsize':(6, 4)})
-            sns.set_palette(sns.color_palette("Paired"))
+            sns.set_palette(sns.color_palette("colorblind"))
             fontsize="medium"
-            
+        
+        sns.set_style("white")
         ax = sns.lineplot(x=x, y=y,
                         data=df_metrics,
                         hue=hue)
         ax.set_aspect(1)
-
+        sns.despine()
         plt.title("N pos = {}; N neg = {}".format(class_counts[0], class_counts[1]))
         plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., frameon=False, fontsize=fontsize)
         plt.ylim(0, 1.05)
         plt.tight_layout()
+
         plt.savefig(fname, bbox_inches='tight')
         plt.close()
         sns.reset_defaults()
