@@ -67,5 +67,5 @@ CI-SpliceAI	CI-SpliceAI
 Pangolin	Pangolin
 SPiP	SPiP
 MLCsplice	MLCsplice
-AbSplice-DNA      AbSplice_DNA
+AbSplice-DNA	AbSplice_DNA
 LaBranchoR	labranchoR
