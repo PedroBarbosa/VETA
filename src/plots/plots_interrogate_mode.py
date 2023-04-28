@@ -70,7 +70,7 @@ def plot_heatmap(df: pd.DataFrame,
     fig, ax = plt.subplots(1, 2, figsize=(5, 7))
 
     if display_annot:
-
+        _linewidth = .5
         if isinstance(benign_too, pd.DataFrame):
             if benign_too.shape[0] > 0 and df.shape[0] > 0:
                 all_path = df[df['Is pathogenic'] == 1].copy()
@@ -94,16 +94,18 @@ def plot_heatmap(df: pd.DataFrame,
             plt.close()
             return
     else:
+        df = df.sort_values(['Is pathogenic'])
+        _linewidth = 0.001
         outfile = os.path.join(outdir, 'predictability_trade_off.pdf')
 
     if plot_benign:
-
+        fig, ax = plt.subplots(1, 2, figsize=(11, 9))
         sns.heatmap(df[["Is pathogenic"]][::-1], ax=ax[0],
                     cbar=False,
                     vmax=1,
                     vmin=0,
                     cmap="OrRd",
-                    linewidths=.5,
+                    linewidths=_linewidth,
                     linecolor='k',
                     yticklabels=display_annot)
 
@@ -112,7 +114,7 @@ def plot_heatmap(df: pd.DataFrame,
                     vmax=1,
                     vmin=0,
                     cmap="OrRd",
-                    linewidths=.5,
+                    linewidths=_linewidth,
                     linecolor='k',
                     annot_kws={'size': 1},
                     yticklabels=display_annot)
@@ -124,7 +126,7 @@ def plot_heatmap(df: pd.DataFrame,
         ax[1].set_ylabel('')
 
     else:
-        _linewidth = 0.001 if df.shape[0] > 2000 else .5
+
         sns.heatmap(df[["Is pathogenic"]][::-1], ax=ax[0], cbar_kws={'label': 'Fraction of tools'},
                     vmax=1,
                     vmin=0,
@@ -133,7 +135,7 @@ def plot_heatmap(df: pd.DataFrame,
                     linecolor='k',
                     yticklabels=display_annot)
 
-        sns.heatmap(df[["Unpredictable"]], ax=ax[1], cbar_kws={'label': 'Percentage (%)'},
+        sns.heatmap(df[["Unpredictable"]][::-1], ax=ax[1], cbar_kws={'label': 'Percentage (%)'},
                     vmax=100,
                     vmin=0,
                     cmap="OrRd",

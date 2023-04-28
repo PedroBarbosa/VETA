@@ -337,7 +337,7 @@ def format_spliceai_fields(record, symbol: str):
     return '|'.join(map(str, [x for x in fields]))
 
 
-def process_spliceai(preds: pd.Series, check_gene_name: bool = True):
+def process_spliceai(preds: pd.Series, check_gene_name: bool = False):
     """
     Processes a list of SpliceAI/CI-SpliceAI
     predictions (SNV or Indel)
@@ -358,7 +358,8 @@ def process_spliceai(preds: pd.Series, check_gene_name: bool = True):
     
     :return float: Top prediction
     """
-    tool = "SpliceAI" if check_gene_name else "CI-SpliceAI"
+    tool = preds.index[0]
+
     if all(v is None or v == "." for v in preds[tool]):
         return np.nan
   

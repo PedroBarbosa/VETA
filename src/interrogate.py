@@ -202,13 +202,13 @@ class PredictionsEval(Base):
     
             plot_heatmap(ratios_df, outdir)
             plot_heatmap(_top_predicted_patho, 
-                            outdir, 
-                            display_annot=True)
+                           outdir,
+                           display_annot=True)
 
             plot_heatmap(_top_predicted_patho, 
-                        outdir, 
-                        display_annot=True,
-                        benign_too = _top_predicted_benign)
+                       outdir,
+                       display_annot=True,
+                       benign_too = _top_predicted_benign)
                 
             # except KeyError:
             #     logging.info("No tool has predictions for the given variant type ({}), "

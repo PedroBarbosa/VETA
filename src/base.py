@@ -386,12 +386,8 @@ class Base(object):
 
                 elif _f.__name__ in _functions_that_require_symbol:
                     
-                    # If CI-SpliceAI
-                    if _f.__name__ == "process_spliceai" and _tool != "SpliceAI":
-                        df[_tool] = df[[_tool] + ['SYMBOL']].apply(_f, check_gene_name=False, axis=1)
-                    else:
-                        df[_tool] = df[[_tool] + ['SYMBOL']].apply(_f, axis=1)
-                    
+                    df[_tool] = df[[_tool] + ['SYMBOL']].apply(_f, axis=1)
+ 
                 # apply single function to
                 # the target columns
                 else:
