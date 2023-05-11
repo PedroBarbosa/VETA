@@ -68,4 +68,5 @@ Pangolin	Pangolin
 SPiP	SPiP
 MLCsplice	MLCsplice
 AbSplice-DNA	AbSplice_DNA
+PDIVAS	PDIVAS
 LaBranchoR	labranchoR

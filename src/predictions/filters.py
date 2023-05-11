@@ -112,6 +112,7 @@ def update_thresholds(config_dict: defaultdict):
         ('SPiP', '>', 0.452, 'Splicing'),
         ('MLCsplice', '>', 0.5, 'Splicing'),
         ('AbSplice-DNA', '>', 0.01, 'Splicing'),
+        ('PDIVAS', '>', 0.151, 'Splicing'),
         ('LaBranchoR', '>', 0.1, 'Splicing')
     ]
 

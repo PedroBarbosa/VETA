@@ -282,6 +282,7 @@ List of tools available (more will be continuously added)
 |                                 | Pangolin          | \|splicing_diff\| > 0.2 | No                     | model_inference |
 |                                 | SPiP              | > 0.452              | Yes                       | model_inference |
 |                                 | AbSplice-DNA      | > 0.01               | Yes                       | vcfanno       |
+|                                 | PDIVAS            | > 0.151              | Yes                       | vcfanno       |
 |                                 | LaBranchoR        | > 0.1                | Yes                       | kipoi         |
 <a name="manual_config"></a>
 #### Manual config file

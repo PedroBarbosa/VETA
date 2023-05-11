@@ -347,6 +347,7 @@ class Base(object):
             "SPiP": available_functions['spip'],
             "MLCsplice": available_functions['top_max'],
             "AbSplice-DNA": available_functions['absplice_dna'],
+            "PDIVAS": available_functions['conspliceml_like'],
             "LaBranchoR": available_functions['labranchor']
         }
 
@@ -432,7 +433,7 @@ class Base(object):
                                  "Eigen", "FunSeq2", "CADD_v1.5", "CADD-Splice", "DANN", "CAPICE",
                                  "HAL", "SPIDEX", "dbscSNV", "MaxEntScan", "SpliceAI", "S-CAP", "ConSpliceML",
                                  "TraP", "MMSplice", "SQUIRLS", "IntSplice2", "kipoiSplice4", "kipoiSplice4_cons",
-                                 "CI-SpliceAI", "Pangolin", "SPiP", "LaBranchoR", "MLCsplice", "AbSplice-DNA"]
+                                 "CI-SpliceAI", "Pangolin", "SPiP", "LaBranchoR", "MLCsplice", "PDIVAS", "AbSplice-DNA"]
 
         AVAILABLE_SCOPES = ["Protein", "Conservation", "Whole_genome", "Splicing"]
         AVAILABLE_FUNCTIONS = ['to_numeric', 'top_max', 'top_min', 'top_min_abs',
