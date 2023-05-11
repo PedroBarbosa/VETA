@@ -1,6 +1,5 @@
 import os
 from collections import defaultdict
-from posixpath import split
 from typing import Union, List, Tuple
 
 import hgvs

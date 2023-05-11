@@ -264,7 +264,7 @@ List of tools available (more will be continuously added)
 |                                 | DANN              | > 0.9                | Yes                       | vcfanno       |
 |                                 | fitCons           | > 0.4                | No                        | vcfanno       |
 |                                 | LINSIGHT          | > 0.056              | Yes                       | vcfanno       |
-| Splicing                        | MaxEntScan        | \|MaxEntScan_diff\|> 1 | No                      | kipoi         |
+| Splicing                        | MaxEntScan        | \|MaxEntScan_diff\|> 3 | No                      | VEP           |
 |                                 | dbscSNV           | > 0.6                | Yes                       | VEP           |
 |                                 | SPIDEX            | \|dpsi_zscore\| > 2  | No                        | vcfanno       |
 |                                 | TraP              | > 0.221 for coding, 0.174 for intronic | Yes     | vcfanno       |
