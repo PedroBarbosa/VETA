@@ -396,14 +396,18 @@ def process_conspliceml_like(preds: pd.Series):
         return np.nan
     
     _preds = preds[0].split(",")
+  
     _max = 0
     for _p in _preds:
-       
-        new_max = round(float(_p.split("|")[1]), 3)
-        if abs(new_max) > _max:
-            _max = abs(new_max)
-
-    return _max
+        try:
+            new_max = round(float(_p.split("|")[1]), 3)
+            if abs(new_max) > _max or np.isnan(_max):
+                _max = abs(new_max)
+           
+        except ValueError:
+            if _max == 0:
+                _max = np.nan
+    return _max 
 
 def process_conspliceml(preds: pd.Series):
     """
