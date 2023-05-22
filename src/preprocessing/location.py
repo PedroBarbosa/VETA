@@ -111,7 +111,7 @@ def get_location_from_consequence(x: str,
     except KeyError:
         raise ValueError("Consequence not registered. {}".format(conseq))
 
-ranges_split_at_ss = [(0, 2, '1-2'),
+ranges_split_at_ss = [(1, 2, '1-2'),
           (3, 10, '3-10'),
           (11, 40, '11-40'),
           (41, 200, '41-200'),
@@ -119,7 +119,7 @@ ranges_split_at_ss = [(0, 2, '1-2'),
           (501, 1000, '501-1000'),
           (1001, 5000000, '1000+')]
 
-ranges = [(0, 10, '1-10'),
+ranges = [(1, 10, '1-10'),
           (11, 40, '11-40'),
           (41, 200, '41-200'),
           (201, 500, '201-500'),
