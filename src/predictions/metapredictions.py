@@ -54,8 +54,8 @@ class Metapredictions(object):
             will not be included.
         """
         # Remove useless columns
-        useless_cols = ['index', 'chr', 'pos', 'ref', 'alt', 'id', 'HGVSc']
-
+        useless_cols = [c for c in ['index', 'chr', 'pos', 'ref', 'alt', 'id', 'HGVSc'] if c in df.columns]
+        
         df = df.drop(useless_cols, axis=1)
 
         self.label_fields = ['label']  # 'outcome' would also work

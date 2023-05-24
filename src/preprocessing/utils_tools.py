@@ -63,7 +63,8 @@ def to_numeric(preds: list, absolute: bool = True):
     _p = preds[0]
     if isinstance(_p, float):
         score = round(_p, 4)
-
+    elif isinstance(_p, int):
+        return abs(_p) if absolute else _p
     else:
         try:
             if any([k in _p for k in [',', '|', '&']]):
@@ -76,6 +77,7 @@ def to_numeric(preds: list, absolute: bool = True):
         except (TypeError, ValueError):
             return np.nan
 
+  
     return abs(score) if absolute else score
 
 
