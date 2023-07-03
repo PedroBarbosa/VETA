@@ -21,6 +21,9 @@ VETA is a tool that analyses the performance of several variant prediction metho
 
    * Paper: [Clinical significance of genetic variation in hypertrophic cardiomyopathy: comparison of computational tools to prioritize missense variants.](https://www.frontiersin.org/articles/10.3389/fcvm.2022.975478/full). The analysis performed with VETA for the paper is stored in a [jupyter notebook](https://github.com/PedroBarbosa/paper_HCM_benchmark/blob/main/run_benchmarks.ipynb), where multiple running examples are presented.
 
+**Contact:**
+psbpedrobarbosa@gmail.com
+pbarbosa@lasige.di.fc.ul.pt
 
 # Table of Contents
 - [Table of Contents](#table-of-contents)
@@ -335,5 +338,3 @@ By default, VETA draws hierarchically-clustered heatmaps, which allows the user 
 If the input data has a field that somehow measures allele frequency, that information can be taken into account by VETA by additionally plotting allele frequencies between the variants belonging to each label (benchmark mode, figure below). For example, if gnomAD frequencies are represented in the VCF with the `gnomAD_AF` INFO field, one can set the `--allele_frequency gnomAD_AF` so that information is included in the analysis. More info in the help: ```veta benchmark --help```. If the analysis is done with a Clinvar file and `AF*` is not present in the output, try to delete the `tsv` file a redo analysis from the original VCF file.
 
 <img src="src/config/example_imgs/benchmark_af.png" height="300"/>
-
-If you find bugs or have suggestions, feel free to get in touch  psbpedrobarbosa@gmail.com or by opening an issue.
