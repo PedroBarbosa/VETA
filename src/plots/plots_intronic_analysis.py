@@ -306,36 +306,36 @@ def plot_metrics_by_bin(df: pd.DataFrame,
     variant_class = df.name
     
     df['fraction_scored'] = 1 - df.fraction_nan
-    df['weighted_roc_auc'] = df.apply(lambda x: None if x.roc_auc is None else x.fraction_scored * x.roc_auc, axis = 1)
-    df['weighted_ap_score'] = df.apply(lambda x: None if x.ap_score is None else x.fraction_scored * x.ap_score, axis = 1)
+    df['weighted_auROC'] = df.apply(lambda x: None if x.auROC is None else x.fraction_scored * x.auROC, axis = 1)
+    df['weighted_auPRC'] = df.apply(lambda x: None if x.auPRC is None else x.fraction_scored * x.auPRC, axis = 1)
     
     # Keep only tools with auc and ap scores in all bins
-    na_rows = df.loc[df.isnull()['weighted_roc_auc'] | df.isnull()['weighted_ap_score']]
+    na_rows = df.loc[df.isnull()['weighted_auROC'] | df.isnull()['weighted_auPRC']]
     tools_to_remove = na_rows.tool.unique()
     
     _df = df[~df.tool.isin(tools_to_remove)]
-    _avg = _df.groupby('tool').agg({'weighted_roc_auc': 'mean',
-                                   'weighted_ap_score': 'mean'})
-    _avg = _avg.rename(columns={'weighted_roc_auc': 'avg_weighted_roc_auc_all_bins',
-                                'weighted_ap_score': 'avg_weighted_ap_score_all_bins'})
+    _avg = _df.groupby('tool').agg({'weighted_auROC': 'mean',
+                                   'weighted_auPRC': 'mean'})
+    _avg = _avg.rename(columns={'weighted_auROC': 'avg_weighted_auROC_all_bins',
+                                'weighted_auPRC': 'avg_weighted_auPRC_all_bins'})
     
     metrics = {"F1": "F1_Score",
                "weighted_F1": "F1 score (weighted)",
                "fraction_scored": "Fraction scored",
-               "roc_auc": "auROC",
-               "weighted_roc_auc": "auROC (weighted)",
-               "weighted_roc_auc_all_bins": "auROC (weighted)",
-               "ap_score": "Average precision",
-               "weighted_ap_score": "Average precision (weighted)",
-               "weighted_ap_score_all_bins": "Average precision (weighted)"}
+               "auROC": "area under ROC curve",
+               "weighted_auROC": "area under ROC curve (weighted)",
+               "weighted_auROC_all_bins": "area under ROC curve (weighted)",
+               "auPRC": "area under PR curve",
+               "weighted_auPRC": "area under PR curve (weighted)",
+               "weighted_auPRC_all_bins": "area under PR curve (weighted)"}
     
     avg = df.groupby('tool').agg({'F1':'mean',
                              'weighted_F1': 'mean',
                              'fraction_scored': 'mean',
-                             'roc_auc': 'mean',
-                             'ap_score': 'mean',
-                             'weighted_roc_auc': 'mean',
-                             'weighted_ap_score': 'mean'})
+                             'auROC': 'mean',
+                             'auPRC': 'mean',
+                             'weighted_auROC': 'mean',
+                             'weighted_auPRC': 'mean'})
     
     avg = avg.round(3)
     avg.columns = ["avg_{}".format(x) for x in avg.columns]

@@ -436,9 +436,9 @@ class IntronicAnalysis(object):
                 stats_df['auROC'] = None
             
             if pr_m:
-                stats_df = pd.merge(stats_df, pd.DataFrame.from_dict(pr_m, orient='index', columns=['average_precision']), how = 'left', left_on = 'tool', right_index = True)
+                stats_df = pd.merge(stats_df, pd.DataFrame.from_dict(pr_m, orient='index', columns=['auPRC']), how = 'left', left_on = 'tool', right_index = True)
             else:
-                stats_df['average_precision'] = None
+                stats_df['auPRC'] = None
 
             stats_df.drop(["filter"], axis=1).to_csv(stats_out, sep="\t", index=False)
             
@@ -451,8 +451,8 @@ class IntronicAnalysis(object):
                 "F1",
                 "weighted_F1",
                 "fraction_nan",
-                "roc_auc",
-                "ap_score"
+                "auROC",
+                "auPRC"
             ],
         )
 

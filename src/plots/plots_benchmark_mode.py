@@ -517,10 +517,10 @@ def plot_curve(data: list,
     if data:
         if is_roc:
             colnames = ['tool', 'fraction_nan', 'label', 'thresholds', 'True Positive Rate (TPR)',
-                        'False Positive Rate (FPR)', 'roc_auc']
+                        'False Positive Rate (FPR)', 'auROC']
             to_explode = ['thresholds', 'True Positive Rate (TPR)', 'False Positive Rate (FPR)']
         else:
-            colnames = ['tool', 'fraction_nan', 'label', 'thresholds', 'Recall', 'Precision', 'ap_score']
+            colnames = ['tool', 'fraction_nan', 'label', 'thresholds', 'Recall', 'Precision', 'auPRC']
             to_explode = ['thresholds', 'Recall', 'Precision']
 
         df_metrics = pd.DataFrame.from_records(data, columns=colnames)
@@ -530,12 +530,12 @@ def plot_curve(data: list,
         if is_roc:
             df_metrics['True Positive Rate (TPR)'] = pd.to_numeric(df_metrics['True Positive Rate (TPR)'])
             df_metrics['False Positive Rate (FPR)'] = pd.to_numeric(df_metrics['False Positive Rate (FPR)'])
-            df_metrics["tool_with_roc_auc"] = df_metrics["label"] + " auROC=" + \
-                                            df_metrics["roc_auc"].round(3).map(str) + ")"
-            hue = "tool_with_roc_auc"
+            df_metrics["tool_with_auROC"] = df_metrics["label"] + " auROC=" + \
+                                            df_metrics["auROC"].round(3).map(str) + ")"
+            hue = "tool_with_auROC"
             x = "False Positive Rate (FPR)"
             y = "True Positive Rate (TPR)"
-            df_metrics = df_metrics.sort_values('roc_auc', ascending=False)
+            df_metrics = df_metrics.sort_values('auROC', ascending=False)
             
             no_min_scored = df_metrics[df_metrics['fraction_nan'] > max_nan_allowed].tool.unique().tolist()
             if no_min_scored:
@@ -543,12 +543,12 @@ def plot_curve(data: list,
         else:
             df_metrics['Recall'] = pd.to_numeric(df_metrics['Recall'])
             df_metrics['Precision'] = pd.to_numeric(df_metrics['Precision'])
-            df_metrics["tool_with_ap_score"] = df_metrics["label"] + " AP=" + \
-                                            df_metrics["ap_score"].round(3).map(str) + ")"
-            hue = "tool_with_ap_score"
+            df_metrics["tool_with_auPRC"] = df_metrics["label"] + " auPRC=" + \
+                                            df_metrics["auPRC"].round(3).map(str) + ")"
+            hue = "tool_with_auPRC"
             x = "Recall"
             y = "Precision"
-            df_metrics = df_metrics.sort_values('ap_score', ascending=False)
+            df_metrics = df_metrics.sort_values('auPRC', ascending=False)
 
         df_metrics = df_metrics[df_metrics['fraction_nan'] <= max_nan_allowed]
 
@@ -581,7 +581,7 @@ def plot_curve(data: list,
         plt.close()
         sns.reset_defaults()
         
-        _metric = 'roc_auc' if is_roc else 'ap_score'   
+        _metric = 'auROC' if is_roc else 'auPRC'   
         df_metrics = df_metrics[['tool', _metric]].drop_duplicates()
         return dict(zip(df_metrics.tool, df_metrics[_metric])) 
 

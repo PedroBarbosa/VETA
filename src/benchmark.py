@@ -281,7 +281,7 @@ class BenchmarkTools(Base):
     
                 if roc_metrics_per_tool:
                     roc_m = pd.DataFrame([[x[0], x[-1]] for x in roc_metrics_per_tool], columns=['tool', 'auROC'])
-                    pr_m = pd.DataFrame([[x[0], x[-1]] for x in pr_metrics_per_tool], columns=['tool', 'average_precision'])
+                    pr_m = pd.DataFrame([[x[0], x[-1]] for x in pr_metrics_per_tool], columns=['tool', 'auPRC'])
                     stats_all_df = stats_all_df.merge(roc_m, on='tool', how='left').merge(pr_m, on='tool', how='left')
 
                 # draw plots
