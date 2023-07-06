@@ -6,7 +6,6 @@ channels:
 dependencies:
   - python==3.10.6
   - pip>=22
-  - bcftools=1.16
   - postgresql
   - pip:
       - matplotlib==3.5.1
