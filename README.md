@@ -20,11 +20,11 @@ VETA is a tool that analyses the performance of several variant prediction metho
 **Citing VETA:**
 
    * Paper: [Clinical significance of genetic variation in hypertrophic cardiomyopathy: comparison of computational tools to prioritize missense variants.](https://www.frontiersin.org/articles/10.3389/fcvm.2022.975478/full). The analysis performed with VETA for the paper is stored in a [jupyter notebook](https://github.com/PedroBarbosa/paper_HCM_benchmark/blob/main/run_benchmarks.ipynb), where multiple running examples are presented.
+   * An extension for evaluating intronic variants in a bin-based manner was presented [here](https://academic.oup.com/gigascience/article/doi/10.1093/gigascience/giad085/7329463).
 
 **Contact:**
 
-psbpedrobarbosa@gmail.com\
-pbarbosa@lasige.di.fc.ul.pt
+psbarbosa@ciencias.ulisboa.pt
 
 # Table of Contents
 - [Table of Contents](#table-of-contents)
